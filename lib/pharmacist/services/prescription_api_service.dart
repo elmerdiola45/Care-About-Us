@@ -83,7 +83,13 @@ class PrescriptionApiService {
     request.fields['patient_gender'] = prescription.patientGender;
     request.fields['doctor_name'] = prescription.doctorName;
     request.fields['is_senior'] = prescription.isSenior ? '1' : '0';
-    request.fields['date_time'] = prescription.dateTime.toIso8601String();
+    // .toUtc() before serializing — a bare local-time ISO string (no
+    // offset/Z suffix) gets misinterpreted as already-UTC by Laravel/Carbon
+    // (app timezone is UTC), shifting the displayed time by the device's
+    // UTC offset when it's later read back and converted with .toLocal().
+    request.fields['date_time'] = prescription.dateTime
+        .toUtc()
+        .toIso8601String();
     request.fields['total_price'] = '${prescription.totalPrice}';
     if (confirmNew) {
       request.fields['confirm_new'] = 'true';

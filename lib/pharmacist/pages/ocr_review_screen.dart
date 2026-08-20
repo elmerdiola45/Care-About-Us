@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../common/widgets/tap_target.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../models/prescription_scan_result.dart';
 import '../models/prescription.dart';
 import '../services/correction_memory_service.dart';
@@ -1093,28 +1094,31 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          _buildScannedNotePreview(),
-          if (_hasUnavailableMedicine) ...[
-            const SizedBox(height: 12),
-            _buildMedicineNotAvailableCard(),
-          ],
-          if (_validationWarnings.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _buildValidationWarnings(),
-          ],
-          if (_isSaved && _ocrCode != null) ...[
+      body: ResponsiveCenter.dashboard(
+        padding: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            _buildScannedNotePreview(),
+            if (_hasUnavailableMedicine) ...[
+              const SizedBox(height: 12),
+              _buildMedicineNotAvailableCard(),
+            ],
+            if (_validationWarnings.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildValidationWarnings(),
+            ],
+            if (_isSaved && _ocrCode != null) ...[
+              const SizedBox(height: 16),
+              _buildSavedBanner(),
+            ],
+            _buildEditableFieldsSection(),
             const SizedBox(height: 16),
-            _buildSavedBanner(),
+            _buildMedicineListSection(),
+            const SizedBox(height: 18),
+            _buildBottomButtons(),
           ],
-          _buildEditableFieldsSection(),
-          const SizedBox(height: 16),
-          _buildMedicineListSection(),
-          const SizedBox(height: 18),
-          _buildBottomButtons(),
-        ],
+        ),
       ),
     );
   }
@@ -1242,18 +1246,16 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFFEE2E2),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDC2626).withValues(alpha: 0.5)),
+        border: Border.all(
+          color: const Color(0xFFDC2626).withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: const [
-              Icon(
-                Icons.report_rounded,
-                color: Color(0xFFDC2626),
-                size: 20,
-              ),
+              Icon(Icons.report_rounded, color: Color(0xFFDC2626), size: 20),
               SizedBox(width: 8),
               Text(
                 'Medicine Not Available',
@@ -2132,9 +2134,50 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   DateTime? _parseHumanDate(String input) {
     final s = input.trim();
     if (s.isEmpty) return null;
-    final iso = DateTime.tryParse(s);
-    if (iso != null) return iso;
-    return null;
+
+    // Year-first, e.g. "2026-8-21" or "2026/08/21" — the isoDateMatch regex
+    // above extracts this shape but with 1-2 digit month/day, which
+    // DateTime.tryParse's strict ISO-8601 parser rejects (it requires
+    // zero-padded MM/DD), so this would otherwise silently fail below.
+    final yearFirst = RegExp(
+      r'^(19\d\d|20\d\d)[-/](\d{1,2})[-/](\d{1,2})$',
+    ).firstMatch(s);
+    if (yearFirst != null) {
+      final year = int.parse(yearFirst.group(1)!);
+      final month = int.parse(yearFirst.group(2)!);
+      final day = int.parse(yearFirst.group(3)!);
+      if (_isValidCalendarDate(year, month, day)) {
+        return DateTime(year, month, day);
+      }
+    }
+
+    // Month-first, e.g. "8/21/26", "8/21/2026", "8-21-2026" — the shape the
+    // shortDateMatch regex above actually extracts from OCR text, matching
+    // the M/D/Y convention already used to display dates elsewhere in the
+    // app (see _formatDateTime in saved_prescriptions_list_screen.dart).
+    final monthFirst = RegExp(
+      r'^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$',
+    ).firstMatch(s);
+    if (monthFirst != null) {
+      final month = int.parse(monthFirst.group(1)!);
+      final day = int.parse(monthFirst.group(2)!);
+      var year = int.parse(monthFirst.group(3)!);
+      if (year < 100) {
+        year += 2000;
+      }
+      if (_isValidCalendarDate(year, month, day)) {
+        return DateTime(year, month, day);
+      }
+    }
+
+    // Fall back to strict ISO-8601 (zero-padded date, and/or a time part).
+    return DateTime.tryParse(s);
+  }
+
+  bool _isValidCalendarDate(int year, int month, int day) {
+    if (month < 1 || month > 12 || day < 1) return false;
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    return day <= daysInMonth;
   }
 
   // ===========================================================================
@@ -2355,9 +2398,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
     _nameController = TextEditingController(
       text: widget.medicine.medicineLabel,
     );
-    _qtyController = TextEditingController(
-      text: '${widget.medicine.quantity}',
-    );
+    _qtyController = TextEditingController(text: '${widget.medicine.quantity}');
   }
 
   @override
@@ -3034,9 +3075,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     controller: _qtyController,
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,

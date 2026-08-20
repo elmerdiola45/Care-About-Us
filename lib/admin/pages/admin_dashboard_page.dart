@@ -433,8 +433,20 @@ class _OverviewTabState extends State<_OverviewTab> {
   DashboardSummary? _summary;
   List<DispensingTrendPoint> _trend = [];
   bool _loading = true;
+  // True while re-fetching a period that's already showing cached data —
+  // drives a small inline indicator instead of blanking the whole tab.
+  bool _refreshing = false;
   String? _error;
   OverviewPeriod _period = OverviewPeriod.today;
+
+  // Last-fetched summary/trend per period, so switching back to an
+  // already-viewed period shows instantly instead of re-blocking on the
+  // network every tap.
+  final Map<
+    OverviewPeriod,
+    ({DashboardSummary summary, List<DispensingTrendPoint> trend})
+  >
+  _cache = {};
 
   @override
   void initState() {
@@ -444,10 +456,19 @@ class _OverviewTabState extends State<_OverviewTab> {
 
   Future<void> _loadData({OverviewPeriod? period}) async {
     final selected = period ?? _period;
+    final cached = _cache[selected];
+
     setState(() {
-      _loading = true;
-      _error = null;
       _period = selected;
+      _error = null;
+      if (cached != null) {
+        _summary = cached.summary;
+        _trend = cached.trend;
+        _loading = false;
+        _refreshing = true;
+      } else {
+        _loading = true;
+      }
     });
     try {
       final periodString = switch (selected) {
@@ -458,30 +479,42 @@ class _OverviewTabState extends State<_OverviewTab> {
       final summary = await widget.api.fetchDashboardSummary(
         period: periodString,
       );
+      final parsedSummary = DashboardSummary.fromJson(summary);
+      // Trend is already in the dashboard summary response under the `data` wrapper.
+      final dataMap = summary['data'] is Map
+          ? Map<String, dynamic>.from(summary['data'] as Map)
+          : summary;
+      final trend = safeList(dataMap['dispensing_trend']);
+      final parsedTrend = trend.map((e) {
+        final m = safeMap(e) ?? {};
+        return DispensingTrendPoint(
+          day: m['day']?.toString() ?? '',
+          count: safeInt(m['count']),
+          value: safeDouble(m['value']),
+        );
+      }).toList();
+
+      _cache[selected] = (summary: parsedSummary, trend: parsedTrend);
+
       if (mounted) {
         setState(() {
-          _summary = DashboardSummary.fromJson(summary);
-          // Trend is already in the dashboard summary response under the `data` wrapper.
-          final dataMap = summary['data'] is Map
-              ? Map<String, dynamic>.from(summary['data'] as Map)
-              : summary;
-          final trend = safeList(dataMap['dispensing_trend']);
-          _trend = trend.map((e) {
-            final m = safeMap(e) ?? {};
-            return DispensingTrendPoint(
-              day: m['day']?.toString() ?? '',
-              count: safeInt(m['count']),
-              value: safeDouble(m['value']),
-            );
-          }).toList();
+          _summary = parsedSummary;
+          _trend = parsedTrend;
           _loading = false;
+          _refreshing = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = e.toString();
+          _refreshing = false;
+          // Keep showing cached data on a background-refresh failure rather
+          // than replacing it with an error screen; only surface the error
+          // when there was nothing cached to fall back to.
+          if (cached == null) {
+            _error = e.toString();
+          }
         });
       }
     }
@@ -557,6 +590,17 @@ class _OverviewTabState extends State<_OverviewTab> {
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
               ),
               const Spacer(),
+              if (_refreshing) ...[
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.teal,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               _PeriodSelector(
                 selected: _period,
                 onChanged: (p) {
@@ -1327,11 +1371,7 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: fg,
-        ),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: fg),
       ),
     );
     if (onTap == null) {
@@ -1970,7 +2010,9 @@ class _DateRangeField extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 13.5,
-                  color: dateRange == null ? AppColors.textFaint : AppColors.textSecondary,
+                  color: dateRange == null
+                      ? AppColors.textFaint
+                      : AppColors.textSecondary,
                   fontWeight: dateRange == null
                       ? FontWeight.w500
                       : FontWeight.w600,
@@ -2022,147 +2064,301 @@ class _DispensingPreviewTable extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(AppColors.tealPale),
-          columns: const [
-            DataColumn(
-              label: Text(
-                'Date Dispensed',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
+    // Below ~700px a 10-column DataTable is unusable even with horizontal
+    // scroll (reading one field at a time via swipe), so it's replaced with
+    // a stacked card per record — the DataTable itself is unchanged for
+    // tablet/desktop widths where it's actually readable.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 700) {
+          return Column(
+            children: rows
+                .map((row) => _DispensingRecordCard(row: row))
+                .toList(),
+          );
+        }
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
             ),
-            DataColumn(
-              label: Text(
-                'RX No.',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Physician',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Patient Name',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Generic Name',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Brand Name',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Lot No.',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Expiry Date',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Qty Served',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Remarks',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-          ],
-          rows: rows.map((row) {
-            final isFully = row.remarks.toLowerCase().contains('fully');
-            final tagColor = isFully ? AppColors.success : AppColors.warning;
-            final tagBg = isFully ? AppColors.successBg : AppColors.warningBg;
-            return DataRow(
-              cells: [
-                DataCell(
-                  Text(
-                    row.dateDispensed,
-                    style: const TextStyle(fontSize: 12.5),
-                  ),
-                ),
-                DataCell(
-                  Text(row.rxNumber, style: const TextStyle(fontSize: 12.5)),
-                ),
-                DataCell(
-                  Text(
-                    row.physicianName,
-                    style: const TextStyle(fontSize: 12.5),
-                  ),
-                ),
-                DataCell(
-                  Text(row.patientName, style: const TextStyle(fontSize: 12.5)),
-                ),
-                DataCell(
-                  Text(row.genericName, style: const TextStyle(fontSize: 12.5)),
-                ),
-                DataCell(
-                  Text(row.brandName, style: const TextStyle(fontSize: 12.5)),
-                ),
-                DataCell(
-                  Text(row.lotNo, style: const TextStyle(fontSize: 12.5)),
-                ),
-                DataCell(
-                  Text(row.expiryDate, style: const TextStyle(fontSize: 12.5)),
-                ),
-                DataCell(
-                  Text(
-                    '${row.quantityServed}',
-                    style: const TextStyle(fontSize: 12.5),
-                  ),
-                ),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(AppColors.tealPale),
+              columns: const [
+                DataColumn(
+                  label: Text(
+                    'Date Dispensed',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
                     ),
-                    decoration: BoxDecoration(
-                      color: tagBg,
-                      borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'RX No.',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
                     ),
-                    child: Text(
-                      row.remarks,
-                      style: TextStyle(
-                        color: tagColor,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Physician',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Patient Name',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Generic Name',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Brand Name',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Lot No.',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Expiry Date',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Qty Served',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Remarks',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
                     ),
                   ),
                 ),
               ],
-            );
-          }).toList(),
-        ),
+              rows: rows.map((row) {
+                final isFully = row.remarks.toLowerCase().contains('fully');
+                final tagColor = isFully
+                    ? AppColors.success
+                    : AppColors.warning;
+                final tagBg = isFully
+                    ? AppColors.successBg
+                    : AppColors.warningBg;
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      Text(
+                        row.dateDispensed,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        row.rxNumber,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        row.physicianName,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        row.patientName,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        row.genericName,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        row.brandName,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(row.lotNo, style: const TextStyle(fontSize: 12.5)),
+                    ),
+                    DataCell(
+                      Text(
+                        row.expiryDate,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        '${row.quantityServed}',
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: tagBg,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          row.remarks,
+                          style: TextStyle(
+                            color: tagColor,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DispensingRecordCard extends StatelessWidget {
+  final DispensingReportRow row;
+  const _DispensingRecordCard({required this.row});
+
+  @override
+  Widget build(BuildContext context) {
+    final isFully = row.remarks.toLowerCase().contains('fully');
+    final tagColor = isFully ? AppColors.success : AppColors.warning;
+    final tagBg = isFully ? AppColors.successBg : AppColors.warningBg;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  row.patientName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: tagBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  row.remarks,
+                  style: TextStyle(
+                    color: tagColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'RX ${row.rxNumber} · ${row.dateDispensed}',
+            style: const TextStyle(color: AppColors.textFaint, fontSize: 12),
+          ),
+          const Divider(height: 16, color: AppColors.border),
+          _cardRow('Physician', row.physicianName),
+          _cardRow('Generic Name', row.genericName),
+          _cardRow('Brand Name', row.brandName),
+          _cardRow('Lot No.', row.lotNo),
+          _cardRow('Expiry Date', row.expiryDate),
+          _cardRow('Qty Served', '${row.quantityServed}'),
+        ],
       ),
     );
   }
+
+  Widget _cardRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: const TextStyle(color: AppColors.textFaint, fontSize: 12),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _SeniorCitizenPreviewTable extends StatelessWidget {
@@ -2188,110 +2384,211 @@ class _SeniorCitizenPreviewTable extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(AppColors.tealPale),
-          columns: const [
-            DataColumn(
-              label: Text(
-                'Date',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 700) {
+          return Column(
+            children: rows
+                .map((row) => _SeniorCitizenRecordCard(row: row))
+                .toList(),
+          );
+        }
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
             ),
-            DataColumn(
-              label: Text(
-                'Senior Citizen Name',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'OSCA ID No.',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Drug Name',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Gross Cost',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                '% Discount',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Net Cost',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'OR No.',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
-            ),
-          ],
-          rows: rows.map((row) {
-            return DataRow(
-              cells: [
-                DataCell(
-                  Text(row.date, style: const TextStyle(fontSize: 12.5)),
-                ),
-                DataCell(
-                  Text(
-                    row.seniorCitizenName,
-                    style: const TextStyle(fontSize: 12.5),
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(AppColors.tealPale),
+              columns: const [
+                DataColumn(
+                  label: Text(
+                    'Date',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ),
-                DataCell(
-                  Text(row.oscaId, style: const TextStyle(fontSize: 12.5)),
-                ),
-                DataCell(
-                  Text(row.drugName, style: const TextStyle(fontSize: 12.5)),
-                ),
-                DataCell(
-                  Text(
-                    '₱${row.grossCost.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 12.5),
+                DataColumn(
+                  label: Text(
+                    'Senior Citizen Name',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ),
-                DataCell(
-                  Text(
-                    '${row.discountPercent.toStringAsFixed(0)}%',
-                    style: const TextStyle(fontSize: 12.5),
+                DataColumn(
+                  label: Text(
+                    'OSCA ID No.',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ),
-                DataCell(
-                  Text(
-                    '₱${row.netCost.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 12.5),
+                DataColumn(
+                  label: Text(
+                    'Drug Name',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ),
-                DataCell(
-                  Text(row.orNumber, style: const TextStyle(fontSize: 12.5)),
+                DataColumn(
+                  label: Text(
+                    'Gross Cost',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    '% Discount',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Net Cost',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'OR No.',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                  ),
                 ),
               ],
-            );
-          }).toList(),
-        ),
+              rows: rows.map((row) {
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      Text(row.date, style: const TextStyle(fontSize: 12.5)),
+                    ),
+                    DataCell(
+                      Text(
+                        row.seniorCitizenName,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(row.oscaId, style: const TextStyle(fontSize: 12.5)),
+                    ),
+                    DataCell(
+                      Text(
+                        row.drugName,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        '₱${row.grossCost.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        '${row.discountPercent.toStringAsFixed(0)}%',
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        '₱${row.netCost.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        row.orNumber,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SeniorCitizenRecordCard extends StatelessWidget {
+  final SeniorCitizenReportRow row;
+  const _SeniorCitizenRecordCard({required this.row});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            row.seniorCitizenName,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${row.date} · OSCA ${row.oscaId}',
+            style: const TextStyle(color: AppColors.textFaint, fontSize: 12),
+          ),
+          const Divider(height: 16, color: AppColors.border),
+          _cardRow('Drug Name', row.drugName),
+          _cardRow('Gross Cost', '₱${row.grossCost.toStringAsFixed(2)}'),
+          _cardRow('% Discount', '${row.discountPercent.toStringAsFixed(0)}%'),
+          _cardRow('Net Cost', '₱${row.netCost.toStringAsFixed(2)}'),
+          _cardRow('OR No.', row.orNumber),
+        ],
       ),
     );
   }
+
+  Widget _cardRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: const TextStyle(color: AppColors.textFaint, fontSize: 12),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
+          ),
+        ),
+      ],
+    ),
+  );
 }

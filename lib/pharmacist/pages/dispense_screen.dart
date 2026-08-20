@@ -9,7 +9,9 @@ import '../../admin/models/admin_models.dart' hide MedicineItem;
 import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
 import '../../common/theme/app_colors.dart';
+import '../../common/theme/responsive_context.dart';
 import '../../common/widgets/tap_target.dart';
+import '../../common/widgets/authenticated_network_image.dart';
 import 'dispensing_summary_screen.dart';
 import 'saved_prescriptions_list_screen.dart';
 
@@ -58,6 +60,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
   // Backend dispensing logs
   final List<DispensingLog> _backendLogs = [];
+  bool _historyLoading = false;
 
   /// How many distinct dispensing visits ("fills") this prescription has
   /// already had, based on server history. A visit can cover several
@@ -235,6 +238,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
             _selectedOcrCode = entry.ocrCode;
             _resetDispensedQuantities();
             _backendLogs.clear();
+            _historyLoading = true;
             _loadBackendHistory(entry);
           }
         }
@@ -257,24 +261,37 @@ class _DispenseScreenState extends State<DispenseScreen> {
       _selectedOcrCode = entry.ocrCode;
       _resetDispensedQuantities();
       _backendLogs.clear();
+      _historyLoading = true;
     });
     _loadBackendHistory(entry);
   }
 
   Future<void> _loadBackendHistory(PrescriptionEntry entry) async {
-    if (entry.backendId == null || entry.backendId!.isEmpty) return;
+    if (entry.backendId == null || entry.backendId!.isEmpty) {
+      if (mounted) {
+        setState(() => _historyLoading = false);
+      }
+      return;
+    }
     try {
       final logs = await _api.fetchDispensingLogs(entry.backendId!);
       if (mounted) {
         setState(() {
           _backendLogs.clear();
           _backendLogs.addAll(logs);
+          _historyLoading = false;
         });
       }
     } on LaravelApiException catch (_) {
       // Ignore backend history fetch errors — local history will still show
+      if (mounted) {
+        setState(() => _historyLoading = false);
+      }
     } catch (_) {
       // Ignore other errors
+      if (mounted) {
+        setState(() => _historyLoading = false);
+      }
     }
   }
 
@@ -1253,15 +1270,13 @@ class _DispenseScreenState extends State<DispenseScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  entry.imageUrl!,
-                  headers: {
-                    'Authorization': 'Bearer ${AppSession.instance.token}',
-                  },
+                child: AuthenticatedNetworkImage(
+                  imageUrl: entry.imageUrl!,
+                  token: AppSession.instance.token,
                   width: 56,
                   height: 56,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const Icon(
+                  errorWidget: const Icon(
                     Icons.image_not_supported_outlined,
                     size: 24,
                     color: Color(0xFFC0C4C8),
@@ -1489,8 +1504,47 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
   // ---------- BACKEND DISPENSING LOGS CARD ----------
   Widget _buildBackendHistoryCard() {
-    if (_backendLogs.isEmpty) {
+    if (_backendLogs.isEmpty && !_historyLoading) {
       return const SizedBox.shrink();
+    }
+
+    if (_backendLogs.isEmpty && _historyLoading) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF0B7B77),
+              ),
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Loading dispensing history…',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0B7B77),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(
@@ -2210,38 +2264,44 @@ class _DispenseScreenState extends State<DispenseScreen> {
         child: Row(
           children: [
             if (selectedEntry != null) ...[
-              OutlinedButton.icon(
-                onPressed: _isDispensing
-                    ? null
-                    : () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => SavedPrescriptionsListScreen(),
-                          ),
-                        );
-                      },
-                icon: const Icon(Icons.save_outlined, size: 18),
-                label: const Text('View List'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF0B7B77),
-                  side: BorderSide(color: Color(0xFF0B7B77)),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                    horizontal: 16,
+              Flexible(
+                child: OutlinedButton.icon(
+                  onPressed: _isDispensing
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SavedPrescriptionsListScreen(),
+                            ),
+                          );
+                        },
+                  icon: const Icon(Icons.save_outlined, size: 18),
+                  label: const Text(
+                    'View List',
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  textStyle: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF0B7B77),
+                    side: BorderSide(color: Color(0xFF0B7B77)),
+                    padding: EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: context.isSmallPhone ? 10 : 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
             ],
             Expanded(
+              flex: 2,
               child: ElevatedButton.icon(
                 onPressed: canDispense ? _onDispense : null,
                 icon: _isDispensing

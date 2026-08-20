@@ -15,6 +15,8 @@ import 'package:pharmacy_management_system/pharmacist/data/saved_prescriptions_s
 import 'package:pharmacy_management_system/pharmacist/models/adherence.dart';
 import 'package:pharmacy_management_system/pharmacist/widgets/adherence_badge.dart';
 import 'package:pharmacy_management_system/common/theme/app_colors.dart';
+import 'package:pharmacy_management_system/common/widgets/responsive_center.dart';
+import 'package:pharmacy_management_system/common/widgets/authenticated_network_image.dart';
 import 'package:pharmacy_management_system/common/services/laravel_api_service.dart';
 import 'package:pharmacy_management_system/common/session.dart';
 import 'package:pharmacy_management_system/pharmacist/pages/dispense_screen.dart';
@@ -232,70 +234,74 @@ class _SavedPrescriptionsListScreenState
             child: _buildFilterChips(),
           ),
           Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
+            child: ResponsiveCenter.dashboard(
+              padding: EdgeInsets.zero,
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: SavedListColors.teal,
+                      ),
+                    )
+                  : _errorMessage != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Failed to load records',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                color: SavedListColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              onPressed: _fetchFromBackend,
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('Retry'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: SavedListColors.teal,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : items.isEmpty
+                  ? _buildEmptyState()
+                  : RefreshIndicator(
+                      onRefresh: _fetchFromBackend,
                       color: SavedListColors.teal,
-                    ),
-                  )
-                : _errorMessage != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Failed to load records',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _errorMessage!,
-                            style: const TextStyle(
-                              color: SavedListColors.textSecondary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: _fetchFromBackend,
-                            icon: const Icon(Icons.refresh, size: 18),
-                            label: const Text('Retry'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: SavedListColors.teal,
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
-                        ],
+                      child: Container(
+                        color: SavedListColors.bg,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                          itemCount: items.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) =>
+                              _buildEntryCard(items[index]),
+                        ),
                       ),
                     ),
-                  )
-                : items.isEmpty
-                ? _buildEmptyState()
-                : RefreshIndicator(
-                    onRefresh: _fetchFromBackend,
-                    color: SavedListColors.teal,
-                    child: Container(
-                      color: SavedListColors.bg,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                        itemCount: items.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) =>
-                            _buildEntryCard(items[index]),
-                      ),
-                    ),
-                  ),
+            ),
           ),
         ],
       ),
@@ -555,9 +561,16 @@ class _SavedPrescriptionsListScreenState
             children: [
               Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: _buildImageThumbnail(entry.imageBytes, 52, entry.imageUrl),
+                  GestureDetector(
+                    onTap: () => _onViewDetails(entry),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: _buildImageThumbnail(
+                        entry.imageBytes,
+                        52,
+                        entry.imageUrl,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1208,16 +1221,20 @@ class _SavedPrescriptionsListScreenState
     );
   }
 
-  Widget _buildImageThumbnail(Uint8List bytes, double size, [String? imageUrl]) {
+  Widget _buildImageThumbnail(
+    Uint8List bytes,
+    double size, [
+    String? imageUrl,
+  ]) {
     if (bytes.isEmpty) {
       if (imageUrl != null && imageUrl.isNotEmpty) {
-        return Image.network(
-          imageUrl,
-          headers: {'Authorization': 'Bearer ${AppSession.instance.token}'},
+        return AuthenticatedNetworkImage(
+          imageUrl: imageUrl,
+          token: AppSession.instance.token,
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Icon(
+          errorWidget: Icon(
             Icons.image_not_supported_outlined,
             size: size,
             color: Colors.grey.shade400,

@@ -884,33 +884,97 @@ class LaravelApiService {
     String? pharmacistId,
     String? dispenserId,
     String? pharmacyId,
+    Uint8List? imageBytes,
   }) async {
-    final response = await http
-        .post(
-          _buildUri(['prescriptions']),
-          headers: {..._headers, 'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'ocr_code': ocrCode,
-            'patient_name': patientName,
-            'patient_age': patientAge,
-            'patient_gender': patientGender,
-            'doctor_name': doctorName,
-            'is_senior': isSenior,
-            'osca_id': oscaId,
-            'license_no': licenseNo,
-            'pt_no': ptNo,
-            's2': s2,
-            'patient_address': patientAddress,
-            'date_time': dateTime.toIso8601String(),
-            'medicines': medicines,
-            'total_price': totalPrice,
-            'raw_extracted_text': rawExtractedText,
-            'pharmacist_id': pharmacistId,
-            'dispenser_id': dispenserId,
-            'pharmacy_id': pharmacyId,
-          }),
-        )
-        .timeout(_timeout);
+    // .toUtc() — see prescription_api_service.dart's save() for why a bare
+    // local-time ISO string would round-trip to the wrong displayed time.
+    final dateTimeUtc = dateTime.toUtc().toIso8601String();
+
+    final http.Response response;
+    if (imageBytes != null && imageBytes.isNotEmpty) {
+      // Same multipart shape as PrescriptionApiService.save() — required
+      // because Laravel's `image` validation rule needs the scanned photo
+      // in the same request as an uploaded file, not a JSON body. Used
+      // whenever this entry has image bytes to send (e.g. a prescription
+      // synced to the backend later, such as via "Generate QR", rather than
+      // through the main OCR-save happy path that already goes through
+      // PrescriptionApiService.save()).
+      final request = http.MultipartRequest('POST', _buildUri(['prescriptions']))
+        ..headers.addAll(_headers)
+        ..fields['ocr_code'] = ocrCode
+        ..fields['patient_name'] = patientName
+        ..fields['patient_age'] = '$patientAge'
+        ..fields['patient_gender'] = patientGender
+        ..fields['doctor_name'] = doctorName
+        ..fields['is_senior'] = isSenior ? '1' : '0'
+        ..fields['license_no'] = licenseNo
+        ..fields['pt_no'] = ptNo
+        ..fields['s2'] = s2
+        ..fields['date_time'] = dateTimeUtc
+        ..fields['total_price'] = '$totalPrice';
+      if (oscaId != null && oscaId.isNotEmpty) {
+        request.fields['osca_id'] = oscaId;
+      }
+      if (patientAddress != null && patientAddress.isNotEmpty) {
+        request.fields['patient_address'] = patientAddress;
+      }
+      if (rawExtractedText != null && rawExtractedText.isNotEmpty) {
+        request.fields['raw_extracted_text'] = rawExtractedText;
+      }
+      if (pharmacistId != null && pharmacistId.isNotEmpty) {
+        request.fields['pharmacist_id'] = pharmacistId;
+      }
+      if (dispenserId != null && dispenserId.isNotEmpty) {
+        request.fields['dispenser_id'] = dispenserId;
+      }
+      if (pharmacyId != null && pharmacyId.isNotEmpty) {
+        request.fields['pharmacy_id'] = pharmacyId;
+      }
+      for (var i = 0; i < medicines.length; i++) {
+        medicines[i].forEach((key, value) {
+          if (value != null) {
+            request.fields['medicines[$i][$key]'] = '$value';
+          }
+        });
+      }
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'image',
+          imageBytes,
+          filename: 'rx_$ocrCode.jpg',
+        ),
+      );
+
+      final streamed = await request.send().timeout(_timeout);
+      response = await http.Response.fromStream(streamed);
+    } else {
+      response = await http
+          .post(
+            _buildUri(['prescriptions']),
+            headers: {..._headers, 'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'ocr_code': ocrCode,
+              'patient_name': patientName,
+              'patient_age': patientAge,
+              'patient_gender': patientGender,
+              'doctor_name': doctorName,
+              'is_senior': isSenior,
+              'osca_id': oscaId,
+              'license_no': licenseNo,
+              'pt_no': ptNo,
+              's2': s2,
+              'patient_address': patientAddress,
+              'date_time': dateTimeUtc,
+              'medicines': medicines,
+              'total_price': totalPrice,
+              'raw_extracted_text': rawExtractedText,
+              'pharmacist_id': pharmacistId,
+              'dispenser_id': dispenserId,
+              'pharmacy_id': pharmacyId,
+            }),
+          )
+          .timeout(_timeout);
+    }
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       return LaravelPrescription.fromJson(_decodeJsonMap(response));
@@ -1017,7 +1081,10 @@ class LaravelApiService {
             'pt_no': ptNo,
             's2': s2,
             'patient_address': patientAddress,
-            'date_time': dateTime.toIso8601String(),
+            // .toUtc() — see prescription_api_service.dart's save() for why
+            // a bare local-time ISO string would round-trip to the wrong
+            // displayed time.
+            'date_time': dateTime.toUtc().toIso8601String(),
             'medicines': medicines,
             'total_price': totalPrice,
             'raw_extracted_text': rawExtractedText,

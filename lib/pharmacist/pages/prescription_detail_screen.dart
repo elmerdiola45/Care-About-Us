@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
+import '../../common/widgets/responsive_center.dart';
+import '../../common/widgets/authenticated_network_image.dart';
 import '../models/prescription.dart';
 import '../data/saved_prescriptions_store.dart';
 import 'dispense_screen.dart';
@@ -200,6 +202,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
           pharmacistId: session.userType == 'admin' ? session.userId : null,
           dispenserId: session.userType == 'dispenser' ? session.userId : null,
           pharmacyId: session.pharmacyId,
+          imageBytes: widget.entry.imageBytes,
         );
       } else {
         await api.updatePrescription(liveBackendId, {
@@ -307,30 +310,33 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          _buildPrescriptionHeader(context),
-          const SizedBox(height: 16),
-          _buildPatientInfoCard(),
-          const SizedBox(height: 12),
-          _buildDoctorInfoCard(),
-          const SizedBox(height: 12),
-          _buildMedicinesCard(),
-          const SizedBox(height: 12),
-          _buildDispensingActionCard(),
-          const SizedBox(height: 12),
-          _buildTotalCard(),
-          const SizedBox(height: 16),
-          if (widget.entry.qrData != null) ...[
-            _buildQrSection(context),
+      body: ResponsiveCenter.dashboard(
+        padding: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            _buildPrescriptionHeader(context),
             const SizedBox(height: 16),
-          ],
-          if (widget.entry.rawExtractedText.isNotEmpty) ...[
-            _buildRawTextCard(),
+            _buildPatientInfoCard(),
+            const SizedBox(height: 12),
+            _buildDoctorInfoCard(),
+            const SizedBox(height: 12),
+            _buildMedicinesCard(),
+            const SizedBox(height: 12),
+            _buildDispensingActionCard(),
+            const SizedBox(height: 12),
+            _buildTotalCard(),
             const SizedBox(height: 16),
+            if (widget.entry.qrData != null) ...[
+              _buildQrSection(context),
+              const SizedBox(height: 16),
+            ],
+            if (widget.entry.rawExtractedText.isNotEmpty) ...[
+              _buildRawTextCard(),
+              const SizedBox(height: 16),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -347,7 +353,11 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: _buildImageThumbnail(widget.entry.imageBytes, 64, widget.entry.imageUrl),
+            child: _buildImageThumbnail(
+              widget.entry.imageBytes,
+              64,
+              widget.entry.imageUrl,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -616,7 +626,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '×${m.quantity}',
+                        '/${m.quantity}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
@@ -980,16 +990,20 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
     return '${d.month}/${d.day}/${d.year} · $hour:$minute $ampm';
   }
 
-  Widget _buildImageThumbnail(Uint8List bytes, double size, [String? imageUrl]) {
+  Widget _buildImageThumbnail(
+    Uint8List bytes,
+    double size, [
+    String? imageUrl,
+  ]) {
     if (bytes.isEmpty) {
       if (imageUrl != null && imageUrl.isNotEmpty) {
-        return Image.network(
-          imageUrl,
-          headers: {'Authorization': 'Bearer ${AppSession.instance.token}'},
+        return AuthenticatedNetworkImage(
+          imageUrl: imageUrl,
+          token: AppSession.instance.token,
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Icon(
+          errorWidget: Icon(
             Icons.image_not_supported_outlined,
             size: size,
             color: Colors.grey.shade400,

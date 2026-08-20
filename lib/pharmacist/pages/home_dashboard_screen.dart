@@ -7,6 +7,9 @@ import '../../common/services/dashboard_repository.dart';
 import '../../common/session.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/widgets/bottom_nav_bar.dart';
+import '../../common/widgets/responsive_center.dart';
+import '../data/saved_prescriptions_store.dart';
+import '../models/prescription.dart';
 import 'functional_qr_scanner_screen.dart';
 import 'ocr_scan_screen.dart';
 import 'saved_prescriptions_list_screen.dart';
@@ -99,8 +102,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         ),
       );
       final staffFuture = _safeCall(() => _repo.fetchStaffProfile());
+      // Also used by the "Recent Prescriptions" section below — reuses the
+      // same store/fetch already used by dispense_screen.dart and
+      // saved_prescriptions_list_screen.dart rather than a new endpoint.
+      final recentFuture = _safeCall<void>(
+        () => SavedPrescriptionsStore.instance.fetchFromBackend(),
+      );
 
-      final results = await Future.wait([summaryFuture, staffFuture]);
+      final results = await Future.wait([
+        summaryFuture,
+        staffFuture,
+        recentFuture,
+      ]);
 
       if (!mounted) return;
 
@@ -224,26 +237,31 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     return RefreshIndicator(
       onRefresh: _onRefresh,
       color: AppColors.teal,
-      child: _isLoading && !_isRefreshing
-          ? _buildLoadingShimmer()
-          : _errorMessage != null && _summary == null
-          ? _buildErrorState()
-          : ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 10),
-                _buildPeriodToggle(),
-                const SizedBox(height: 14),
-                _buildStatRow(),
-                const SizedBox(height: 16),
-                _buildSectionLabel('PRESCRIPTION SCANNING'),
-                const SizedBox(height: 8),
-                _buildScanCardsRow(),
-                const SizedBox(height: 18),
-              ],
-            ),
+      child: ResponsiveCenter.dashboard(
+        padding: EdgeInsets.zero,
+        child: _isLoading && !_isRefreshing
+            ? _buildLoadingShimmer()
+            : _errorMessage != null && _summary == null
+            ? _buildErrorState()
+            : ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 10),
+                  _buildPeriodToggle(),
+                  const SizedBox(height: 14),
+                  _buildStatRow(),
+                  const SizedBox(height: 16),
+                  _buildSectionLabel('PRESCRIPTION SCANNING'),
+                  const SizedBox(height: 8),
+                  _buildScanCardsRow(),
+                  const SizedBox(height: 20),
+                  _buildRecentPrescriptions(),
+                  const SizedBox(height: 18),
+                ],
+              ),
+      ),
     );
   }
 
@@ -469,9 +487,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             if (value == 'logout') _logout();
             if (value == 'change_password') {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ChangePasswordScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
               );
             }
           },
@@ -777,6 +793,114 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRecentPrescriptions() {
+    final recent = SavedPrescriptionsStore.instance.items.take(3).toList();
+    if (recent.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _buildSectionLabel('RECENT PRESCRIPTIONS'),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const SavedPrescriptionsListScreen(),
+                ),
+              ),
+              child: const Text(
+                'View All',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.teal,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        for (final entry in recent) ...[
+          _recentPrescriptionRow(entry),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+
+  Widget _recentPrescriptionRow(PrescriptionEntry entry) {
+    final p = entry.prescription;
+    final medCount = p.medicines.length;
+    final dt = p.dateTime.toLocal();
+    final dateLabel = '${dt.month}/${dt.day}/${dt.year}';
+
+    final (statusColor, statusLabel) = switch (p.dispensingStatus) {
+      DispensingStatus.fullyDispensed => (AppColors.teal, 'Dispensed'),
+      DispensingStatus.partiallyDispensed => (Colors.orange, 'Partial'),
+      DispensingStatus.overDispensing => (AppColors.danger, 'Over-dispensed'),
+      DispensingStatus.pending => (AppColors.textFaint, 'Pending'),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p.patientName.isEmpty ? 'Unknown patient' : p.patientName,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$medCount medicine(s) · $dateLabel',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            statusLabel,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: statusColor,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -221,6 +221,7 @@ class SavedPrescriptionsStore {
       pharmacistId: session.userType == 'admin' ? session.userId : null,
       dispenserId: session.userType == 'dispenser' ? session.userId : null,
       pharmacyId: session.pharmacyId,
+      imageBytes: entry.imageBytes,
     );
 
     final idx = _items.indexWhere((p) => p.ocrCode == entry.ocrCode);
