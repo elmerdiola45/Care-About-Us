@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../../common/services/app_config.dart';
+
 /// Talks to OUR OWN Laravel backend's `/api/ocr/ocrspace-scan` endpoint —
 /// this client NEVER calls OCR.space directly and NEVER holds an OCR.space
 /// API key.
@@ -35,12 +37,10 @@ class OcrResult {
 }
 
 class OcrService {
-  // Same backend host as GroqOcrService/MedicineDictionaryService/
-  // CorrectionMemoryService — keep these in sync if you ever change the
-  // backend's address (e.g. when moving off `php artisan serve` on
-  // localhost to a real host).
-  static const String _baseUrl = 'http://127.0.0.1:8000';
-  static const String _endpoint = '$_baseUrl/api/ocr/ocrspace-scan';
+  // Backend address comes from AppConfig.baseUrl (overridable at build
+  // time via --dart-define=API_BASE_URL — see app_config.dart), the same
+  // source GroqOcrService/MedicineDictionaryService/CorrectionMemoryService use.
+  static String get _endpoint => '${AppConfig.baseUrl}/ocr/ocrspace-scan';
 
   /// Sends the image bytes to our backend, which forwards them to
   /// OCR.space using the server-side key and returns just the

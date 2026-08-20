@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../../common/services/app_config.dart';
 import '../../common/session.dart';
 
 /// Where the medicine name comes from when the parser corrects an OCR
@@ -55,8 +56,6 @@ class MedicineVariant {
 /// treats "no dictionary match" as "keep the raw OCR text", not as an
 /// error, so this degrades safely rather than crashing.
 class MedicineDictionaryService {
-  static const String _baseUrl = 'http://127.0.0.1:8000';
-
   static List<String>? _cache;
   static Map<String, List<MedicineVariant>>? _variantCache;
 
@@ -97,7 +96,7 @@ class MedicineDictionaryService {
       final token = AppSession.instance.token;
       final response = await http
           .get(
-            Uri.parse('$_baseUrl/api/pharmacies/$pharmacyId/medicines'),
+            Uri.parse('${AppConfig.baseUrl}/pharmacies/$pharmacyId/medicines'),
             headers: {
               'Accept': 'application/json',
               if (token != null && token.isNotEmpty)

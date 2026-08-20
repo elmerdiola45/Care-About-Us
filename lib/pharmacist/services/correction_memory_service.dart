@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../../common/services/app_config.dart';
 import '../../common/session.dart';
 
 /// Institutional memory of pharmacist corrections to OCR-misread
@@ -22,8 +23,6 @@ import '../../common/session.dart';
 /// top of the existing dictionary fuzzy-match, not a path to
 /// general-purpose accuracy gains on entirely new misreads.
 class CorrectionMemoryService {
-  static const String _baseUrl = 'http://127.0.0.1:8000';
-
   static Map<String, String>? _cache; // lowercased ocr text -> corrected name
   static DateTime? _cachedAt;
   static const _cacheTtl = Duration(minutes: 30);
@@ -58,7 +57,7 @@ class CorrectionMemoryService {
       final token = AppSession.instance.token;
       final response = await http
           .get(
-            Uri.parse('$_baseUrl/api/pharmacies/$pharmacyId/corrections'),
+            Uri.parse('${AppConfig.baseUrl}/pharmacies/$pharmacyId/corrections'),
             headers: {
               'Accept': 'application/json',
               if (token != null && token.isNotEmpty)
@@ -118,7 +117,7 @@ class CorrectionMemoryService {
       final token = AppSession.instance.token;
       await http
           .post(
-            Uri.parse('$_baseUrl/api/pharmacies/$pharmacyId/corrections'),
+            Uri.parse('${AppConfig.baseUrl}/pharmacies/$pharmacyId/corrections'),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../../common/services/app_config.dart';
 import '../../common/session.dart';
 import '../models/prescription.dart';
 
@@ -62,14 +63,12 @@ class PossibleDuplicateException implements Exception {
 /// parses into a proper array server-side the same way it would from a
 /// JSON body — no backend change needed for that part.
 class PrescriptionApiService {
-  static const String _baseUrl = 'http://127.0.0.1:8000';
-
   static Future<PrescriptionSaveResult> save(
     Prescription prescription,
     String ocrCode, {
     bool confirmNew = false,
   }) async {
-    final uri = Uri.parse('$_baseUrl/api/prescriptions');
+    final uri = Uri.parse('${AppConfig.baseUrl}/prescriptions');
     final request = http.MultipartRequest('POST', uri);
 
     request.headers['Accept'] = 'application/json';

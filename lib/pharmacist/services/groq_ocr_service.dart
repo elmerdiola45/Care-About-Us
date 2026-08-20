@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
+import '../../common/services/app_config.dart';
 import '../../common/session.dart';
 
 /// Talks to OUR OWN Laravel backend's `/api/ocr/groq-scan` endpoint —
@@ -56,11 +57,10 @@ class GroqOcrResult {
 }
 
 class GroqOcrService {
-  // Same backend host as MedicineDictionaryService/CorrectionMemoryService
-  // — keep these in sync if you ever change the backend's address (e.g.
-  // when moving off `php artisan serve` on localhost to a real host).
-  static const String _baseUrl = 'http://127.0.0.1:8000';
-  static const String _endpoint = '$_baseUrl/api/ocr/groq-scan';
+  // Backend address comes from AppConfig.baseUrl (overridable at build
+  // time via --dart-define=API_BASE_URL — see app_config.dart), the same
+  // source MedicineDictionaryService/CorrectionMemoryService/OcrService use.
+  static String get _endpoint => '${AppConfig.baseUrl}/ocr/groq-scan';
 
   /// Sends the (already-preprocessed) image bytes to our backend, which
   /// forwards a resized/recompressed copy to Groq and returns just the
