@@ -146,33 +146,42 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                _FilterPill(
-                  label: 'All',
-                  selected: _filter == _Filter.all,
-                  onTap: () {
-                    setState(() => _filter = _Filter.all);
-                    _load();
-                  },
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _FilterPill(
+                          label: 'All',
+                          selected: _filter == _Filter.all,
+                          onTap: () {
+                            setState(() => _filter = _Filter.all);
+                            _load();
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterPill(
+                          label: 'QR Scans',
+                          selected: _filter == _Filter.qr,
+                          onTap: () {
+                            setState(() => _filter = _Filter.qr);
+                            _load();
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterPill(
+                          label: 'OCR Scans',
+                          selected: _filter == _Filter.ocr,
+                          onTap: () {
+                            setState(() => _filter = _Filter.ocr);
+                            _load();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
-                _FilterPill(
-                  label: 'QR Scans',
-                  selected: _filter == _Filter.qr,
-                  onTap: () {
-                    setState(() => _filter = _Filter.qr);
-                    _load();
-                  },
-                ),
-                const SizedBox(width: 8),
-                _FilterPill(
-                  label: 'OCR Scans',
-                  selected: _filter == _Filter.ocr,
-                  onTap: () {
-                    setState(() => _filter = _Filter.ocr);
-                    _load();
-                  },
-                ),
-                const Spacer(),
                 _DateDropdown(
                   label: _dateFilterLabel(),
                   onTap: _showDateFilter,
@@ -185,18 +194,24 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                if (_records != null) ...[
-                  _LegendDot(
-                    color: AppColors.teal,
-                    label: '${_records!.qrCount} QR scans',
+                if (_records != null)
+                  Flexible(
+                    child: Wrap(
+                      spacing: 14,
+                      runSpacing: 4,
+                      children: [
+                        _LegendDot(
+                          color: AppColors.teal,
+                          label: '${_records!.qrCount} QR scans',
+                        ),
+                        _LegendDot(
+                          color: AppColors.warning,
+                          label: '${_records!.ocrCount} OCR saves',
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 14),
-                  _LegendDot(
-                    color: AppColors.warning,
-                    label: '${_records!.ocrCount} OCR saves',
-                  ),
-                ],
-                const Spacer(),
+                const SizedBox(width: 8),
                 if (_records != null)
                   _FlaggedToggle(
                     flaggedOnly: _flaggedOnly,

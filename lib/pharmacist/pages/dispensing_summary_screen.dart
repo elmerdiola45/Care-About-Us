@@ -1,5 +1,6 @@
 //dispensing_summary_screen.dart
 import 'package:flutter/material.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../models/prescription.dart' show DispensingStatus;
 
 class SummaryColors {
@@ -119,15 +120,18 @@ class DispensingSummaryScreen extends StatelessWidget {
           children: [
             _header(),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-                children: [
-                  _transactionCard(),
-                  const SizedBox(height: 16),
-                  _medicinesCard(),
-                  const SizedBox(height: 16),
-                  _inventoryCard(),
-                ],
+              child: ResponsiveCenter.dashboard(
+                padding: EdgeInsets.zero,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                  children: [
+                    _transactionCard(),
+                    const SizedBox(height: 16),
+                    _medicinesCard(),
+                    const SizedBox(height: 16),
+                    _inventoryCard(),
+                  ],
+                ),
               ),
             ),
             Padding(
@@ -553,31 +557,36 @@ class DispensingSummaryScreen extends StatelessWidget {
     String label,
     String value, {
     Color valueColor = SummaryColors.text,
-  }) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 108,
-          child: Text(
-            label,
-            style: const TextStyle(color: SummaryColors.muted, fontSize: 12.5),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              color: valueColor,
-              fontWeight: FontWeight.w700,
-              fontSize: 13.2,
-              height: 1.35,
+  }) => LayoutBuilder(
+    builder: (context, constraints) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: constraints.maxWidth < 280 ? 90 : 108,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: SummaryColors.muted,
+                fontSize: 12.5,
+              ),
             ),
           ),
-        ),
-      ],
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: valueColor,
+                fontWeight: FontWeight.w700,
+                fontSize: 13.2,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 

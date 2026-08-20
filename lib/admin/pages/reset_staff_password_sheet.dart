@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../admin/models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
+import '../../../common/widgets/responsive_center.dart';
 import 'add_staff_sheet.dart' show LabeledField, ErrorBanner, StrengthIndicator;
 
 /// Admin-only bottom sheet for setting a new password on another staff
@@ -165,146 +166,156 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
           top: false,
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.border,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                  const Text(
-                    'Reset Password',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${widget.staff.name} · ${widget.staff.email}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textFaint,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_generalError != null) ...[
-                    ErrorBanner(message: _generalError!),
-                    const SizedBox(height: 12),
-                  ],
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: LabeledField(
-                          label: 'New Password',
-                          controller: _passwordController,
-                          validator: _requiredValidator,
-                          serverError: _fieldErrors['password'],
-                          obscureText: _obscurePassword,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              size: 18,
-                              color: AppColors.textFaint,
-                            ),
-                            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
-                            onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            ),
-                          ),
+            child: ResponsiveCenter.form(
+              padding: EdgeInsets.zero,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.border,
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
+                    ),
+                    const Text(
+                      'Reset Password',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${widget.staff.name} · ${widget.staff.email}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textFaint,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_generalError != null) ...[
+                      ErrorBanner(message: _generalError!),
+                      const SizedBox(height: 12),
                     ],
-                  ),
-                  StrengthIndicator(password: _passwordController.text),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: _submitting ? null : _regenerate,
-                      icon: const Icon(Icons.refresh, size: 16),
-                      label: const Text('Generate New'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.teal700,
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(0, 0),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'The staff member will need this password to log in. '
-                    'Share it with them directly — it will not be shown '
-                    'again after this screen closes.',
-                    style: TextStyle(fontSize: 11.5, color: AppColors.textFaint),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _submitting
-                              ? null
-                              : () => Navigator.of(context).pop(false),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textFaint,
-                            side: const BorderSide(color: AppColors.border),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: LabeledField(
+                            label: 'New Password',
+                            controller: _passwordController,
+                            validator: _requiredValidator,
+                            serverError: _fieldErrors['password'],
+                            obscureText: _obscurePassword,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 18,
+                                color: AppColors.textFaint,
+                              ),
+                              tooltip: _obscurePassword
+                                  ? 'Show password'
+                                  : 'Hide password',
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
                             ),
-                          ),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),
+                      ],
+                    ),
+                    StrengthIndicator(password: _passwordController.text),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: _submitting ? null : _regenerate,
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Generate New'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.teal700,
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 0),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _submitting ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.teal700,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'The staff member will need this password to log in. '
+                      'Share it with them directly — it will not be shown '
+                      'again after this screen closes.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textFaint,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _submitting
+                                ? null
+                                : () => Navigator.of(context).pop(false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.textFaint,
+                              side: const BorderSide(color: AppColors.border),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                           ),
-                          child: _submitting
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _submitting ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.teal700,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _submitting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Reset Password',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                )
-                              : const Text(
-                                  'Reset Password',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

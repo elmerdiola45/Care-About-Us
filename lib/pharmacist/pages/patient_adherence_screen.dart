@@ -3,6 +3,7 @@ import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/services/app_config.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../models/adherence.dart';
 import 'patient_adherence_detail_screen.dart';
 
@@ -255,57 +256,60 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
           _buildFilterChips(),
           const SizedBox(height: 8),
           Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(color: AppColors.teal),
-                        SizedBox(height: 16),
-                        Text(
-                          'Loading prescriptions...',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  )
-                : _errorMessage != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
+            child: ResponsiveCenter.dashboard(
+              padding: EdgeInsets.zero,
+              child: _isLoading
+                  ? const Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 44,
-                            color: AppColors.danger,
-                          ),
-                          const SizedBox(height: 10),
+                          CircularProgressIndicator(color: AppColors.teal),
+                          SizedBox(height: 16),
                           Text(
-                            _errorMessage!,
-                            style: const TextStyle(color: AppColors.danger),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton.icon(
-                            onPressed: _loadRecords,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
+                            'Loading prescriptions...',
+                            style: TextStyle(color: AppColors.textSecondary),
                           ),
                         ],
                       ),
+                    )
+                  : _errorMessage != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 44,
+                              color: AppColors.danger,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: AppColors.danger),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 10),
+                            ElevatedButton.icon(
+                              onPressed: _loadRecords,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : _filtered.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                      itemCount: _filtered.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) =>
+                          _buildPrescriptionCard(_filtered[index]),
                     ),
-                  )
-                : _filtered.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                    itemCount: _filtered.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) =>
-                        _buildPrescriptionCard(_filtered[index]),
-                  ),
+            ),
           ),
         ],
       ),

@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'ocr_review_screen.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../services/prescription_ocr_service.dart';
 import '../services/image_preprocessor_service.dart';
 import '../services/prescription_api_service.dart' show PrescriptionSaveResult;
@@ -306,35 +307,38 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 22),
-              _buildCameraCard(),
-              const SizedBox(height: 70),
-              _buildBookIcon(),
-              const SizedBox(height: 26),
-              _buildTitle(),
-              const SizedBox(height: 22),
-              _buildDescription(),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 34),
-                  child: Text(
-                    _errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: _isQuotaExceeded
-                          ? const Color(0xFF9A6B0A)
-                          : Colors.red,
-                      fontSize: 13,
+          child: ResponsiveCenter.form(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 22),
+                _buildCameraCard(),
+                const SizedBox(height: 70),
+                _buildBookIcon(),
+                const SizedBox(height: 26),
+                _buildTitle(),
+                const SizedBox(height: 22),
+                _buildDescription(),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 34),
+                    child: Text(
+                      _errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _isQuotaExceeded
+                            ? const Color(0xFF9A6B0A)
+                            : Colors.red,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
-                ),
+                ],
+                const SizedBox(height: 60),
               ],
-              const SizedBox(height: 60),
-            ],
+            ),
           ),
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../admin/models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
+import '../../../common/widgets/responsive_center.dart';
 
 class RequestsScreen extends StatefulWidget {
   const RequestsScreen({super.key});
@@ -91,10 +92,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
       setState(() => _processingIds.remove(requestId));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.danger,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.danger),
         );
       }
     } catch (_) {
@@ -136,10 +134,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
       setState(() => _processingIds.remove(requestId));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.danger,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.danger),
         );
       }
     } catch (_) {
@@ -265,7 +260,11 @@ class _RequestsScreenState extends State<RequestsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: AppColors.danger,
+              ),
               const SizedBox(height: 16),
               const Text(
                 "Couldn't reach the backend",
@@ -345,18 +344,21 @@ class _RequestsScreenState extends State<RequestsScreen> {
     return RefreshIndicator(
       onRefresh: _load,
       color: AppColors.teal,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        children: [
-          ..._filteredRequests.map(
-            (r) => _RequestCard(
-              request: r,
-              onApprove: () => _approve(r),
-              onReject: () => _reject(r),
-              isProcessing: _processingIds.contains(r.requestId),
+      child: ResponsiveCenter.dashboard(
+        padding: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          children: [
+            ..._filteredRequests.map(
+              (r) => _RequestCard(
+                request: r,
+                onApprove: () => _approve(r),
+                onReject: () => _reject(r),
+                isProcessing: _processingIds.contains(r.requestId),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

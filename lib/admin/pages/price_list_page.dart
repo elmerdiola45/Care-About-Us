@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../common/theme/app_colors.dart';
+import '../../common/theme/responsive_context.dart';
 import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
 
@@ -801,31 +802,52 @@ class _PriceListPageState extends State<PriceListPage> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                OutlinedButton.icon(
-                  onPressed: _pickAndPreviewUpload,
-                  icon: const Icon(
-                    Icons.upload_file,
-                    size: 18,
-                    color: AppColors.teal,
-                  ),
-                  label: const Text(
-                    'Upload',
-                    style: TextStyle(
-                      color: AppColors.teal,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.teal),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
+                // Below AppBreakpoints.phone, "Upload" label + icon next to
+                // the search field + history icon no longer reliably fits —
+                // collapse to icon-only rather than let it overflow.
+                context.isSmallPhone
+                    ? IconButton(
+                        onPressed: _pickAndPreviewUpload,
+                        tooltip: 'Upload',
+                        icon: const Icon(
+                          Icons.upload_file,
+                          color: AppColors.teal,
+                          size: 18,
+                        ),
+                        constraints: const BoxConstraints(),
+                        style: IconButton.styleFrom(
+                          side: const BorderSide(color: AppColors.teal),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.all(14),
+                        ),
+                      )
+                    : OutlinedButton.icon(
+                        onPressed: _pickAndPreviewUpload,
+                        icon: const Icon(
+                          Icons.upload_file,
+                          size: 18,
+                          color: AppColors.teal,
+                        ),
+                        label: const Text(
+                          'Upload',
+                          style: TextStyle(
+                            color: AppColors.teal,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.teal),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: _showRecentlyRemoved,

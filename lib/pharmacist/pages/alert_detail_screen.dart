@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
+import '../../common/theme/responsive_context.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../models/dispense_alert.dart';
 
 class AlertDetailScreen extends StatefulWidget {
@@ -128,103 +130,108 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
     final isHigh = alert.priority == AlertPriority.high;
     final titleColor = isHigh ? AppColors.danger : AppColors.warning;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isHigh
-                  ? AppColors.danger.withValues(alpha: 0.25)
-                  : AppColors.border,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+    return ResponsiveCenter.dashboard(
+      padding: EdgeInsets.zero,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isHigh
+                    ? AppColors.danger.withValues(alpha: 0.25)
+                    : AppColors.border,
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      alert.title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isHigh ? AppColors.dangerBg : AppColors.warningBg,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      isHigh ? 'High' : 'Normal',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                alert.description,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  color: AppColors.textSecondary,
-                  height: 1.5,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-              if (alert.note.isNotEmpty) ...[
-                const SizedBox(height: 8),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        alert.title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: titleColor,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isHigh
+                            ? AppColors.dangerBg
+                            : AppColors.warningBg,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        isHigh ? 'High' : 'Normal',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: titleColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Text(
-                  alert.note,
+                  alert.description,
                   style: const TextStyle(
                     fontSize: 13.5,
-                    color: AppColors.textPrimary,
+                    color: AppColors.textSecondary,
                     height: 1.5,
                   ),
                 ),
+                if (alert.note.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    alert.note,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      color: AppColors.textPrimary,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+                const Divider(height: 28),
+                _detailRow('RX Number', alert.rxNumber ?? 'N/A'),
+                _detailRow('Patient ID', alert.patientId ?? 'N/A'),
+                _detailRow('Prescription ID', alert.prescriptionId ?? 'N/A'),
+                _detailRow('Attempted By', alert.attemptedBy ?? 'N/A'),
+                _detailRow(
+                  'Attempting Pharmacy',
+                  alert.attemptingPharmacyId ?? 'N/A',
+                ),
+                _detailRow(
+                  'Original Pharmacy',
+                  alert.originalPharmacyId ?? 'N/A',
+                ),
+                _detailRow('Reported', _fmtDate(alert.createdAt)),
+                _detailRow('Resolved', alert.resolved ? 'Yes' : 'No'),
+                if (alert.resolved && alert.resolvedAt != null)
+                  _detailRow('Resolved At', _fmtDate(alert.resolvedAt!)),
               ],
-              const Divider(height: 28),
-              _detailRow('RX Number', alert.rxNumber ?? 'N/A'),
-              _detailRow('Patient ID', alert.patientId ?? 'N/A'),
-              _detailRow('Prescription ID', alert.prescriptionId ?? 'N/A'),
-              _detailRow('Attempted By', alert.attemptedBy ?? 'N/A'),
-              _detailRow(
-                'Attempting Pharmacy',
-                alert.attemptingPharmacyId ?? 'N/A',
-              ),
-              _detailRow(
-                'Original Pharmacy',
-                alert.originalPharmacyId ?? 'N/A',
-              ),
-              _detailRow('Reported', _fmtDate(alert.createdAt)),
-              _detailRow('Resolved', alert.resolved ? 'Yes' : 'No'),
-              if (alert.resolved && alert.resolvedAt != null)
-                _detailRow('Resolved At', _fmtDate(alert.resolvedAt!)),
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -235,7 +242,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 140,
+            width: context.isSmallPhone ? 110 : 140,
             child: Text(
               label,
               style: const TextStyle(

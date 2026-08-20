@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../admin/models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
+import '../../../common/widgets/responsive_center.dart';
 
 class OverDispensingScreen extends StatefulWidget {
   final String prescriptionId;
@@ -62,7 +63,10 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
           children: [
             _RedHeader(),
             Expanded(
-              child: _buildBody(),
+              child: ResponsiveCenter.dashboard(
+                padding: EdgeInsets.zero,
+                child: _buildBody(),
+              ),
             ),
           ],
         ),
@@ -84,7 +88,11 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: AppColors.danger,
+              ),
               const SizedBox(height: 16),
               const Text(
                 "Couldn't reach the backend",
@@ -155,43 +163,30 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       children: [
-        _InfoCard(
-          title: 'Rx Number',
-          value: rxNumber,
-        ),
+        _InfoCard(title: 'Rx Number', value: rxNumber),
         const SizedBox(height: 12),
         _InfoCard(
           title: 'Patient',
-          value: '$patientName ${patientAge != null ? '· Age $patientAge' : ''} ${patientGender.isNotEmpty ? '· $patientGender' : ''}',
+          value:
+              '$patientName ${patientAge != null ? '· Age $patientAge' : ''} ${patientGender.isNotEmpty ? '· $patientGender' : ''}',
         ),
         const SizedBox(height: 12),
-        _InfoCard(
-          title: 'Doctor',
-          value: doctorName,
-        ),
+        _InfoCard(title: 'Doctor', value: doctorName),
         const SizedBox(height: 12),
-        _InfoCard(
-          title: 'Total Price',
-          value: '₱$totalPrice',
-        ),
+        _InfoCard(title: 'Total Price', value: '₱$totalPrice'),
         const SizedBox(height: 12),
         _InfoCard(
           title: 'Status',
-          value: '${status.toUpperCase()} · Dispensing: ${dispensingStatus.replaceAll('_', ' ').toUpperCase()}',
+          value:
+              '${status.toUpperCase()} · Dispensing: ${dispensingStatus.replaceAll('_', ' ').toUpperCase()}',
         ),
         if (dateIssued != null) ...[
           const SizedBox(height: 12),
-          _InfoCard(
-            title: 'Date Issued',
-            value: dateIssued,
-          ),
+          _InfoCard(title: 'Date Issued', value: dateIssued),
         ],
         if (dateExpiry != null) ...[
           const SizedBox(height: 12),
-          _InfoCard(
-            title: 'Date Expiry',
-            value: dateExpiry,
-          ),
+          _InfoCard(title: 'Date Expiry', value: dateExpiry),
         ],
         const SizedBox(height: 16),
         Text(
@@ -208,7 +203,9 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
           final name = im['name']?.toString() ?? 'Unknown';
           final qty = safeInt(im['quantity'], 1);
           final dosage = im['dosage']?.toString();
-          final dispensed = safeInt(im['disposed_quantity'] ?? im['dispatched_quantity']);
+          final dispensed = safeInt(
+            im['disposed_quantity'] ?? im['dispatched_quantity'],
+          );
           return Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(12),
@@ -241,7 +238,10 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                         const SizedBox(height: 2),
                         Text(
                           dosage,
-                          style: TextStyle(fontSize: 11, color: AppColors.textFaint),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textFaint,
+                          ),
                         ),
                       ],
                     ],
@@ -338,7 +338,11 @@ class _RedHeader extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.cancel, color: Colors.white, size: 30),
+                  child: const Icon(
+                    Icons.cancel,
+                    color: Colors.white,
+                    size: 30,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -373,7 +377,11 @@ class _RedHeader extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.shield_outlined, color: Colors.white, size: 16),
+                const Icon(
+                  Icons.shield_outlined,
+                  color: Colors.white,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

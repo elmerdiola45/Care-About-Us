@@ -7,6 +7,7 @@
 // onSavePrescription.
 
 import 'package:flutter/material.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../models/extracted_prescription.dart';
 
 class OcrResultScreen extends StatefulWidget {
@@ -131,29 +132,32 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
           children: [
             _buildHeader(context),
             Expanded(
-              child: prescription == null
-                  ? _buildEmptyState()
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildOcrCompleteCard(prescription),
-                          const SizedBox(height: 22),
-                          _buildEditableFields(),
-                          if (prescription.medicines.isNotEmpty) ...[
+              child: ResponsiveCenter.form(
+                padding: EdgeInsets.zero,
+                child: prescription == null
+                    ? _buildEmptyState()
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildOcrCompleteCard(prescription),
                             const SizedBox(height: 22),
-                            _buildPriceList(prescription),
+                            _buildEditableFields(),
+                            if (prescription.medicines.isNotEmpty) ...[
+                              const SizedBox(height: 22),
+                              _buildPriceList(prescription),
+                            ],
+                            if (_validationError != null) ...[
+                              const SizedBox(height: 12),
+                              _buildInlineError(_validationError!),
+                            ],
+                            const SizedBox(height: 22),
+                            _buildActionButtons(prescription),
                           ],
-                          if (_validationError != null) ...[
-                            const SizedBox(height: 12),
-                            _buildInlineError(_validationError!),
-                          ],
-                          const SizedBox(height: 22),
-                          _buildActionButtons(prescription),
-                        ],
+                        ),
                       ),
-                    ),
+              ),
             ),
           ],
         ),

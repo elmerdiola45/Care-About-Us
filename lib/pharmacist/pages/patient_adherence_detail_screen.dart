@@ -6,6 +6,7 @@ import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/widgets/bottom_nav_bar.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../models/adherence.dart';
 
 class PatientAdherenceDetailScreen extends StatefulWidget {
@@ -365,60 +366,63 @@ class _PatientAdherenceDetailScreenState
           children: [
             _buildHeader(context, name),
             Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(color: AppColors.teal),
-                          SizedBox(height: 16),
-                          Text(
-                            'Loading patient data...',
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                        ],
-                      ),
-                    )
-                  : _errorMessage != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
+              child: ResponsiveCenter.dashboard(
+                padding: EdgeInsets.zero,
+                child: _isLoading
+                    ? const Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons.error_outline,
-                              size: 44,
-                              color: AppColors.danger,
-                            ),
-                            const SizedBox(height: 10),
+                            CircularProgressIndicator(color: AppColors.teal),
+                            SizedBox(height: 16),
                             Text(
-                              _errorMessage!,
-                              style: const TextStyle(color: AppColors.danger),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 10),
-                            ElevatedButton.icon(
-                              onPressed: _loadDetail,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Retry'),
+                              'Loading patient data...',
+                              style: TextStyle(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
+                      )
+                    : _errorMessage != null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 44,
+                                color: AppColors.danger,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(color: AppColors.danger),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 10),
+                              ElevatedButton.icon(
+                                onPressed: _loadDetail,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        children: [
+                          _buildScoreCard(tierColor, tierBg, tierLabel),
+                          const SizedBox(height: 14),
+                          _buildMedicationsCard(),
+                          const SizedBox(height: 14),
+                          _buildRefillHistoryCard(),
+                          const SizedBox(height: 14),
+                          _buildInfoBanner(),
+                        ],
                       ),
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                      children: [
-                        _buildScoreCard(tierColor, tierBg, tierLabel),
-                        const SizedBox(height: 14),
-                        _buildMedicationsCard(),
-                        const SizedBox(height: 14),
-                        _buildRefillHistoryCard(),
-                        const SizedBox(height: 14),
-                        _buildInfoBanner(),
-                      ],
-                    ),
+              ),
             ),
           ],
         ),

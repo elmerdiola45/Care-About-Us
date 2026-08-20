@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../common/theme/app_colors.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../data/admin_api_service.dart';
 import '../models/admin_models.dart';
 import '../models/admin_patient_adherence.dart';
@@ -289,62 +290,65 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
           _buildFilterChips(),
           const SizedBox(height: 8),
           Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(color: AppColors.teal),
-                        SizedBox(height: 16),
-                        Text(
-                          'Loading prescriptions...',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  )
-                : _errorMessage != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
+            child: ResponsiveCenter.dashboard(
+              padding: EdgeInsets.zero,
+              child: _isLoading
+                  ? const Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 44,
-                            color: AppColors.danger,
-                          ),
-                          const SizedBox(height: 10),
+                          CircularProgressIndicator(color: AppColors.teal),
+                          SizedBox(height: 16),
                           Text(
-                            _errorMessage!,
-                            style: const TextStyle(color: AppColors.danger),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton.icon(
-                            onPressed: _loadRecords,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
+                            'Loading prescriptions...',
+                            style: TextStyle(color: AppColors.textSecondary),
                           ),
                         ],
                       ),
+                    )
+                  : _errorMessage != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 44,
+                              color: AppColors.danger,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: AppColors.danger),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 10),
+                            ElevatedButton.icon(
+                              onPressed: _loadRecords,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : _filtered.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No prescriptions found',
+                        style: TextStyle(color: Colors.grey.shade500),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                      itemCount: _filtered.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) =>
+                          _buildPrescriptionCard(_filtered[index]),
                     ),
-                  )
-                : _filtered.isEmpty
-                ? Center(
-                    child: Text(
-                      'No prescriptions found',
-                      style: TextStyle(color: Colors.grey.shade500),
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                    itemCount: _filtered.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) =>
-                        _buildPrescriptionCard(_filtered[index]),
-                  ),
+            ),
           ),
         ],
       ),
@@ -611,7 +615,11 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                     switch (record.tier) {
                       AdherenceTier.good => 'Good',
                       AdherenceTier.atRisk => 'Partially Dispensed',
-                      AdherenceTier.critical => ((record.adherenceStatus ?? '').toLowerCase() == 'no_data') ? 'No Data' : 'Pending',
+                      AdherenceTier.critical =>
+                        ((record.adherenceStatus ?? '').toLowerCase() ==
+                                'no_data')
+                            ? 'No Data'
+                            : 'Pending',
                       AdherenceTier.overDispensing => 'Overdispensing',
                       AdherenceTier.fullyDispensed => 'Fully Dispensed',
                     },
@@ -656,9 +664,12 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
     final ageStr = r.age > 0 ? r.age.toString() : '';
     final sexStr = r.sex.trim();
     if (ageStr.isNotEmpty || sexStr.isNotEmpty) parts.add('$ageStr$sexStr');
-    final isPending = (r.adherenceStatus ?? '').toLowerCase() == 'pending' ||
+    final isPending =
+        (r.adherenceStatus ?? '').toLowerCase() == 'pending' ||
         (r.adherenceStatus ?? '').toLowerCase() == 'no_data';
-    parts.add(isPending ? 'Not dispensed yet' : 'Last fill: ${_fmtDate(r.lastFill)}');
+    parts.add(
+      isPending ? 'Not dispensed yet' : 'Last fill: ${_fmtDate(r.lastFill)}',
+    );
     return parts.join(' · ');
   }
 

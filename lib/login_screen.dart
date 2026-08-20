@@ -4,21 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:pharmacy_management_system/common/session.dart';
 import 'package:pharmacy_management_system/common/services/app_config.dart';
+import 'package:pharmacy_management_system/common/theme/app_colors.dart';
 import 'package:pharmacy_management_system/common/widgets/tap_target.dart';
 import 'pharmacist/pages/home_dashboard_screen.dart';
 import 'admin/pages/admin_dashboard_page.dart';
-
-class LoginColors {
-  static const tealDark = Color(0xFF0B4F4A);
-  static const teal = Color(0xFF0F766E);
-  static const tealLight = Color(0xFF14B8A6);
-  static const bg = Colors.white;
-  static const inputBg = Color(0xFFF3F4F6);
-  static const textPrimary = Color(0xFF1F2937);
-  static const textSecondary = Color(0xFF6B7280);
-  static const textFaint = Color(0xFF9CA3AF);
-  static const green = Color(0xFF22C55E);
-}
 
 enum LoginRole { assistant, admin }
 
@@ -151,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: LoginColors.bg,
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -191,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: const Text(
                             'Forgot Password?',
-                            style: TextStyle(color: LoginColors.teal, fontSize: 13.5, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: AppColors.teal, fontSize: 13.5, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),
@@ -249,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [LoginColors.tealDark, LoginColors.teal],
+          colors: [AppColors.loginGradientDark, AppColors.teal],
         ),
       ),
       child: Column(
@@ -281,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   width: 7,
                   height: 7,
-                  decoration: const BoxDecoration(color: LoginColors.green, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(color: AppColors.accentGreen, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -300,14 +289,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildRoleToggle() {
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: LoginColors.inputBg,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
           Expanded(child: _roleTab('Pharmacy Assistant', LoginRole.assistant)),
+          const SizedBox(width: 6),
           Expanded(child: _roleTab('Pharmacist / Admin', LoginRole.admin)),
         ],
       ),
@@ -319,13 +309,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return TapTarget(
       onTap: () => setState(() => _role = role),
       semanticLabel: label,
-      borderRadius: BorderRadius.circular(9),
+      borderRadius: BorderRadius.circular(10),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(10),
           boxShadow: selected
               ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6, offset: const Offset(0, 1))]
               : null,
@@ -334,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: selected ? LoginColors.teal : LoginColors.textFaint,
+            color: selected ? AppColors.teal : AppColors.textFaint,
             fontWeight: FontWeight.w700,
             fontSize: 13.5,
           ),
@@ -347,7 +337,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Text(
       text,
       style: const TextStyle(
-        color: LoginColors.textSecondary,
+        color: AppColors.textSecondary,
         fontSize: 11.5,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.6,
@@ -357,10 +347,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   InputDecoration _inputDecoration({required IconData icon, Widget? suffix}) {
     return InputDecoration(
-      prefixIcon: Icon(icon, color: LoginColors.textFaint, size: 20),
+      prefixIcon: Icon(icon, color: AppColors.textFaint, size: 20),
       suffixIcon: suffix,
       filled: true,
-      fillColor: LoginColors.inputBg,
+      fillColor: AppColors.bg,
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -372,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: LoginColors.teal, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.teal, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -385,7 +375,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
-      style: const TextStyle(color: LoginColors.textPrimary, fontSize: 14.5),
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14.5),
       decoration: _inputDecoration(icon: Icons.mail_outline),
       validator: (value) {
         if (value == null || value.trim().isEmpty) return 'Email is required';
@@ -399,13 +389,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return TextFormField(
       controller: _passwordController,
       obscureText: _obscurePassword,
-      style: const TextStyle(color: LoginColors.textPrimary, fontSize: 14.5),
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14.5),
       decoration: _inputDecoration(
         icon: Icons.lock_outline,
         suffix: IconButton(
           icon: Icon(
             _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-            color: LoginColors.textFaint,
+            color: AppColors.textFaint,
             size: 20,
           ),
           tooltip: _obscurePassword ? 'Show password' : 'Hide password',
@@ -425,7 +415,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ElevatedButton(
         onPressed: _isSubmitting ? null : _handleSignIn,
         style: ElevatedButton.styleFrom(
-          backgroundColor: LoginColors.tealDark,
+          backgroundColor: AppColors.loginGradientDark,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 0,
@@ -453,13 +443,13 @@ class _LoginScreenState extends State<LoginScreen> {
       children: const [
         Text(
           'Secured · DoH-accredited e-prescription system',
-          style: TextStyle(color: LoginColors.textFaint, fontSize: 11.5),
+          style: TextStyle(color: AppColors.textFaint, fontSize: 11.5),
           textAlign: TextAlign.center,
         ),
         SizedBox(height: 2),
         Text(
           'Care About Us Pharmacy · v2.4.1 · Build 20250705',
-          style: TextStyle(color: LoginColors.textFaint, fontSize: 11.5),
+          style: TextStyle(color: AppColors.textFaint, fontSize: 11.5),
           textAlign: TextAlign.center,
         ),
       ],

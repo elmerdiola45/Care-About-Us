@@ -4,6 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../common/widgets/responsive_center.dart';
 import '../models/prescription.dart';
 
 class QrDetailScreen extends StatelessWidget {
@@ -29,15 +30,18 @@ class QrDetailScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          _medicinesHeader(),
-          const SizedBox(height: 12),
-          _buildQrCard(),
-          const SizedBox(height: 16),
-          _buildPrintButton(context),
-        ],
+      body: ResponsiveCenter.dashboard(
+        padding: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            _medicinesHeader(),
+            const SizedBox(height: 12),
+            _buildQrCard(),
+            const SizedBox(height: 16),
+            _buildPrintButton(context),
+          ],
+        ),
       ),
     );
   }
@@ -55,7 +59,11 @@ class QrDetailScreen extends StatelessWidget {
         children: [
           const Text(
             'Prescription Medicines',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFF6B7280)),
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 12.5,
+              color: Color(0xFF6B7280),
+            ),
           ),
           const SizedBox(height: 10),
           for (final m in prescription.medicines)
@@ -63,7 +71,11 @@ class QrDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
                 '• ${m.name} ${m.dosage} × ${m.quantity}',
-                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF1F2937)),
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
               ),
             ),
           const SizedBox(height: 12),
@@ -71,7 +83,11 @@ class QrDetailScreen extends StatelessWidget {
             children: [
               const Text(
                 'Total',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF1F2937)),
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  color: Color(0xFF1F2937),
+                ),
               ),
               const Spacer(),
               Text(
@@ -83,7 +99,7 @@ class QrDetailScreen extends StatelessWidget {
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -111,12 +127,20 @@ class QrDetailScreen extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             'QR code for ${prescription.ocrCode}',
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: Color(0xFF1F2937)),
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 14.5,
+              color: Color(0xFF1F2937),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Patient: ${prescription.patientName}',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF6B7280)),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 13.5,
+              color: Color(0xFF6B7280),
+            ),
           ),
           const SizedBox(height: 12),
           Container(
@@ -124,11 +148,17 @@ class QrDetailScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFDCF3E8),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF2E9C6B).withValues(alpha: .35)),
+              border: Border.all(
+                color: const Color(0xFF2E9C6B).withValues(alpha: .35),
+              ),
             ),
             child: const Text(
               'Ready to scan at any branch.',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Color(0xFF2E9C6B)),
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 13.5,
+                color: Color(0xFF2E9C6B),
+              ),
             ),
           ),
         ],
@@ -156,9 +186,21 @@ class QrDetailScreen extends StatelessWidget {
                     return pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text('Prescription QR', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                        pw.Text(
+                          'Prescription QR',
+                          style: pw.TextStyle(
+                            fontSize: 18,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
                         pw.SizedBox(height: 12),
-                        pw.Text('QR code for ${prescription.ocrCode}', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                        pw.Text(
+                          'QR code for ${prescription.ocrCode}',
+                          style: pw.TextStyle(
+                            fontSize: 12,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
                         pw.SizedBox(height: 12),
                         // QR placeholder box: QR code scanners will use the printed QR from the UI,
                         // but for actual QR pixels in print we’d need a QR generator compatible with pdf.
@@ -171,27 +213,59 @@ class QrDetailScreen extends StatelessWidget {
                           ),
                         ),
                         pw.SizedBox(height: 14),
-                        pw.Text('Patient: ${prescription.patientName}', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                        pw.Text(
+                          'Patient: ${prescription.patientName}',
+                          style: pw.TextStyle(
+                            fontSize: 12,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
                         pw.SizedBox(height: 10),
-                        pw.Text('Medicines', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
+                        pw.Text(
+                          'Medicines',
+                          style: pw.TextStyle(
+                            fontSize: 13,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
                         pw.SizedBox(height: 6),
                         ...prescription.medicines.map(
-                          (m) => pw.Text('• ${m.name} ${m.dosage} × ${m.quantity}', style: pw.TextStyle(fontSize: 11)),
+                          (m) => pw.Text(
+                            '• ${m.name} ${m.dosage} × ${m.quantity}',
+                            style: pw.TextStyle(fontSize: 11),
+                          ),
                         ),
                         pw.SizedBox(height: 12),
                         pw.Divider(),
                         pw.SizedBox(height: 8),
                         pw.Row(
                           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                              children: [
-                                pw.Text('Total', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                                pw.Text('₱${prescription.totalPrice.toStringAsFixed(2)}',
-                                  style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: PdfColor(0, 0.5, 0)),
-                                ),
-                              ],
+                          children: [
+                            pw.Text(
+                              'Total',
+                              style: pw.TextStyle(
+                                fontSize: 12,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                            pw.Text(
+                              '₱${prescription.totalPrice.toStringAsFixed(2)}',
+                              style: pw.TextStyle(
+                                fontSize: 12,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColor(0, 0.5, 0),
+                              ),
+                            ),
+                          ],
                         ),
                         pw.SizedBox(height: 18),
-                        pw.Text('Ready to scan at any branch.', style: pw.TextStyle(fontSize: 11, color: PdfColor(76/255, 175/255, 80/255))),
+                        pw.Text(
+                          'Ready to scan at any branch.',
+                          style: pw.TextStyle(
+                            fontSize: 11,
+                            color: PdfColor(76 / 255, 175 / 255, 80 / 255),
+                          ),
+                        ),
                       ],
                     );
                   },
@@ -206,7 +280,9 @@ class QrDetailScreen extends StatelessWidget {
           backgroundColor: const Color(0xFF0B7B77),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
         icon: const Icon(Icons.print, size: 18),
         label: const Text('Print'),
@@ -214,5 +290,3 @@ class QrDetailScreen extends StatelessWidget {
     );
   }
 }
-
-

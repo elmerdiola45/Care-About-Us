@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../models/dispense_alert.dart';
 import 'alert_detail_screen.dart';
 
@@ -75,41 +76,60 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
             _buildFilterChips(),
             const SizedBox(height: 8),
             Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(color: AppColors.teal),
-                          SizedBox(height: 16),
-                          Text('Loading alerts...', style: TextStyle(color: AppColors.textSecondary)),
-                        ],
-                      ),
-                    )
-                  : _errorMessage != null
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.error_outline, size: 44, color: AppColors.danger),
-                                const SizedBox(height: 10),
-                                Text(_errorMessage!, style: const TextStyle(color: AppColors.danger), textAlign: TextAlign.center),
-                                const SizedBox(height: 10),
-                                ElevatedButton.icon(onPressed: _loadAlerts, icon: const Icon(Icons.refresh), label: const Text('Retry')),
-                              ],
+              child: ResponsiveCenter.dashboard(
+                padding: EdgeInsets.zero,
+                child: _isLoading
+                    ? const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(color: AppColors.teal),
+                            SizedBox(height: 16),
+                            Text(
+                              'Loading alerts...',
+                              style: TextStyle(color: AppColors.textSecondary),
                             ),
+                          ],
+                        ),
+                      )
+                    : _errorMessage != null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 44,
+                                color: AppColors.danger,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(color: AppColors.danger),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 10),
+                              ElevatedButton.icon(
+                                onPressed: _loadAlerts,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                              ),
+                            ],
                           ),
-                        )
-                      : _filtered.isEmpty
-                          ? _buildEmptyState()
-                          : ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                              itemCount: _filtered.length,
-                              separatorBuilder: (_, _) => const SizedBox(height: 10),
-                              itemBuilder: (context, index) => _buildAlertCard(_filtered[index]),
-                            ),
+                        ),
+                      )
+                    : _filtered.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                        itemCount: _filtered.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) =>
+                            _buildAlertCard(_filtered[index]),
+                      ),
+              ),
             ),
           ],
         ),
@@ -131,7 +151,11 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
           const Expanded(
             child: Text(
               'Dispensing Alerts',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           IconButton(
@@ -173,9 +197,14 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                 fontSize: 13,
               ),
               backgroundColor: const Color(0xFFEDF1F1),
-              selectedColor: _selectedPriority == AlertPriority.high ? AppColors.danger : AppColors.teal,
+              selectedColor: _selectedPriority == AlertPriority.high
+                  ? AppColors.danger
+                  : AppColors.teal,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide.none,
+              ),
             ),
           );
         }).toList(),
@@ -197,59 +226,87 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
         ),
       ),
       child: Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isHigh ? AppColors.danger.withValues(alpha: 0.25) : AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, color: titleColor, size: 20),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isHigh
+                ? AppColors.danger.withValues(alpha: 0.25)
+                : AppColors.border,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  alert.title,
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  alert.note,
-                  style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${_fmtDate(alert.createdAt)} · RX: ${alert.rxNumber ?? 'N/A'}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textFaint),
-                ),
-              ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isHigh ? AppColors.dangerBg : AppColors.warningBg,
-              borderRadius: BorderRadius.circular(999),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: titleColor, size: 20),
             ),
-            child: Text(
-              isHigh ? 'High' : 'Normal',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: titleColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    alert.title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    alert.note,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_fmtDate(alert.createdAt)} · RX: ${alert.rxNumber ?? 'N/A'}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textFaint,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: isHigh ? AppColors.dangerBg : AppColors.warningBg,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                isHigh ? 'High' : 'Normal',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: titleColor,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -261,9 +318,19 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(Icons.check_circle_outline, size: 44, color: AppColors.success),
+            Icon(
+              Icons.check_circle_outline,
+              size: 44,
+              color: AppColors.success,
+            ),
             SizedBox(height: 10),
-            Text('No active alerts', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            Text(
+              'No active alerts',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ],
         ),
       ),
@@ -284,7 +351,20 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
   }
 
   String _fmtDate(DateTime d) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
 }

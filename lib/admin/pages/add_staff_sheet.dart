@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../common/theme/app_colors.dart';
+import '../../../common/widgets/responsive_center.dart';
 import '../../../common/widgets/tap_target.dart';
 
 enum StaffRole { dispenser, pharmacist }
@@ -184,187 +185,195 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
           top: false,
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.border,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                  const Text(
-                    'Add Staff Member',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _role == StaffRole.dispenser
-                        ? 'Dispenser — Pharmacy Assistant'
-                        : 'Pharmacist — Licensed Staff',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textFaint,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  RoleToggle(
-                    role: _role,
-                    onChanged: (r) {
-                      setState(() => _role = r);
-                      _loadNextStaffId();
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  if (_isLoadingId)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Center(
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.teal600,
-                          ),
+            child: ResponsiveCenter.form(
+              padding: EdgeInsets.zero,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.border,
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ),
-                  if (!_isLoadingId)
-                    LabeledField(
-                      label: _role == StaffRole.pharmacist
-                          ? 'Pharmacist ID'
-                          : 'Dispenser ID',
-                      controller: _staffIdController,
-                      readOnly: true,
+                    const Text(
+                      'Add Staff Member',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  const SizedBox(height: 12),
-                  if (_generalError != null) ...[
-                    ErrorBanner(message: _generalError!),
-                    const SizedBox(height: 12),
-                  ],
-                  LabeledField(
-                    label: 'First Name',
-                    controller: _firstNameController,
-                    validator: _requiredValidator,
-                    serverError: _fieldErrors['first_name'],
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 12),
-                  LabeledField(
-                    label: 'Last Name',
-                    controller: _lastNameController,
-                    validator: _requiredValidator,
-                    serverError: _fieldErrors['last_name'],
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 12),
-                  LabeledField(
-                    label: 'Email',
-                    controller: _emailController,
-                    validator: _emailValidator,
-                    serverError: _fieldErrors['email'],
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 12),
-                  LabeledField(
-                    label: 'Password',
-                    controller: _passwordController,
-                    validator: _requiredValidator,
-                    serverError: _fieldErrors['password'],
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.next,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        size: 18,
+                    const SizedBox(height: 4),
+                    Text(
+                      _role == StaffRole.dispenser
+                          ? 'Dispenser — Pharmacy Assistant'
+                          : 'Pharmacist — Licensed Staff',
+                      style: const TextStyle(
+                        fontSize: 13,
                         color: AppColors.textFaint,
                       ),
-                      tooltip: _obscurePassword ? 'Show password' : 'Hide password',
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
-                  ),
-                  StrengthIndicator(password: _passwordController.text),
-                  const SizedBox(height: 12),
-                  LabeledField(
-                    label: _role == StaffRole.pharmacist
-                        ? 'License Number'
-                        : 'License Number (optional)',
-                    controller: _licenseController,
-                    validator: _role == StaffRole.pharmacist
-                        ? _requiredValidator
-                        : null,
-                    serverError: _fieldErrors['license_number'],
-                    textInputAction: TextInputAction.done,
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _submitting
-                              ? null
-                              : () => Navigator.of(context).pop(false),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textFaint,
-                            side: const BorderSide(color: AppColors.border),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 16),
+                    RoleToggle(
+                      role: _role,
+                      onChanged: (r) {
+                        setState(() => _role = r);
+                        _loadNextStaffId();
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isLoadingId)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.teal600,
                             ),
-                          ),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _submitting ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.teal700,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: _submitting
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text(
-                                  'Create',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                        ),
+                    if (!_isLoadingId)
+                      LabeledField(
+                        label: _role == StaffRole.pharmacist
+                            ? 'Pharmacist ID'
+                            : 'Dispenser ID',
+                        controller: _staffIdController,
+                        readOnly: true,
                       ),
+                    const SizedBox(height: 12),
+                    if (_generalError != null) ...[
+                      ErrorBanner(message: _generalError!),
+                      const SizedBox(height: 12),
                     ],
-                  ),
-                ],
+                    LabeledField(
+                      label: 'First Name',
+                      controller: _firstNameController,
+                      validator: _requiredValidator,
+                      serverError: _fieldErrors['first_name'],
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 12),
+                    LabeledField(
+                      label: 'Last Name',
+                      controller: _lastNameController,
+                      validator: _requiredValidator,
+                      serverError: _fieldErrors['last_name'],
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 12),
+                    LabeledField(
+                      label: 'Email',
+                      controller: _emailController,
+                      validator: _emailValidator,
+                      serverError: _fieldErrors['email'],
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 12),
+                    LabeledField(
+                      label: 'Password',
+                      controller: _passwordController,
+                      validator: _requiredValidator,
+                      serverError: _fieldErrors['password'],
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.next,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 18,
+                          color: AppColors.textFaint,
+                        ),
+                        tooltip: _obscurePassword
+                            ? 'Show password'
+                            : 'Hide password',
+                        onPressed: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
+                      ),
+                    ),
+                    StrengthIndicator(password: _passwordController.text),
+                    const SizedBox(height: 12),
+                    LabeledField(
+                      label: _role == StaffRole.pharmacist
+                          ? 'License Number'
+                          : 'License Number (optional)',
+                      controller: _licenseController,
+                      validator: _role == StaffRole.pharmacist
+                          ? _requiredValidator
+                          : null,
+                      serverError: _fieldErrors['license_number'],
+                      textInputAction: TextInputAction.done,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _submitting
+                                ? null
+                                : () => Navigator.of(context).pop(false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.textFaint,
+                              side: const BorderSide(color: AppColors.border),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _submitting ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.teal700,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _submitting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Create',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

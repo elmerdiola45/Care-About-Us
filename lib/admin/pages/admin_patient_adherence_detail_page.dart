@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../common/theme/app_colors.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../data/admin_api_service.dart';
 import '../models/admin_models.dart';
 import '../models/admin_patient_adherence.dart';
@@ -12,13 +13,20 @@ class AdminPatientAdherenceDetailPage extends StatefulWidget {
   final String? altPatientId;
   final Map<String, dynamic>? initialPatient;
 
-  const AdminPatientAdherenceDetailPage({super.key, required this.patientId, this.altPatientId, this.initialPatient});
+  const AdminPatientAdherenceDetailPage({
+    super.key,
+    required this.patientId,
+    this.altPatientId,
+    this.initialPatient,
+  });
 
   @override
-  State<AdminPatientAdherenceDetailPage> createState() => _AdminPatientAdherenceDetailPageState();
+  State<AdminPatientAdherenceDetailPage> createState() =>
+      _AdminPatientAdherenceDetailPageState();
 }
 
-class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceDetailPage> {
+class _AdminPatientAdherenceDetailPageState
+    extends State<AdminPatientAdherenceDetailPage> {
   bool _isLoading = true;
   bool _isNotFound = false;
   String? _errorMessage;
@@ -28,7 +36,9 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
   @override
   void initState() {
     super.initState();
-    debugPrint('AdminPatientAdherenceDetailPage init: patientId=${widget.patientId}');
+    debugPrint(
+      'AdminPatientAdherenceDetailPage init: patientId=${widget.patientId}',
+    );
     _loadPatient();
   }
 
@@ -42,11 +52,12 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
     PatientDetailResponse? patient;
     String? failMsg;
 
-    final hasAdherenceData = widget.initialPatient != null &&
+    final hasAdherenceData =
+        widget.initialPatient != null &&
         (widget.initialPatient!['adherence_status'] != null ||
-         widget.initialPatient!['adherence_score'] != null ||
-         widget.initialPatient!['medications'] != null ||
-         widget.initialPatient!['refill_history'] != null);
+            widget.initialPatient!['adherence_score'] != null ||
+            widget.initialPatient!['medications'] != null ||
+            widget.initialPatient!['refill_history'] != null);
 
     if (hasAdherenceData) {
       try {
@@ -63,7 +74,8 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
         } on Exception catch (e) {
           final msg = e.toString();
           debugPrint('Primary fetch failed: $msg');
-          if (widget.altPatientId != null && widget.altPatientId != widget.patientId) {
+          if (widget.altPatientId != null &&
+              widget.altPatientId != widget.patientId) {
             debugPrint('Trying altPatientId: ${widget.altPatientId}');
             try {
               patient = await api.fetchPatientDetail(widget.altPatientId!);
@@ -102,8 +114,11 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
           _patient = PatientDetailResponse.fromJson(widget.initialPatient!);
         } catch (e) {
           _patient = PatientDetailResponse(
-            patientId: widget.initialPatient!['patient_id']?.toString() ?? widget.patientId,
-            name: widget.initialPatient!['name']?.toString() ?? 'Unknown Patient',
+            patientId:
+                widget.initialPatient!['patient_id']?.toString() ??
+                widget.patientId,
+            name:
+                widget.initialPatient!['name']?.toString() ?? 'Unknown Patient',
             genderAge: '',
             hasHistory: true,
           );
@@ -111,7 +126,9 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
         _isLoading = false;
       } else {
         _isNotFound = failMsg != null && failMsg.contains('Patient not found');
-        _errorMessage = _isNotFound ? null : 'Failed to load patient detail: $failMsg';
+        _errorMessage = _isNotFound
+            ? null
+            : 'Failed to load patient detail: $failMsg';
         _isLoading = false;
       }
     });
@@ -128,25 +145,65 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
   (Color, Color, String, String?) get _tierStyle {
     final p = _patient;
     if (p == null) {
-      return (AppColors.textFaint, AppColors.border.withValues(alpha: 0.08), 'No data yet', null);
+      return (
+        AppColors.textFaint,
+        AppColors.border.withValues(alpha: 0.08),
+        'No data yet',
+        null,
+      );
     }
     if (_tier == AdherenceTier.fullyDispensed) {
-      return (const Color(0xFF6B7280), const Color(0xFFF3F4F6), 'Fully Dispensed', p.adherenceReason);
+      return (
+        const Color(0xFF6B7280),
+        const Color(0xFFF3F4F6),
+        'Fully Dispensed',
+        p.adherenceReason,
+      );
     }
     if (!p.hasHistory) {
-      return (AppColors.textFaint, AppColors.border.withValues(alpha: 0.08), 'No data yet', null);
+      return (
+        AppColors.textFaint,
+        AppColors.border.withValues(alpha: 0.08),
+        'No data yet',
+        null,
+      );
     }
     switch (_tier) {
       case AdherenceTier.good:
-        return (AppColors.success, AppColors.successBg, 'Good', p.adherenceReason);
+        return (
+          AppColors.success,
+          AppColors.successBg,
+          'Good',
+          p.adherenceReason,
+        );
       case AdherenceTier.atRisk:
-        return (AppColors.warning, AppColors.warningBg, 'At Risk', p.adherenceReason);
+        return (
+          AppColors.warning,
+          AppColors.warningBg,
+          'At Risk',
+          p.adherenceReason,
+        );
       case AdherenceTier.critical:
-        return (AppColors.danger, AppColors.dangerBg, 'Pending', p.adherenceReason);
+        return (
+          AppColors.danger,
+          AppColors.dangerBg,
+          'Pending',
+          p.adherenceReason,
+        );
       case AdherenceTier.overDispensing:
-        return (AppColors.danger, AppColors.dangerBg, 'Overdispensing', p.adherenceReason);
+        return (
+          AppColors.danger,
+          AppColors.dangerBg,
+          'Overdispensing',
+          p.adherenceReason,
+        );
       case AdherenceTier.fullyDispensed:
-        return (const Color(0xFF6B7280), const Color(0xFFF3F4F6), 'Fully Dispensed', p.adherenceReason);
+        return (
+          const Color(0xFF6B7280),
+          const Color(0xFFF3F4F6),
+          'Fully Dispensed',
+          p.adherenceReason,
+        );
     }
   }
 
@@ -166,11 +223,19 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.person_off_outlined, size: 48, color: AppColors.textFaint),
+                const Icon(
+                  Icons.person_off_outlined,
+                  size: 48,
+                  color: AppColors.textFaint,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Patient not found',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -186,8 +251,13 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.teal,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
@@ -209,18 +279,31 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(_errorMessage ?? 'Loading...', textAlign: TextAlign.center),
+            child: Text(
+              _errorMessage ?? 'Loading...',
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       );
     }
 
     final (tierColor, tierBg, tierLabel, tierSub) = _tierStyle;
-    final initialPrescription = widget.initialPatient != null &&
-        (widget.initialPatient!['ocr_code'] != null || widget.initialPatient!['items'] != null);
-    final rxNumber = initialPrescription ? widget.initialPatient!['ocr_code']?.toString() : null;
-    final doctorName = initialPrescription ? widget.initialPatient!['doctor_name']?.toString() ?? widget.initialPatient!['doctor']?.toString() : null;
-    final dateTime = initialPrescription ? widget.initialPatient!['date_time']?.toString() ?? widget.initialPatient!['date']?.toString() : null;
+    final initialPrescription =
+        widget.initialPatient != null &&
+        (widget.initialPatient!['ocr_code'] != null ||
+            widget.initialPatient!['items'] != null);
+    final rxNumber = initialPrescription
+        ? widget.initialPatient!['ocr_code']?.toString()
+        : null;
+    final doctorName = initialPrescription
+        ? widget.initialPatient!['doctor_name']?.toString() ??
+              widget.initialPatient!['doctor']?.toString()
+        : null;
+    final dateTime = initialPrescription
+        ? widget.initialPatient!['date_time']?.toString() ??
+              widget.initialPatient!['date']?.toString()
+        : null;
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -231,34 +314,55 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(p.name, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+            Text(
+              p.name,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             if (rxNumber != null)
-              Text('Rx: $rxNumber', style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5))
+              Text(
+                'Rx: $rxNumber',
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5),
+              )
             else
-              Text(p.genderAge, style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5)),
+              Text(
+                p.genderAge,
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5),
+              ),
           ],
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          if (initialPrescription) _buildPrescriptionInfoCard(rxNumber, doctorName, dateTime),
-          if (initialPrescription) const SizedBox(height: 14),
-          _buildScoreCard(tierColor, tierBg, tierLabel, tierSub),
-          const SizedBox(height: 14),
-          _buildMedicationsCard(),
-          const SizedBox(height: 14),
-          _buildRefillHistoryCard(),
-          const SizedBox(height: 14),
-          _buildInfoBanner(),
-          const SizedBox(height: 14),
-          _buildAdminActionSection(),
-        ],
+      body: ResponsiveCenter.dashboard(
+        padding: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            if (initialPrescription)
+              _buildPrescriptionInfoCard(rxNumber, doctorName, dateTime),
+            if (initialPrescription) const SizedBox(height: 14),
+            _buildScoreCard(tierColor, tierBg, tierLabel, tierSub),
+            const SizedBox(height: 14),
+            _buildMedicationsCard(),
+            const SizedBox(height: 14),
+            _buildRefillHistoryCard(),
+            const SizedBox(height: 14),
+            _buildInfoBanner(),
+            const SizedBox(height: 14),
+            _buildAdminActionSection(),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildPrescriptionInfoCard(String? rxNumber, String? doctorName, String? dateTime) {
+  Widget _buildPrescriptionInfoCard(
+    String? rxNumber,
+    String? doctorName,
+    String? dateTime,
+  ) {
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,16 +382,29 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
               children: [
                 const Icon(Icons.qr_code_2, size: 16, color: AppColors.teal),
                 const SizedBox(width: 8),
-                Text('Rx Number: $rxNumber', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(
+                  'Rx Number: $rxNumber',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           if (doctorName != null) ...[
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.person_outline, size: 16, color: AppColors.teal),
+                const Icon(
+                  Icons.person_outline,
+                  size: 16,
+                  color: AppColors.teal,
+                ),
                 const SizedBox(width: 8),
-                Text('Doctor: $doctorName', style: const TextStyle(fontSize: 13)),
+                Text(
+                  'Doctor: $doctorName',
+                  style: const TextStyle(fontSize: 13),
+                ),
               ],
             ),
           ],
@@ -295,7 +412,11 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.teal),
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 16,
+                  color: AppColors.teal,
+                ),
                 const SizedBox(width: 8),
                 Text('Date: $dateTime', style: const TextStyle(fontSize: 13)),
               ],
@@ -306,7 +427,12 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
     );
   }
 
-  Widget _buildScoreCard(Color tierColor, Color tierBg, String tierLabel, String? tierSub) {
+  Widget _buildScoreCard(
+    Color tierColor,
+    Color tierBg,
+    String tierLabel,
+    String? tierSub,
+  ) {
     final p = _patient!;
     final score = p.adherencePercent ?? 0;
     final displayScore = _isFullyDispensed ? 100 : score;
@@ -330,18 +456,30 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
                 const SizedBox(height: 8),
                 Text(
                   tierLabel,
-                  style: TextStyle(color: tierColor, fontSize: 34, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    color: tierColor,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '$displayScore%',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 if (tierSub != null && tierSub.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
                     tierSub,
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5, fontStyle: FontStyle.italic),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12.5,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ],
@@ -356,7 +494,8 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
   Widget _buildMedicationsCard() {
     final p = _patient!;
 
-    final historyTotals = <String, ({int initial, int dispensed, int remaining})>{};
+    final historyTotals =
+        <String, ({int initial, int dispensed, int remaining})>{};
     for (final ev in p.refillHistory) {
       final current = historyTotals[ev.medicineName];
       historyTotals[ev.medicineName] = (
@@ -369,11 +508,15 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
     final meds = p.medications;
     debugPrint('DETAIL: medications from API count=${meds.length}');
     for (final m in meds) {
-      debugPrint('DETAIL med: name=${m.name} initial=${m.initialQuantity} dispensed=${m.dispensedQuantity} remaining=${m.remainingQuantity}');
+      debugPrint(
+        'DETAIL med: name=${m.name} initial=${m.initialQuantity} dispensed=${m.dispensedQuantity} remaining=${m.remainingQuantity}',
+      );
     }
     debugPrint('DETAIL: historyTotals count=${historyTotals.length}');
     for (final entry in historyTotals.entries) {
-      debugPrint('DETAIL history: name=${entry.key} initial=${entry.value.initial} dispensed=${entry.value.dispensed} remaining=${entry.value.remaining}');
+      debugPrint(
+        'DETAIL history: name=${entry.key} initial=${entry.value.initial} dispensed=${entry.value.dispensed} remaining=${entry.value.remaining}',
+      );
     }
 
     final displayMeds = meds.isNotEmpty
@@ -404,7 +547,10 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
           ),
           const SizedBox(height: 12),
           if (displayMeds.isEmpty)
-            Text('No medications dispensed yet.', style: TextStyle(color: AppColors.textFaint, fontSize: 13))
+            Text(
+              'No medications dispensed yet.',
+              style: TextStyle(color: AppColors.textFaint, fontSize: 13),
+            )
           else
             for (int i = 0; i < displayMeds.length; i++)
               Column(
@@ -414,11 +560,18 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
                       Container(
                         width: 30,
                         height: 30,
-                        decoration: BoxDecoration(color: AppColors.tealPale, borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(
+                          color: AppColors.tealPale,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         child: Icon(
-                          displayMeds[i].fullyDispensed ? Icons.check_circle_outlined : Icons.medication_outlined,
+                          displayMeds[i].fullyDispensed
+                              ? Icons.check_circle_outlined
+                              : Icons.medication_outlined,
                           size: 16,
-                          color: displayMeds[i].fullyDispensed ? AppColors.success : AppColors.teal,
+                          color: displayMeds[i].fullyDispensed
+                              ? AppColors.success
+                              : AppColors.teal,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -436,13 +589,23 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              _medicationQuantityText(displayMeds[i], historyTotals[displayMeds[i].name]),
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                              _medicationQuantityText(
+                                displayMeds[i],
+                                historyTotals[displayMeds[i].name],
+                              ),
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                              ),
                             ),
                             if (displayMeds[i].fullyDispensed)
                               Text(
                                 'Complete',
-                                style: TextStyle(color: AppColors.success, fontSize: 11.5, fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  color: AppColors.success,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                           ],
                         ),
@@ -461,10 +624,19 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
     );
   }
 
-  String _medicationQuantityText(MedicationInfo med, ({int initial, int dispensed, int remaining})? historyTotal) {
-    final initial = med.initialQuantity > 0 ? med.initialQuantity : (historyTotal?.initial ?? 0);
-    final dispensed = med.dispensedQuantity > 0 ? med.dispensedQuantity : (historyTotal?.dispensed ?? 0);
-    final remaining = med.remainingQuantity > 0 ? med.remainingQuantity : (historyTotal?.remaining ?? 0);
+  String _medicationQuantityText(
+    MedicationInfo med,
+    ({int initial, int dispensed, int remaining})? historyTotal,
+  ) {
+    final initial = med.initialQuantity > 0
+        ? med.initialQuantity
+        : (historyTotal?.initial ?? 0);
+    final dispensed = med.dispensedQuantity > 0
+        ? med.dispensedQuantity
+        : (historyTotal?.dispensed ?? 0);
+    final remaining = med.remainingQuantity > 0
+        ? med.remainingQuantity
+        : (historyTotal?.remaining ?? 0);
     if (initial > 0 || dispensed > 0) {
       return 'Dispensed: $dispensed of $initial · Remaining: $remaining';
     }
@@ -489,7 +661,10 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
           ),
           const SizedBox(height: 14),
           if (events.isEmpty)
-            Text('No dispensing history yet.', style: TextStyle(color: AppColors.textFaint, fontSize: 13))
+            Text(
+              'No dispensing history yet.',
+              style: TextStyle(color: AppColors.textFaint, fontSize: 13),
+            )
           else
             for (int i = 0; i < events.length; i++)
               _buildTimelineRow(events[i], isLast: i == events.length - 1),
@@ -511,14 +686,18 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
               Container(
                 width: 22,
                 height: 22,
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(
                   isFlagged ? Icons.warning_amber_rounded : Icons.check_circle,
                   size: 16,
                   color: color,
                 ),
               ),
-              if (!isLast) Expanded(child: Container(width: 1.5, color: AppColors.border)),
+              if (!isLast)
+                Expanded(child: Container(width: 1.5, color: AppColors.border)),
             ],
           ),
           const SizedBox(width: 12),
@@ -530,17 +709,27 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
                 children: [
                   Text(
                     event.medicineName,
-                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '\u00d7${event.quantity} \u00b7 ${_fmtDate(event.date)}',
-                    style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   if (event.expectedNextFill != null)
                     Text(
                       'Expected next fill: ${_fmtDate(event.expectedNextFill!)}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textFaint),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textFaint,
+                      ),
                     ),
                 ],
               ),
@@ -557,7 +746,10 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: AppColors.tealPale, borderRadius: BorderRadius.circular(14)),
+        decoration: BoxDecoration(
+          color: AppColors.tealPale,
+          borderRadius: BorderRadius.circular(14),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -566,7 +758,11 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
             Expanded(
               child: Text(
                 p.adherenceReason ?? 'All prescriptions fully dispensed.',
-                style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
               ),
             ),
           ],
@@ -578,7 +774,10 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: AppColors.dangerBg, borderRadius: BorderRadius.circular(14)),
+        decoration: BoxDecoration(
+          color: AppColors.dangerBg,
+          borderRadius: BorderRadius.circular(14),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -587,7 +786,11 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
             Expanded(
               child: Text(
                 p.lockReason ?? 'This prescription is locked.',
-                style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
               ),
             ),
           ],
@@ -616,7 +819,9 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
             foregroundColor: AppColors.teal,
             side: const BorderSide(color: AppColors.teal),
             padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         ),
       );
@@ -631,15 +836,26 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
           Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppColors.warningBg, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: AppColors.warningBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: const Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 18),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppColors.warning,
+                  size: 18,
+                ),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'This patient has an overdue refill \u2014 review before dispensing further.',
-                    style: TextStyle(color: AppColors.warning, fontSize: 12.5, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: AppColors.warning,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -650,14 +866,23 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
           child: ElevatedButton.icon(
             onPressed: _isUpdating ? null : _confirmLock,
             icon: _isUpdating
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Icon(Icons.block, size: 18),
             label: const Text('Mark as Fully Dispensed'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 0,
             ),
           ),
@@ -685,10 +910,16 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
           'This action should only be used when over-dispensing has been confirmed. Continue?',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Confirm Lock'),
           ),
         ],
@@ -705,7 +936,11 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
         await _loadPatient();
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Prescription locked \u2014 cannot be dispensed anywhere.')),
+          const SnackBar(
+            content: Text(
+              'Prescription locked \u2014 cannot be dispensed anywhere.',
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -713,7 +948,10 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
         setState(() => _isUpdating = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to lock: $e', style: const TextStyle(color: Colors.white)),
+            content: Text(
+              'Failed to lock: $e',
+              style: const TextStyle(color: Colors.white),
+            ),
             backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
           ),
@@ -731,12 +969,20 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Unlock this prescription?'),
-        content: const Text('This will allow dispensing to resume for this prescription.'),
+        content: const Text(
+          'This will allow dispensing to resume for this prescription.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.teal, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.teal,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Unlock'),
           ),
         ],
@@ -752,14 +998,19 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
         setState(() => _isUpdating = false);
         await _loadPatient();
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Prescription unlocked.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Prescription unlocked.')));
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isUpdating = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to unlock: $e', style: const TextStyle(color: Colors.white)),
+            content: Text(
+              'Failed to unlock: $e',
+              style: const TextStyle(color: Colors.white),
+            ),
             backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
           ),
@@ -775,14 +1026,33 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: child,
     );
   }
 
   String _fmtDate(DateTime d) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
 }
@@ -792,7 +1062,11 @@ class _ScoreRing extends StatelessWidget {
   final Color color;
   final Color trackColor;
 
-  const _ScoreRing({required this.score, required this.color, required this.trackColor});
+  const _ScoreRing({
+    required this.score,
+    required this.color,
+    required this.trackColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -800,11 +1074,19 @@ class _ScoreRing extends StatelessWidget {
       width: 72,
       height: 72,
       child: CustomPaint(
-        painter: _RingPainter(progress: (score / 100).clamp(0.0, 1.0), color: color, trackColor: trackColor),
+        painter: _RingPainter(
+          progress: (score / 100).clamp(0.0, 1.0),
+          color: color,
+          trackColor: trackColor,
+        ),
         child: Center(
           child: Text(
             '$score%',
-            style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 13),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+            ),
           ),
         ),
       ),
@@ -817,7 +1099,11 @@ class _RingPainter extends CustomPainter {
   final Color color;
   final Color trackColor;
 
-  _RingPainter({required this.progress, required this.color, required this.trackColor});
+  _RingPainter({
+    required this.progress,
+    required this.color,
+    required this.trackColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -840,7 +1126,13 @@ class _RingPainter extends CustomPainter {
 
     const startAngle = -math.pi / 2;
     final sweepAngle = 2 * math.pi * progress;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, sweepAngle, false, progressPaint);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle,
+      false,
+      progressPaint,
+    );
   }
 
   @override

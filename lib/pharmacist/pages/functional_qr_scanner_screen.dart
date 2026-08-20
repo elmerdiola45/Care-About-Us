@@ -449,7 +449,17 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                       color: Colors.black.withValues(alpha: 0.34),
                     ),
                   ),
-                  IgnorePointer(child: _scanFrame()),
+                  IgnorePointer(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final frameSize = (constraints.maxWidth * 0.7).clamp(
+                          180.0,
+                          280.0,
+                        );
+                        return _scanFrame(frameSize);
+                      },
+                    ),
+                  ),
                   Positioned(
                     top: 14,
                     right: 16,
@@ -574,9 +584,9 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
           ),
   );
 
-  Widget _scanFrame() => SizedBox(
-    width: 250,
-    height: 250,
+  Widget _scanFrame(double size) => SizedBox(
+    width: size,
+    height: size,
     child: Stack(
       children: const [
         _FrameCorner(alignment: Alignment.topLeft),

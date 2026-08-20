@@ -26,4 +26,12 @@ class AppColors {
   static const teal600 = Color(0xFF00897B);
   static const mint100 = Color(0xFFE0F2F1);
   static const redDark = Color(0xFFB71C1C);
+
+  // Login screen specific — kept as distinct named tokens rather than
+  // reusing a similarly-colored existing token, since the values differ:
+  // tealLight has no existing equivalent; accentGreen is a different shade
+  // than [success]; loginGradientDark is a different shade than [tealDark].
+  static const tealLight = Color(0xFF14B8A6);
+  static const accentGreen = Color(0xFF22C55E);
+  static const loginGradientDark = Color(0xFF0B4F4A);
 }
