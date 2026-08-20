@@ -24,13 +24,13 @@ class AdherenceBadge extends StatelessWidget {
   (Color, Color, String) get _style {
     switch (tier) {
       case AdherenceTier.good:
-        return (AppColors.green, AppColors.greenBg, 'Good');
+        return (AppColors.success, AppColors.successBg, 'Good');
       case AdherenceTier.atRisk:
-        return (AppColors.amber, AppColors.amberBg, 'At Risk');
+        return (AppColors.warning, AppColors.warningBg, 'At Risk');
       case AdherenceTier.critical:
-        return (AppColors.red, AppColors.redBg, 'Critical');
+        return (AppColors.danger, AppColors.dangerBg, 'Critical');
       case AdherenceTier.overDispensing:
-        return (AppColors.red, AppColors.redBg, 'Overdispensing');
+        return (AppColors.danger, AppColors.dangerBg, 'Overdispensing');
       case AdherenceTier.fullyDispensed:
         return (Color(0xFF4B5563), Color(0xFFF3F4F6), 'Fully Dispensed');
     }

@@ -312,7 +312,7 @@ class DispensingSummaryScreen extends StatelessWidget {
                   children: const [
                     Icon(
                       Icons.elderly_rounded,
-                      size: 13,
+                      size: 16,
                       color: Color(0xFFD97706),
                     ),
                     SizedBox(width: 4),
@@ -358,7 +358,7 @@ class DispensingSummaryScreen extends StatelessWidget {
             children: [
               const Icon(
                 Icons.elderly_rounded,
-                size: 14,
+                size: 16,
                 color: Color(0xFFD97706),
               ),
               const SizedBox(width: 4),
@@ -519,7 +519,7 @@ class DispensingSummaryScreen extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.only(top: 2),
-          child: Icon(Icons.check_circle, color: SummaryColors.green, size: 19),
+          child: Icon(Icons.check_circle, color: SummaryColors.green, size: 18),
         ),
         const SizedBox(width: 9),
         Expanded(

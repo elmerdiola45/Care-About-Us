@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../common/theme/app_colors.dart';
+import '../../../common/widgets/tap_target.dart';
 
 enum StaffRole { dispenser, pharmacist }
 
@@ -194,7 +195,7 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: AppColors.divider,
+                        color: AppColors.border,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -204,7 +205,7 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -214,7 +215,7 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                         : 'Pharmacist — Licensed Staff',
                     style: const TextStyle(
                       fontSize: 13,
-                      color: AppColors.muted,
+                      color: AppColors.textFaint,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -291,8 +292,9 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                         size: 18,
-                        color: AppColors.muted,
+                        color: AppColors.textFaint,
                       ),
+                      tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
@@ -319,8 +321,8 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                               ? null
                               : () => Navigator.of(context).pop(false),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.muted,
-                            side: const BorderSide(color: AppColors.line),
+                            foregroundColor: AppColors.textFaint,
+                            side: const BorderSide(color: AppColors.border),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -417,8 +419,10 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapTarget(
       onTap: onTap,
+      semanticLabel: '$label: $subtitle',
+      borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
@@ -426,7 +430,7 @@ class _RoleCard extends StatelessWidget {
           color: selected ? AppColors.teal700 : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? AppColors.teal700 : AppColors.line,
+            color: selected ? AppColors.teal700 : AppColors.border,
             width: 1.5,
           ),
         ),
@@ -438,7 +442,7 @@ class _RoleCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: selected ? Colors.white : AppColors.ink,
+                color: selected ? Colors.white : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 2),
@@ -447,7 +451,7 @@ class _RoleCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w500,
-                color: selected ? AppColors.mint100 : AppColors.muted,
+                color: selected ? AppColors.mint100 : AppColors.textFaint,
               ),
             ),
           ],
@@ -476,17 +480,17 @@ class StrengthIndicator extends StatelessWidget {
   static Color _getStrengthColor(int strength) {
     switch (strength) {
       case 0:
-        return AppColors.divider;
+        return AppColors.border;
       case 1:
         return AppColors.danger;
       case 2:
-        return AppColors.red;
+        return AppColors.danger;
       case 3:
         return AppColors.teal600;
       case 4:
-        return AppColors.green;
+        return AppColors.success;
       default:
-        return AppColors.divider;
+        return AppColors.border;
     }
   }
 
@@ -531,7 +535,7 @@ class StrengthIndicator extends StatelessWidget {
                         right: index < segments - 1 ? 3 : 0,
                       ),
                       decoration: BoxDecoration(
-                        color: filled ? color : AppColors.divider,
+                        color: filled ? color : AppColors.border,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -591,7 +595,7 @@ class LabeledField extends StatelessWidget {
           style: const TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w600,
-            color: AppColors.muted,
+            color: AppColors.textFaint,
           ),
         ),
         const SizedBox(height: 6),
@@ -604,12 +608,12 @@ class LabeledField extends StatelessWidget {
           textInputAction: textInputAction,
           style: TextStyle(
             fontSize: 14,
-            color: readOnly ? AppColors.muted : AppColors.ink,
+            color: readOnly ? AppColors.textFaint : AppColors.textSecondary,
           ),
           decoration: InputDecoration(
             isDense: true,
             filled: true,
-            fillColor: readOnly ? AppColors.divider : AppColors.surface,
+            fillColor: readOnly ? AppColors.border : AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 14,
@@ -618,13 +622,13 @@ class LabeledField extends StatelessWidget {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: readOnly ? AppColors.divider : AppColors.line,
+                color: readOnly ? AppColors.border : AppColors.border,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: readOnly ? AppColors.divider : AppColors.line,
+                color: readOnly ? AppColors.border : AppColors.border,
               ),
             ),
             focusedBorder: OutlineInputBorder(

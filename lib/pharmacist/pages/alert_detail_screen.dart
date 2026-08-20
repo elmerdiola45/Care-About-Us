@@ -79,6 +79,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            tooltip: 'Back',
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           const SizedBox(width: 4),
@@ -125,7 +126,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
 
   Widget _buildDetail(DispenseAlert alert) {
     final isHigh = alert.priority == AlertPriority.high;
-    final titleColor = isHigh ? AppColors.red : AppColors.amber;
+    final titleColor = isHigh ? AppColors.danger : AppColors.warning;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
@@ -133,11 +134,11 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isHigh
-                  ? AppColors.red.withValues(alpha: 0.25)
+                  ? AppColors.danger.withValues(alpha: 0.25)
                   : AppColors.border,
             ),
             boxShadow: [
@@ -169,7 +170,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: isHigh ? AppColors.redBg : AppColors.warningBg,
+                      color: isHigh ? AppColors.dangerBg : AppColors.warningBg,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(

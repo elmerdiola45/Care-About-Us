@@ -17,6 +17,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../common/widgets/tap_target.dart';
 import '../models/prescription_scan_result.dart';
 import '../models/prescription.dart';
 import '../services/correction_memory_service.dart';
@@ -1135,7 +1136,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           const Icon(
             Icons.check_circle_rounded,
             color: OcrReviewColors.green,
-            size: 22,
+            size: 20,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1251,7 +1252,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               Icon(
                 Icons.report_rounded,
                 color: Color(0xFFDC2626),
-                size: 22,
+                size: 20,
               ),
               SizedBox(width: 8),
               Text(
@@ -1599,8 +1600,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   Widget _genderChip(String value) {
     final selected = _gender == value;
     return Expanded(
-      child: GestureDetector(
+      child: TapTarget(
         onTap: () => setState(() => _gender = value),
+        semanticLabel: value == 'M' ? 'Male' : 'Female',
+        borderRadius: BorderRadius.circular(8),
         child: Container(
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -2795,7 +2798,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                             const SizedBox(width: 3),
                             Icon(
                               Icons.unfold_more,
-                              size: 13,
+                              size: 16,
                               color: OcrReviewColors.teal.withValues(
                                 alpha: 0.7,
                               ),
@@ -2906,7 +2909,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                             children: [
                               Icon(
                                 Icons.search,
-                                size: 13,
+                                size: 16,
                                 color: const Color(0xFF991B1B),
                               ),
                               Text(
@@ -2980,7 +2983,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                             children: [
                               Icon(
                                 Icons.search,
-                                size: 13,
+                                size: 16,
                                 color: const Color(0xFF991B1B),
                               ),
                               Text(

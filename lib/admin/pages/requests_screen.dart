@@ -80,7 +80,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                 : 'Approved — ${request.requestingPharmacyName} can now dispense ${request.rxNumber}.',
           ),
           backgroundColor: result.critical
-              ? AppColors.amber
+              ? AppColors.warning
               : AppColors.success,
         ),
       );
@@ -182,7 +182,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
               if (reason.isEmpty) return;
               Navigator.pop(ctx, reason);
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Reject'),
           ),
         ],
@@ -193,9 +193,9 @@ class _RequestsScreenState extends State<RequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.bg,
         elevation: 0,
         title: const Text(
           'Requests',
@@ -265,7 +265,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
               const SizedBox(height: 16),
               const Text(
                 "Couldn't reach the backend",
@@ -279,7 +279,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
               const SizedBox(height: 8),
               Text(
                 _error ?? '',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                style: TextStyle(fontSize: 12, color: AppColors.textFaint),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -429,7 +429,7 @@ class _RequestCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: AppColors.bg,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
@@ -460,7 +460,7 @@ class _RequestCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Staff: ${request.requestingStaffName}',
-            style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 11.5, color: AppColors.textFaint),
           ),
           if (isPending && request.wouldExceedRemaining) ...[
             const SizedBox(height: 10),
@@ -470,7 +470,7 @@ class _RequestCard extends StatelessWidget {
                 color: const Color(0xFFFDEEE8),
                 borderRadius: BorderRadius.circular(10),
                 border: Border(
-                  left: BorderSide(color: AppColors.red, width: 3),
+                  left: BorderSide(color: AppColors.danger, width: 3),
                 ),
               ),
               child: Column(
@@ -488,7 +488,7 @@ class _RequestCard extends StatelessWidget {
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.4,
-                            color: AppColors.red,
+                            color: AppColors.danger,
                           ),
                         ),
                       ),
@@ -561,7 +561,7 @@ class _RequestCard extends StatelessWidget {
                 color: const Color(0xFFFDEEE8),
                 borderRadius: BorderRadius.circular(10),
                 border: Border(
-                  left: BorderSide(color: AppColors.red, width: 3),
+                  left: BorderSide(color: AppColors.danger, width: 3),
                 ),
               ),
               child: Row(
@@ -579,7 +579,7 @@ class _RequestCard extends StatelessWidget {
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.4,
-                            color: AppColors.red,
+                            color: AppColors.danger,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -629,10 +629,10 @@ class _RequestCard extends StatelessWidget {
                   color:
                       dispensingStatus == 'over_dispensing' ||
                           dispensingStatus == 'overdispensing'
-                      ? AppColors.red
+                      ? AppColors.danger
                       : dispensingStatus == 'fully_dispensed'
-                      ? AppColors.green
-                      : AppColors.amber,
+                      ? AppColors.success
+                      : AppColors.warning,
                 ),
               ),
             ),
@@ -645,8 +645,8 @@ class _RequestCard extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: isProcessing ? null : onReject,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.red,
-                      side: const BorderSide(color: AppColors.red),
+                      foregroundColor: AppColors.danger,
+                      side: const BorderSide(color: AppColors.danger),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -658,7 +658,7 @@ class _RequestCard extends StatelessWidget {
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.red,
+                              color: AppColors.danger,
                             ),
                           )
                         : const Text(
@@ -708,7 +708,7 @@ class _RequestCard extends StatelessWidget {
                 'Rejected: ${request.rejectionReason}',
                 style: const TextStyle(
                   fontSize: 12,
-                  color: AppColors.red,
+                  color: AppColors.danger,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -732,21 +732,21 @@ class _StatusBadge extends StatelessWidget {
     switch (status) {
       case RequestStatus.pending:
         bg = AppColors.amberLight;
-        fg = AppColors.amber;
+        fg = AppColors.warning;
         label = 'Pending';
         break;
       case RequestStatus.approved:
         bg = AppColors.greenLight;
-        fg = AppColors.green;
+        fg = AppColors.success;
         label = 'Approved';
         break;
       case RequestStatus.rejected:
         bg = AppColors.redLight;
-        fg = AppColors.red;
+        fg = AppColors.danger;
         label = 'Rejected';
         break;
       case RequestStatus.dispensed:
-        bg = AppColors.tealLight;
+        bg = AppColors.tealPale;
         fg = AppColors.teal;
         label = 'Dispensed';
         break;
@@ -777,18 +777,18 @@ class _DispensingStatusBadge extends StatelessWidget {
     final s = status.toLowerCase();
     if (s == 'over_dispensing' || s == 'overdispensing') {
       bg = AppColors.redLight;
-      fg = AppColors.red;
+      fg = AppColors.danger;
       label = 'Overdispensing';
     } else if (s == 'fully_dispensed') {
       bg = AppColors.greenLight;
-      fg = AppColors.green;
+      fg = AppColors.success;
       label = 'Fully Dispensed';
     } else if (s == 'partially_dispensed') {
       bg = AppColors.amberLight;
-      fg = AppColors.amber;
+      fg = AppColors.warning;
       label = 'Partial';
     } else {
-      bg = AppColors.background;
+      bg = AppColors.bg;
       fg = AppColors.textSecondary;
       label = 'Dispensed';
     }

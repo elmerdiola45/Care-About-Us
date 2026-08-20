@@ -176,7 +176,7 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: AppColors.divider,
+                        color: AppColors.border,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -186,7 +186,7 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -194,7 +194,7 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                     '${widget.staff.name} · ${widget.staff.email}',
                     style: const TextStyle(
                       fontSize: 13,
-                      color: AppColors.muted,
+                      color: AppColors.textFaint,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -218,8 +218,9 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                                   ? Icons.visibility_outlined
                                   : Icons.visibility_off_outlined,
                               size: 18,
-                              color: AppColors.muted,
+                              color: AppColors.textFaint,
                             ),
+                            tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                             onPressed: () => setState(
                               () => _obscurePassword = !_obscurePassword,
                             ),
@@ -249,7 +250,7 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                     'The staff member will need this password to log in. '
                     'Share it with them directly — it will not be shown '
                     'again after this screen closes.',
-                    style: TextStyle(fontSize: 11.5, color: AppColors.muted),
+                    style: TextStyle(fontSize: 11.5, color: AppColors.textFaint),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -260,8 +261,8 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                               ? null
                               : () => Navigator.of(context).pop(false),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.muted,
-                            side: const BorderSide(color: AppColors.line),
+                            foregroundColor: AppColors.textFaint,
+                            side: const BorderSide(color: AppColors.border),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

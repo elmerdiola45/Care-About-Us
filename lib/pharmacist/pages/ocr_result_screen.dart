@@ -189,6 +189,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.of(context).maybePop(),
+            tooltip: 'Back',
             icon: const Icon(
               Icons.arrow_back_ios_new,
               color: Color(0xFF0B7B77),

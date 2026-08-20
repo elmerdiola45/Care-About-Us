@@ -334,6 +334,7 @@ class _SavedPrescriptionsListScreenState
                     color: SavedListColors.textSecondary,
                     size: 18,
                   ),
+                  tooltip: 'Clear search',
                   onPressed: () {
                     _searchController.clear();
                     setState(() => _searchQuery = '');

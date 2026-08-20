@@ -65,7 +65,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: AppColors.card,
+      fillColor: AppColors.surface,
       contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -85,6 +85,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           color: AppColors.textFaint,
           size: 20,
         ),
+        tooltip: obscured ? 'Show password' : 'Hide password',
         onPressed: onToggle,
       ),
     );
@@ -156,17 +157,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
                     decoration: BoxDecoration(
-                      color: AppColors.redBg,
+                      color: AppColors.dangerBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: AppColors.red, size: 18),
+                        const Icon(Icons.error_outline, color: AppColors.danger, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: const TextStyle(color: AppColors.red, fontSize: 13),
+                            style: const TextStyle(color: AppColors.danger, fontSize: 13),
                           ),
                         ),
                       ],

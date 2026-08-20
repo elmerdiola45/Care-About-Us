@@ -9,6 +9,7 @@ import '../../admin/models/admin_models.dart' hide MedicineItem;
 import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
 import '../../common/theme/app_colors.dart';
+import '../../common/widgets/tap_target.dart';
 import 'dispensing_summary_screen.dart';
 import 'saved_prescriptions_list_screen.dart';
 
@@ -477,7 +478,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
           context: context,
           barrierDismissible: false,
           builder: (_) => AlertDialog(
-            backgroundColor: isHighPriority ? AppColors.redBg : AppColors.card,
+            backgroundColor: isHighPriority ? AppColors.dangerBg : AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -485,7 +486,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
               children: [
                 Icon(
                   Icons.block_rounded,
-                  color: isHighPriority ? AppColors.red : AppColors.amber,
+                  color: isHighPriority ? AppColors.danger : AppColors.warning,
                   size: 28,
                 ),
                 const SizedBox(width: 10),
@@ -498,7 +499,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                       color: isHighPriority
-                          ? AppColors.red
+                          ? AppColors.danger
                           : AppColors.textPrimary,
                     ),
                   ),
@@ -522,14 +523,14 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.redBg,
+                      color: AppColors.dangerBg,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       children: [
                         const Icon(
                           Icons.warning_amber_rounded,
-                          color: AppColors.red,
+                          color: AppColors.danger,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -539,7 +540,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.red,
+                              color: AppColors.danger,
                             ),
                           ),
                         ),
@@ -561,7 +562,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.amber,
+                    backgroundColor: AppColors.warning,
                     foregroundColor: Colors.white,
                   ),
                   child: const Text('Proceed Anyway'),
@@ -577,7 +578,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(reason),
-            backgroundColor: AppColors.amber,
+            backgroundColor: AppColors.warning,
             duration: const Duration(seconds: 4),
           ),
         );
@@ -629,7 +630,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: const [
-            Icon(Icons.cloud_off_rounded, color: Colors.red, size: 26),
+            Icon(Icons.cloud_off_rounded, color: Colors.red, size: 24),
             SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -668,7 +669,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.card,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Official Receipt Number',
@@ -1157,6 +1158,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
                     },
+                    tooltip: 'Clear search',
                     icon: const Icon(
                       Icons.clear,
                       color: Color(0xFF8A8F9C),
@@ -1420,7 +1422,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
         children: [
           Row(
             children: const [
-              Icon(Icons.report_rounded, color: Color(0xFFDC2626), size: 22),
+              Icon(Icons.report_rounded, color: Color(0xFFDC2626), size: 20),
               SizedBox(width: 8),
               Text(
                 'Medicine Not Available',
@@ -1776,6 +1778,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                     _stepperButton(
                       Icons.remove,
                       () => _decrementMedicine(m.name),
+                      'Decrease quantity',
                     ),
                     SizedBox(
                       width: 52,
@@ -1801,7 +1804,11 @@ class _DispenseScreenState extends State<DispenseScreen> {
                             _onQuantityTyped(m.name, value, cap),
                       ),
                     ),
-                    _stepperButton(Icons.add, () => _incrementMedicine(m.name)),
+                    _stepperButton(
+                      Icons.add,
+                      () => _incrementMedicine(m.name),
+                      'Increase quantity',
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -1884,7 +1891,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   children: const [
                     Icon(
                       Icons.elderly_rounded,
-                      size: 14,
+                      size: 16,
                       color: Color(0xFFD97706),
                     ),
                     SizedBox(width: 4),
@@ -1964,9 +1971,11 @@ class _DispenseScreenState extends State<DispenseScreen> {
   }
 
   // ---------- STEPPER BUTTON ----------
-  Widget _stepperButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
+  Widget _stepperButton(IconData icon, VoidCallback onTap, String label) {
+    return TapTarget(
       onTap: onTap,
+      semanticLabel: label,
+      borderRadius: BorderRadius.circular(999),
       child: Container(
         width: 32,
         height: 32,
@@ -2076,7 +2085,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                       child: Icon(
                         Icons.person_outline,
                         color: isSelected ? Colors.white : AppColors.teal,
-                        size: 22,
+                        size: 20,
                       ),
                     ),
                     const SizedBox(width: 12),

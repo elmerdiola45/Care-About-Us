@@ -519,6 +519,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   onPressed: () => Navigator.maybePop(context),
+                  tooltip: 'Back',
                   icon: const Icon(
                     Icons.chevron_left,
                     color: ScanColors.text,
@@ -664,7 +665,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
             const Icon(
               Icons.no_photography_outlined,
               color: ScanColors.teal,
-              size: 42,
+              size: 44,
             ),
             const SizedBox(height: 14),
             Text(

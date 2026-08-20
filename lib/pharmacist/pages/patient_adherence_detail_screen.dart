@@ -271,13 +271,13 @@ class _PatientAdherenceDetailScreenState
     }
     switch (_tier) {
       case AdherenceTier.good:
-        return (AppColors.green, AppColors.greenBg, 'Good');
+        return (AppColors.success, AppColors.successBg, 'Good');
       case AdherenceTier.atRisk:
-        return (AppColors.amber, AppColors.amberBg, 'At Risk');
+        return (AppColors.warning, AppColors.warningBg, 'At Risk');
       case AdherenceTier.critical:
-        return (AppColors.red, AppColors.redBg, 'Critical');
+        return (AppColors.danger, AppColors.dangerBg, 'Critical');
       case AdherenceTier.overDispensing:
-        return (AppColors.red, AppColors.redBg, 'Overdispensing');
+        return (AppColors.danger, AppColors.dangerBg, 'Overdispensing');
       case AdherenceTier.fullyDispensed:
         return (
           const Color(0xFF6B7280),
@@ -435,6 +435,7 @@ class _PatientAdherenceDetailScreenState
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            tooltip: 'Back',
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           const SizedBox(width: 4),
@@ -639,7 +640,7 @@ class _PatientAdherenceDetailScreenState
                         width: 30,
                         height: 30,
                         decoration: BoxDecoration(
-                          color: AppColors.tealLight,
+                          color: AppColors.tealPale,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -732,7 +733,7 @@ class _PatientAdherenceDetailScreenState
 
   Widget _buildTimelineRow(AdherenceHistoryItem event, {required bool isLast}) {
     final isFlagged = event.flag != null && event.flag!.isNotEmpty;
-    final color = isFlagged ? AppColors.amber : AppColors.green;
+    final color = isFlagged ? AppColors.warning : AppColors.success;
 
     return IntrinsicHeight(
       child: Row(
@@ -749,7 +750,7 @@ class _PatientAdherenceDetailScreenState
                 ),
                 child: Icon(
                   isFlagged ? Icons.warning_amber_rounded : Icons.check_circle,
-                  size: 14,
+                  size: 16,
                   color: color,
                 ),
               ),
@@ -802,7 +803,7 @@ class _PatientAdherenceDetailScreenState
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.infoBg,
+        color: AppColors.tealPale,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -852,7 +853,7 @@ class _PatientAdherenceDetailScreenState
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(

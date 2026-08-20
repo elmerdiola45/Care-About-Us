@@ -37,7 +37,7 @@ class RxCard extends StatelessWidget {
                 if (isVerifiedQrData)
                   const Chip(
                     label: Text('QR data verified', style: TextStyle(fontSize: 10)),
-                    avatar: Icon(Icons.verified, size: 15, color: Color(0xFF0B7B77)),
+                    avatar: Icon(Icons.verified, size: 16, color: Color(0xFF0B7B77)),
                   ),
               ],
             ),

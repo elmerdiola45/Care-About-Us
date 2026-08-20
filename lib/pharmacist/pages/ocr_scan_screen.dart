@@ -353,6 +353,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.of(context).maybePop(),
+            tooltip: 'Back',
             icon: const Icon(Icons.arrow_back_ios_new, color: OcrColors.teal),
           ),
           const SizedBox(width: 4),
@@ -389,7 +390,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
             const Icon(
               Icons.photo_camera_outlined,
               color: OcrColors.iconDim,
-              size: 42,
+              size: 44,
             )
           else
             ClipRRect(
@@ -436,7 +437,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       child: const Icon(
         Icons.menu_book_outlined,
         color: OcrColors.teal,
-        size: 38,
+        size: 44,
       ),
     );
   }

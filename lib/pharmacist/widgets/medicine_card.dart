@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../common/widgets/tap_target.dart';
+
 class MedicineCard extends StatefulWidget {
   final String medicineName;
   final String strength;
@@ -103,7 +105,7 @@ class _MedicineCardState extends State<MedicineCard> {
             const SizedBox(height: 8),
             Row(
               children: [
-                _qtyButton(Icons.remove, () {
+                _qtyButton(Icons.remove, 'Decrease quantity', () {
                   if (quantity > 0) {
                     setState(() => quantity--);
                   }
@@ -118,7 +120,7 @@ class _MedicineCardState extends State<MedicineCard> {
                     ),
                   ),
                 ),
-                _qtyButton(Icons.add, () {
+                _qtyButton(Icons.add, 'Increase quantity', () {
                   if (quantity < widget.stock) {
                     setState(() => quantity++);
                   }
@@ -173,12 +175,13 @@ class _MedicineCardState extends State<MedicineCard> {
     );
   }
 
-  Widget _qtyButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
+  Widget _qtyButton(IconData icon, String label, VoidCallback onTap) {
+    return TapTarget(
       onTap: () {
         onTap();
         widget.onChanged?.call(quantity);
       },
+      semanticLabel: label,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 38,

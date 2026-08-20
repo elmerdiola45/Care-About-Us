@@ -559,7 +559,7 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                         const SizedBox(width: 6),
                         const Icon(
                           Icons.lock,
-                          size: 14,
+                          size: 16,
                           color: AppColors.danger,
                         ),
                       ],

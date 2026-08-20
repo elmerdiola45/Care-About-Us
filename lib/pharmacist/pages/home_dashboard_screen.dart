@@ -257,7 +257,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               child: Container(
                 height: 60,
                 decoration: BoxDecoration(
-                  color: AppColors.card,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
@@ -267,7 +267,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: AppColors.card,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
@@ -281,7 +281,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 height: 80,
                 margin: const EdgeInsets.only(right: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.card,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
@@ -293,7 +293,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           height: 20,
           width: 120,
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(8),
           ),
         ),
@@ -301,7 +301,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         Container(
           height: 160,
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
           ),
         ),
@@ -497,7 +497,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               child: _statCard(
                 icon: Icons.description_outlined,
                 iconColor: AppColors.teal,
-                iconBg: AppColors.tealLight,
+                iconBg: AppColors.tealPale,
                 value: '${_summary?.rxCount ?? 0}',
                 valueColor: AppColors.teal,
                 label: rxLabel,
@@ -507,10 +507,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             Expanded(
               child: _statCard(
                 icon: Icons.warning_amber_rounded,
-                iconColor: AppColors.red,
-                iconBg: AppColors.redBg,
+                iconColor: AppColors.danger,
+                iconBg: AppColors.dangerBg,
                 value: '${_summary?.activeAlerts ?? 0}',
-                valueColor: AppColors.red,
+                valueColor: AppColors.danger,
                 label: 'Active Alerts',
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
@@ -549,7 +549,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.teal : AppColors.card,
+                  color: selected ? AppColors.teal : AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: selected ? AppColors.teal : AppColors.border,
@@ -607,7 +607,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     final card = Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -732,7 +732,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       child: Container(
         padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: highlighted ? AppColors.teal : AppColors.border,
@@ -753,7 +753,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: AppColors.tealLight,
+                color: AppColors.tealPale,
                 borderRadius: BorderRadius.circular(9),
               ),
               child: Icon(icon, size: 18, color: AppColors.teal),

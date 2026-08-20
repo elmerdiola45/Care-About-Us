@@ -46,22 +46,8 @@ class CrossPharmacyActionResult {
 
 class AdminApiService {
   static const Duration _timeout = Duration(seconds: 30);
-  static const Duration _connectivityTimeout = Duration(seconds: 5);
 
   String get _baseUrl => AppConfig.baseUrl;
-
-  Future<bool> checkConnection() async {
-    try {
-      final response = await http
-          .get(Uri.parse(_baseUrl), headers: _headers)
-          .timeout(_connectivityTimeout);
-      return response.statusCode < 500;
-    } on TimeoutException {
-      return false;
-    } catch (_) {
-      return false;
-    }
-  }
 
   Future<Map<String, dynamic>> fetchMe() async {
     final response = await http
@@ -546,8 +532,7 @@ class AdminApiService {
     }
 
     final data = safeMap(jsonDecode(response.body));
-    final message =
-        data?['message']?.toString() ?? 'Failed to reset password';
+    final message = data?['message']?.toString() ?? 'Failed to reset password';
     throw Exception(message);
   }
 

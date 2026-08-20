@@ -657,7 +657,7 @@ class _PriceListPageState extends State<PriceListPage> {
                                 padding: EdgeInsets.only(right: 6),
                                 child: Icon(
                                   Icons.restore,
-                                  size: 13,
+                                  size: 16,
                                   color: AppColors.warning,
                                 ),
                               ),

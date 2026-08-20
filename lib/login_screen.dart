@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:pharmacy_management_system/common/session.dart';
 import 'package:pharmacy_management_system/common/services/app_config.dart';
+import 'package:pharmacy_management_system/common/widgets/tap_target.dart';
 import 'pharmacist/pages/home_dashboard_screen.dart';
 import 'admin/pages/admin_dashboard_page.dart';
 
@@ -315,8 +316,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _roleTab(String label, LoginRole role) {
     final selected = _role == role;
-    return GestureDetector(
+    return TapTarget(
       onTap: () => setState(() => _role = role),
+      semanticLabel: label,
+      borderRadius: BorderRadius.circular(9),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -405,6 +408,7 @@ class _LoginScreenState extends State<LoginScreen> {
             color: LoginColors.textFaint,
             size: 20,
           ),
+          tooltip: _obscurePassword ? 'Show password' : 'Hide password',
           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
       ),

@@ -56,7 +56,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -84,7 +84,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
               const SizedBox(height: 16),
               const Text(
                 "Couldn't reach the backend",
@@ -98,7 +98,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
               const SizedBox(height: 8),
               Text(
                 _error ?? '',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                style: TextStyle(fontSize: 12, color: AppColors.textFaint),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -132,7 +132,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
         padding: const EdgeInsets.all(32),
         child: Text(
           'No prescription data available.',
-          style: TextStyle(fontSize: 14, color: AppColors.textMuted),
+          style: TextStyle(fontSize: 14, color: AppColors.textFaint),
         ),
       ),
     );
@@ -241,7 +241,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                         const SizedBox(height: 2),
                         Text(
                           dosage,
-                          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          style: TextStyle(fontSize: 11, color: AppColors.textFaint),
                         ),
                       ],
                     ],
@@ -259,7 +259,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Dispensed: $dispensed',
-                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: AppColors.textFaint),
                   ),
                 ],
               ],
@@ -273,7 +273,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
           decoration: BoxDecoration(
             color: AppColors.redLight,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.red.withValues(alpha: 0.2)),
+            border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,7 +283,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.red,
+                  color: AppColors.danger,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -314,7 +314,7 @@ class _RedHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: AppColors.red,
+      color: AppColors.danger,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,6 +324,7 @@ class _RedHeader extends StatelessWidget {
               IconButton(
                 onPressed: () => Navigator.of(context).maybePop(),
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
+                tooltip: 'Back',
               ),
             ],
           ),
@@ -422,7 +423,7 @@ class _InfoCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: AppColors.textMuted,
+              color: AppColors.textFaint,
               letterSpacing: 0.5,
             ),
           ),

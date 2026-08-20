@@ -124,6 +124,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            tooltip: 'Back',
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           const SizedBox(width: 4),
@@ -135,6 +136,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
+            tooltip: 'Refresh',
             onPressed: _loadAlerts,
           ),
         ],
@@ -171,7 +173,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                 fontSize: 13,
               ),
               backgroundColor: const Color(0xFFEDF1F1),
-              selectedColor: _selectedPriority == AlertPriority.high ? AppColors.red : AppColors.teal,
+              selectedColor: _selectedPriority == AlertPriority.high ? AppColors.danger : AppColors.teal,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none),
             ),
@@ -184,8 +186,8 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
   Widget _buildAlertCard(DispenseAlert alert) {
     final isHigh = alert.priority == AlertPriority.high;
     final icon = _alertIcon(alert.alertType);
-    final bg = isHigh ? AppColors.redBg : AppColors.warningBg;
-    final titleColor = isHigh ? AppColors.red : AppColors.amber;
+    final bg = isHigh ? AppColors.dangerBg : AppColors.warningBg;
+    final titleColor = isHigh ? AppColors.danger : AppColors.warning;
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -197,9 +199,9 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
       child: Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isHigh ? AppColors.red.withValues(alpha: 0.25) : AppColors.border),
+        border: Border.all(color: isHigh ? AppColors.danger.withValues(alpha: 0.25) : AppColors.border),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Row(
@@ -238,7 +240,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isHigh ? AppColors.redBg : AppColors.warningBg,
+              color: isHigh ? AppColors.dangerBg : AppColors.warningBg,
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
@@ -259,7 +261,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(Icons.check_circle_outline, size: 44, color: AppColors.green),
+            Icon(Icons.check_circle_outline, size: 44, color: AppColors.success),
             SizedBox(height: 10),
             Text('No active alerts', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../admin/models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
+import '../../../common/widgets/tap_target.dart';
 import 'over_dispensing_screen.dart';
 
 enum _Filter { all, qr, ocr }
@@ -118,12 +119,12 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
               decoration: InputDecoration(
                 hintText: 'Search patient, RX number, staff...',
                 hintStyle: const TextStyle(
-                  color: AppColors.textMuted,
+                  color: AppColors.textFaint,
                   fontSize: 13,
                 ),
                 prefixIcon: const Icon(
                   Icons.search,
-                  color: AppColors.textMuted,
+                  color: AppColors.textFaint,
                   size: 20,
                 ),
                 filled: true,
@@ -131,11 +132,11 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.divider),
+                  borderSide: const BorderSide(color: AppColors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.divider),
+                  borderSide: const BorderSide(color: AppColors.border),
                 ),
               ),
             ),
@@ -191,7 +192,7 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
                   ),
                   const SizedBox(width: 14),
                   _LegendDot(
-                    color: AppColors.amber,
+                    color: AppColors.warning,
                     label: '${_records!.ocrCount} OCR saves',
                   ),
                 ],
@@ -228,7 +229,7 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
               const SizedBox(height: 16),
               const Text(
                 "Couldn't reach the backend",
@@ -242,7 +243,7 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
               const SizedBox(height: 8),
               Text(
                 _error ?? '',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                style: TextStyle(fontSize: 12, color: AppColors.textFaint),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -273,7 +274,7 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
           padding: EdgeInsets.all(32),
           child: Text(
             'No scan records found.',
-            style: TextStyle(fontSize: 14, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 14, color: AppColors.textFaint),
           ),
         ),
       );
@@ -294,7 +295,7 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textMuted,
+                  color: AppColors.textFaint,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -362,15 +363,17 @@ class _FilterPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapTarget(
       onTap: onTap,
+      semanticLabel: label,
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? AppColors.teal : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.teal : AppColors.divider,
+            color: selected ? AppColors.teal : AppColors.border,
           ),
         ),
         child: Text(
@@ -393,14 +396,16 @@ class _DateDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapTarget(
       onTap: onTap,
+      semanticLabel: label,
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -416,7 +421,7 @@ class _DateDropdown extends StatelessWidget {
             const Icon(
               Icons.keyboard_arrow_down,
               size: 16,
-              color: AppColors.textMuted,
+              color: AppColors.textFaint,
             ),
           ],
         ),
@@ -432,15 +437,17 @@ class _FlaggedToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapTarget(
       onTap: () => onChanged(!flaggedOnly),
+      semanticLabel: flaggedOnly ? 'Flagged Only' : 'Show Flagged',
+      borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: flaggedOnly ? AppColors.redLight : AppColors.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: flaggedOnly ? AppColors.red : AppColors.divider,
+            color: flaggedOnly ? AppColors.danger : AppColors.border,
           ),
         ),
         child: Text(
@@ -448,7 +455,7 @@ class _FlaggedToggle extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: flaggedOnly ? AppColors.red : AppColors.textSecondary,
+            color: flaggedOnly ? AppColors.danger : AppColors.textSecondary,
           ),
         ),
       ),
@@ -490,19 +497,19 @@ class _RecordTile extends StatelessWidget {
     final isBlocked = record.status == ScanRecordStatus.blocked;
     final isOcr = record.type == ScanRecordType.ocr;
 
-    Color statusDotColor = AppColors.amber;
+    Color statusDotColor = AppColors.warning;
     switch (record.status) {
       case ScanRecordStatus.dispensed:
-        statusDotColor = AppColors.green;
+        statusDotColor = AppColors.success;
         break;
       case ScanRecordStatus.blocked:
-        statusDotColor = AppColors.red;
+        statusDotColor = AppColors.danger;
         break;
       case ScanRecordStatus.saved:
-        statusDotColor = AppColors.amber;
+        statusDotColor = AppColors.warning;
         break;
       default:
-        statusDotColor = AppColors.amber;
+        statusDotColor = AppColors.warning;
         break;
     }
 
@@ -543,7 +550,7 @@ class _RecordTile extends StatelessWidget {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: isOcr ? AppColors.amberLight : AppColors.tealLight,
+                    color: isOcr ? AppColors.amberLight : AppColors.tealPale,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -551,7 +558,7 @@ class _RecordTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
-                      color: isOcr ? AppColors.amber : AppColors.teal,
+                      color: isOcr ? AppColors.warning : AppColors.teal,
                     ),
                   ),
                 ),
@@ -571,7 +578,7 @@ class _RecordTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.red,
+                        color: AppColors.danger,
                       ),
                     ),
                   ),
@@ -581,7 +588,7 @@ class _RecordTile extends StatelessWidget {
                   record.time,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted,
+                    color: AppColors.textFaint,
                   ),
                 ),
               ],
@@ -616,7 +623,7 @@ class _RecordTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: isBlocked ? FontWeight.w700 : FontWeight.w400,
-                      color: isBlocked ? AppColors.red : AppColors.textPrimary,
+                      color: isBlocked ? AppColors.danger : AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -625,7 +632,7 @@ class _RecordTile extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Staff: ${record.staff}',
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: const TextStyle(fontSize: 11, color: AppColors.textFaint),
             ),
           ],
         ),

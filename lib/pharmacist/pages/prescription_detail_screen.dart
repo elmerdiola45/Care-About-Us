@@ -279,7 +279,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
               icon: const Icon(
                 Icons.local_pharmacy_rounded,
                 color: Color(0xFF0B7B77),
-                size: 22,
+                size: 24,
               ),
               tooltip: 'Dispense',
             ),

@@ -256,7 +256,7 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 20, 14),
       child: Row(children: [
-        IconButton(onPressed: () => Navigator.maybePop(context), icon: const Icon(Icons.chevron_left, color: CrossPharmacyScanColors.text, size: 30)),
+        IconButton(onPressed: () => Navigator.maybePop(context), tooltip: 'Back', icon: const Icon(Icons.chevron_left, color: CrossPharmacyScanColors.text, size: 30)),
         Expanded(child: Column(children: [
           const Text('Cross-Pharmacy Scan', style: TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w700, fontSize: 17)),
           const SizedBox(height: 3),
@@ -309,7 +309,7 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
   Widget _cameraError(MobileScannerException error) {
     final denied = error.errorCode == MobileScannerErrorCode.permissionDenied;
     return Center(child: Padding(padding: const EdgeInsets.all(30), child: Column(mainAxisSize: MainAxisSize.min, children: [
-      const Icon(Icons.no_photography_outlined, color: CrossPharmacyScanColors.primaryLight, size: 42), const SizedBox(height: 14),
+      const Icon(Icons.no_photography_outlined, color: CrossPharmacyScanColors.primaryLight, size: 44), const SizedBox(height: 14),
       Text(denied ? 'Camera access is needed to scan prescriptions.' : 'The camera could not be started.', textAlign: TextAlign.center, style: const TextStyle(color: CrossPharmacyScanColors.text, fontSize: 16, fontWeight: FontWeight.w600)),
       const SizedBox(height: 8),
       Text(denied ? 'Enable Camera permission for this app in Android Settings, then return here.' : error.errorDetails?.message ?? 'Please try again or restart the scanner.', textAlign: TextAlign.center, style: const TextStyle(color: CrossPharmacyScanColors.muted)),
@@ -588,7 +588,7 @@ class _WebCrossPharmacyScannerState extends State<_WebCrossPharmacyScanner> {
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 20, 14),
               child: Row(children: [
-                IconButton(onPressed: () => Navigator.maybePop(context), icon: const Icon(Icons.chevron_left, color: CrossPharmacyScanColors.text, size: 30)),
+                IconButton(onPressed: () => Navigator.maybePop(context), tooltip: 'Back', icon: const Icon(Icons.chevron_left, color: CrossPharmacyScanColors.text, size: 30)),
                 Expanded(child: Column(children: [
                   const Text('Cross-Pharmacy Scan', style: TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w700, fontSize: 17)),
                   const SizedBox(height: 3),

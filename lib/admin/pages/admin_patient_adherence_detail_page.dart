@@ -138,13 +138,13 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
     }
     switch (_tier) {
       case AdherenceTier.good:
-        return (AppColors.green, AppColors.greenBg, 'Good', p.adherenceReason);
+        return (AppColors.success, AppColors.successBg, 'Good', p.adherenceReason);
       case AdherenceTier.atRisk:
-        return (AppColors.amber, AppColors.amberBg, 'At Risk', p.adherenceReason);
+        return (AppColors.warning, AppColors.warningBg, 'At Risk', p.adherenceReason);
       case AdherenceTier.critical:
-        return (AppColors.red, AppColors.redBg, 'Pending', p.adherenceReason);
+        return (AppColors.danger, AppColors.dangerBg, 'Pending', p.adherenceReason);
       case AdherenceTier.overDispensing:
-        return (AppColors.red, AppColors.redBg, 'Overdispensing', p.adherenceReason);
+        return (AppColors.danger, AppColors.dangerBg, 'Overdispensing', p.adherenceReason);
       case AdherenceTier.fullyDispensed:
         return (const Color(0xFF6B7280), const Color(0xFFF3F4F6), 'Fully Dispensed', p.adherenceReason);
     }
@@ -500,7 +500,7 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
 
   Widget _buildTimelineRow(RefillEvent event, {required bool isLast}) {
     final isFlagged = event.isFlagged;
-    final color = isFlagged ? AppColors.amber : AppColors.green;
+    final color = isFlagged ? AppColors.warning : AppColors.success;
 
     return IntrinsicHeight(
       child: Row(
@@ -514,7 +514,7 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
                 child: Icon(
                   isFlagged ? Icons.warning_amber_rounded : Icons.check_circle,
-                  size: 14,
+                  size: 16,
                   color: color,
                 ),
               ),
@@ -557,7 +557,7 @@ class _AdminPatientAdherenceDetailPageState extends State<AdminPatientAdherenceD
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: AppColors.infoBg, borderRadius: BorderRadius.circular(14)),
+        decoration: BoxDecoration(color: AppColors.tealPale, borderRadius: BorderRadius.circular(14)),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

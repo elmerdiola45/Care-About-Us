@@ -6,10 +6,10 @@ import '../data/admin_api_service.dart';
 import '../models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
 import '../../../common/models/dashboard_models.dart';
-import '../../../common/services/app_config.dart';
 import '../../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
 import '../../common/widgets/bottom_nav_bar.dart';
+import '../../common/widgets/tap_target.dart';
 import 'add_staff_sheet.dart';
 import 'admin_patient_adherence_page.dart';
 import 'reset_staff_password_sheet.dart';
@@ -34,8 +34,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _topTab = 0;
   int _navIndex = 0;
   final AdminApiService _api = AdminApiService();
-  bool _isCheckingConnection = false;
-  bool? _connectionOk;
   String? _adminName; // ADD
   String? _adminRole;
   // Raw role key (not _adminRole's display label) — AppSession.userType
@@ -93,7 +91,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     ? '1 new dispensing alert'
                     : '${newIds.length} new dispensing alerts',
               ),
-              backgroundColor: AppColors.amber,
+              backgroundColor: AppColors.warning,
               action: SnackBarAction(
                 label: 'View',
                 textColor: Colors.white,
@@ -177,27 +175,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     if (mounted) setState(() => _navIndex = 0);
   }
 
-  Future<void> _checkConnection() async {
-    if (_isCheckingConnection) return;
-    setState(() => _isCheckingConnection = true);
-    final ok = await _api.checkConnection();
-    if (mounted) {
-      setState(() {
-        _connectionOk = ok;
-        _isCheckingConnection = false;
-      });
-      if (!ok) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Cannot reach ${AppConfig.baseUrl}'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -253,10 +230,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               ],
             ),
           ),
-          GestureDetector(
+          TapTarget(
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AlertsDashboardScreen()),
             ),
+            semanticLabel: 'Dispensing alerts',
+            borderRadius: BorderRadius.circular(12),
             child: SizedBox(
               width: 42,
               height: 42,
@@ -288,7 +267,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         ),
                         constraints: const BoxConstraints(minWidth: 18),
                         decoration: BoxDecoration(
-                          color: AppColors.red,
+                          color: AppColors.danger,
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(color: Colors.white, width: 1.5),
                         ),
@@ -309,45 +288,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: _checkConnection,
-            child: Container(
-              width: 42,
-              height: 42,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _connectionOk == true
-                    ? AppColors.success.withValues(alpha: 0.1)
-                    : _connectionOk == false
-                    ? AppColors.danger.withValues(alpha: 0.1)
-                    : Colors.grey.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: _isCheckingConnection
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.teal,
-                      ),
-                    )
-                  : Icon(
-                      _connectionOk == true
-                          ? Icons.wifi_rounded
-                          : _connectionOk == false
-                          ? Icons.wifi_off_rounded
-                          : Icons.wifi_rounded,
-                      color: _connectionOk == true
-                          ? AppColors.success
-                          : _connectionOk == false
-                          ? AppColors.danger
-                          : Colors.grey,
-                      size: 20,
-                    ),
-            ),
-          ),
+
           const SizedBox(width: 8), // ADD
           PopupMenuButton<String>(
             // ADD
@@ -447,8 +388,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         children: List.generate(labels.length, (i) {
           final selected = _topTab == i;
           return Expanded(
-            child: GestureDetector(
+            child: TapTarget(
               onTap: () => setState(() => _topTab = i),
+              semanticLabel: labels[i],
               child: Container(
                 padding: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
@@ -670,11 +612,13 @@ class _OverviewTabState extends State<_OverviewTab> {
             ],
           ),
           const SizedBox(height: 16),
-          GestureDetector(
+          TapTarget(
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const QrOcrRecordsScreen()),
             ),
+            semanticLabel: 'QR and OCR records log',
+            borderRadius: BorderRadius.circular(16),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -736,11 +680,13 @@ class _OverviewTabState extends State<_OverviewTab> {
             ),
           ),
           const SizedBox(height: 12),
-          GestureDetector(
+          TapTarget(
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => PriceListPage()),
             ),
+            semanticLabel: 'Medicine price list',
+            borderRadius: BorderRadius.circular(16),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -902,7 +848,7 @@ class _PeriodSelector extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -953,7 +899,7 @@ class _PeriodButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : AppColors.muted,
+            color: selected ? Colors.white : AppColors.textFaint,
           ),
         ),
       ),
@@ -989,10 +935,10 @@ class _DispensingChartState extends State<_DispensingChart> {
               ? (100 * (point.value / maxCount)).toDouble().clamp(10.0, 100.0)
               : 5.0;
           return Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
+            child: TapTarget(
               onTap: () =>
                   setState(() => _selectedIndex = isSelected ? null : i),
+              semanticLabel: '${point.day}: ${point.count} prescriptions',
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -1344,11 +1290,8 @@ class _UsersTabState extends State<_UsersTab> {
           )
         else
           ..._filteredStaff.map(
-            (s) => _StaffCard(
-              staff: s,
-              api: widget.api,
-              isAdmin: widget.isAdmin,
-            ),
+            (s) =>
+                _StaffCard(staff: s, api: widget.api, isAdmin: widget.isAdmin),
           ),
       ],
     );
@@ -1364,9 +1307,9 @@ class _StatusBadge extends StatelessWidget {
   (Color bg, Color fg, String label) get _style {
     switch (status) {
       case StaffStatus.active:
-        return (AppColors.greenBg, AppColors.green, 'Active');
+        return (AppColors.successBg, AppColors.success, 'Active');
       case StaffStatus.onLeave:
-        return (AppColors.amberBg, AppColors.amber, 'On Leave');
+        return (AppColors.warningBg, AppColors.warning, 'On Leave');
       case StaffStatus.inactive:
         return (AppColors.dangerBg, AppColors.danger, 'Inactive');
     }
@@ -1375,24 +1318,30 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg, label) = _style;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: fg.withValues(alpha: 0.2), width: 1),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: fg,
-          ),
+    final content = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: fg.withValues(alpha: 0.2), width: 1),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: fg,
         ),
       ),
+    );
+    if (onTap == null) {
+      return content;
+    }
+    return TapTarget(
+      onTap: onTap!,
+      semanticLabel: label,
+      borderRadius: BorderRadius.circular(999),
+      child: content,
     );
   }
 }
@@ -1434,7 +1383,7 @@ class _StaffCardState extends State<_StaffCard> {
       case StaffStatus.active:
         return AppColors.teal;
       case StaffStatus.onLeave:
-        return AppColors.amber;
+        return AppColors.warning;
       case StaffStatus.inactive:
         return Colors.grey.shade500;
     }
@@ -1540,11 +1489,7 @@ class _StaffCardState extends State<_StaffCard> {
   }
 
   Future<void> _openResetPasswordSheet() async {
-    await ResetStaffPasswordSheet.show(
-      context,
-      staff: _staff,
-      api: widget.api,
-    );
+    await ResetStaffPasswordSheet.show(context, staff: _staff, api: widget.api);
   }
 
   void _openStatusMenu() {
@@ -1565,7 +1510,7 @@ class _StaffCardState extends State<_StaffCard> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.divider,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -1930,7 +1875,7 @@ class _ReportTypeSelector extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -1966,8 +1911,10 @@ class _ReportTypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapTarget(
       onTap: onTap,
+      semanticLabel: label,
+      borderRadius: BorderRadius.circular(11),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
@@ -1981,7 +1928,7 @@ class _ReportTypeButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : AppColors.muted,
+            color: selected ? Colors.white : AppColors.textFaint,
           ),
         ),
       ),
@@ -2008,14 +1955,14 @@ class _DateRangeField extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.line),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.calendar_today_outlined,
               size: 18,
-              color: AppColors.muted,
+              color: AppColors.textFaint,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -2023,7 +1970,7 @@ class _DateRangeField extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 13.5,
-                  color: dateRange == null ? AppColors.muted : AppColors.ink,
+                  color: dateRange == null ? AppColors.textFaint : AppColors.textSecondary,
                   fontWeight: dateRange == null
                       ? FontWeight.w500
                       : FontWeight.w600,
@@ -2036,8 +1983,9 @@ class _DateRangeField extends StatelessWidget {
                 icon: const Icon(
                   Icons.edit_outlined,
                   size: 16,
-                  color: AppColors.muted,
+                  color: AppColors.textFaint,
                 ),
+                tooltip: 'Change date range',
                 visualDensity: VisualDensity.compact,
               ),
           ],
@@ -2063,7 +2011,7 @@ class _DispensingPreviewTable extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.line),
+          border: Border.all(color: AppColors.border),
         ),
         child: const Center(
           child: Text(
@@ -2080,7 +2028,7 @@ class _DispensingPreviewTable extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.line),
+          border: Border.all(color: AppColors.border),
         ),
         child: DataTable(
           headingRowColor: WidgetStateProperty.all(AppColors.tealPale),
@@ -2229,7 +2177,7 @@ class _SeniorCitizenPreviewTable extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.line),
+          border: Border.all(color: AppColors.border),
         ),
         child: const Center(
           child: Text(
@@ -2246,7 +2194,7 @@ class _SeniorCitizenPreviewTable extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.line),
+          border: Border.all(color: AppColors.border),
         ),
         child: DataTable(
           headingRowColor: WidgetStateProperty.all(AppColors.tealPale),
