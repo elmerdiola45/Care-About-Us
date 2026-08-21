@@ -6,6 +6,7 @@ import '../../common/models/dashboard_models.dart';
 import '../../common/services/dashboard_repository.dart';
 import '../../common/session.dart';
 import '../../common/theme/app_colors.dart';
+import '../../common/utils/ph_time.dart';
 import '../../common/widgets/bottom_nav_bar.dart';
 import '../../common/widgets/responsive_center.dart';
 import '../data/saved_prescriptions_store.dart';
@@ -839,7 +840,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   Widget _recentPrescriptionRow(PrescriptionEntry entry) {
     final p = entry.prescription;
     final medCount = p.medicines.length;
-    final dt = p.dateTime.toLocal();
+    final dt = toPhilippineTime(p.dateTime);
     final dateLabel = '${dt.month}/${dt.day}/${dt.year}';
 
     final (statusColor, statusLabel) = switch (p.dispensingStatus) {

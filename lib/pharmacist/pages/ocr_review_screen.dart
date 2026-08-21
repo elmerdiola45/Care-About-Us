@@ -790,7 +790,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
 
     final cleanedPatientName = _cleanPatientName(patientName);
     final diagnosis = _diagnosisController.text.trim();
-    final dateStr = _dateController.text.trim();
     final licenseNo = _licenseController.text.trim();
     final ptNo = _ptController.text.trim();
     final s2 = _s2Controller.text.trim();
@@ -837,7 +836,14 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       (sum, m) => sum + m.totalLine,
     );
     final ocrCode = _generateOcrCode();
-    final dateTime = _parseHumanDate(dateStr) ?? DateTime.now();
+    // The prescription record's dateTime is the scan/save timestamp, not
+    // the "Date" field above (an editable, OCR-guessed field that only
+    // ever carries a date with no time-of-day, and isn't anchored to a
+    // "Date:" label on the document — see _parseOcr). Saved Rx cards and
+    // the detail screen show this value converted to Philippine time
+    // (see common/utils/ph_time.dart), so it needs to be an accurate
+    // instant, not a guess.
+    final dateTime = DateTime.now();
 
     final prescription = Prescription(
       patientName: cleanedPatientName,
@@ -2131,54 +2137,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     );
   }
 
-  DateTime? _parseHumanDate(String input) {
-    final s = input.trim();
-    if (s.isEmpty) return null;
-
-    // Year-first, e.g. "2026-8-21" or "2026/08/21" — the isoDateMatch regex
-    // above extracts this shape but with 1-2 digit month/day, which
-    // DateTime.tryParse's strict ISO-8601 parser rejects (it requires
-    // zero-padded MM/DD), so this would otherwise silently fail below.
-    final yearFirst = RegExp(
-      r'^(19\d\d|20\d\d)[-/](\d{1,2})[-/](\d{1,2})$',
-    ).firstMatch(s);
-    if (yearFirst != null) {
-      final year = int.parse(yearFirst.group(1)!);
-      final month = int.parse(yearFirst.group(2)!);
-      final day = int.parse(yearFirst.group(3)!);
-      if (_isValidCalendarDate(year, month, day)) {
-        return DateTime(year, month, day);
-      }
-    }
-
-    // Month-first, e.g. "8/21/26", "8/21/2026", "8-21-2026" — the shape the
-    // shortDateMatch regex above actually extracts from OCR text, matching
-    // the M/D/Y convention already used to display dates elsewhere in the
-    // app (see _formatDateTime in saved_prescriptions_list_screen.dart).
-    final monthFirst = RegExp(
-      r'^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$',
-    ).firstMatch(s);
-    if (monthFirst != null) {
-      final month = int.parse(monthFirst.group(1)!);
-      final day = int.parse(monthFirst.group(2)!);
-      var year = int.parse(monthFirst.group(3)!);
-      if (year < 100) {
-        year += 2000;
-      }
-      if (_isValidCalendarDate(year, month, day)) {
-        return DateTime(year, month, day);
-      }
-    }
-
-    // Fall back to strict ISO-8601 (zero-padded date, and/or a time part).
-    return DateTime.tryParse(s);
-  }
-
-  bool _isValidCalendarDate(int year, int month, int day) {
-    if (month < 1 || month > 12 || day < 1) return false;
-    final daysInMonth = DateTime(year, month + 1, 0).day;
-    return day <= daysInMonth;
-  }
 
   // ===========================================================================
   // FIXED MEDICINE MATCHER — takes the set of line indices already

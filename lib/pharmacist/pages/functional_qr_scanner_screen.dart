@@ -450,14 +450,22 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                     ),
                   ),
                   IgnorePointer(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final frameSize = (constraints.maxWidth * 0.7).clamp(
-                          180.0,
-                          280.0,
-                        );
-                        return _scanFrame(frameSize);
-                      },
+                    // Shifted above dead-center: the bottom-anchored
+                    // instruction/banner/button block (Positioned below)
+                    // grows taller whenever the home-branch banner wraps to
+                    // two lines, and a plain centered frame then overlaps
+                    // its top edge — see the reported "square is in the
+                    // text" bug. Nudging the frame up leaves clearance
+                    // regardless of banner height.
+                    child: Align(
+                      alignment: const Alignment(0, -0.18),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final frameSize = (constraints.maxWidth * 0.7)
+                              .clamp(180.0, 280.0);
+                          return _scanFrame(frameSize);
+                        },
+                      ),
                     ),
                   ),
                   Positioned(

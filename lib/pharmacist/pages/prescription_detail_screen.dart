@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
+import '../../common/utils/ph_time.dart';
 import '../../common/widgets/responsive_center.dart';
 import '../../common/widgets/authenticated_network_image.dart';
 import '../models/prescription.dart';
@@ -982,13 +983,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
     );
   }
 
-  String _formatDate(DateTime dt) {
-    final d = dt.toLocal();
-    final hour = d.hour % 12 == 0 ? 12 : d.hour % 12;
-    final minute = d.minute.toString().padLeft(2, '0');
-    final ampm = d.hour < 12 ? 'AM' : 'PM';
-    return '${d.month}/${d.day}/${d.year} · $hour:$minute $ampm';
-  }
+  String _formatDate(DateTime dt) => formatPhilippineDateTime(dt);
 
   Widget _buildImageThumbnail(
     Uint8List bytes,

@@ -19,6 +19,7 @@ import 'package:pharmacy_management_system/common/widgets/responsive_center.dart
 import 'package:pharmacy_management_system/common/widgets/authenticated_network_image.dart';
 import 'package:pharmacy_management_system/common/services/laravel_api_service.dart';
 import 'package:pharmacy_management_system/common/session.dart';
+import 'package:pharmacy_management_system/common/utils/ph_time.dart';
 import 'package:pharmacy_management_system/pharmacist/pages/dispense_screen.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:printing/printing.dart';
@@ -182,13 +183,7 @@ class _SavedPrescriptionsListScreenState
     return list;
   }
 
-  String _formatDateTime(DateTime dt) {
-    final d = dt.toLocal();
-    final hour = d.hour % 12 == 0 ? 12 : d.hour % 12;
-    final minute = d.minute.toString().padLeft(2, '0');
-    final ampm = d.hour < 12 ? 'AM' : 'PM';
-    return '${d.month}/${d.day}/${d.year} · $hour:$minute $ampm';
-  }
+  String _formatDateTime(DateTime dt) => formatPhilippineDateTime(dt);
 
   @override
   Widget build(BuildContext context) {
@@ -758,52 +753,66 @@ class _SavedPrescriptionsListScreenState
         ? SavedListColors.teal
         : SavedListColors.warning;
     final typeLabel = isEssential ? 'Essential' : 'Optional';
+    // Name gets its own full-width line instead of sharing a Row with the
+    // badge/qty/duration: those siblings aren't flexible, so on a narrow
+    // card a long qty+duration combo (e.g. "x 21 (dispensed: 21)" + "3x
+    // daily for 7 days") used to squeeze the Expanded name down to
+    // near-zero width, forcing Flutter to wrap it one character per line
+    // (the reported "morphed" text). Wrap below lets the meta info flow
+    // to a second line on its own instead of stealing the name's width.
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              name,
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: typeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              typeLabel,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: typeColor,
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
           Text(
-            qty,
+            name,
             style: const TextStyle(
               fontSize: 12.5,
-              color: SavedListColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          if (duration.isNotEmpty) ...[
-            const SizedBox(width: 6),
-            Text(
-              '· $duration',
-              style: const TextStyle(
-                fontSize: 11,
-                color: SavedListColors.textFaint,
+          const SizedBox(height: 2),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 2,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: typeColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  typeLabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: typeColor,
+                  ),
+                ),
               ),
-            ),
-          ],
+              Text(
+                qty,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: SavedListColors.textSecondary,
+                ),
+              ),
+              if (duration.isNotEmpty)
+                Text(
+                  '· $duration',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: SavedListColors.textFaint,
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
