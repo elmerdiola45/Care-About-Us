@@ -42,6 +42,17 @@ class HomeDashboardScreen extends StatefulWidget {
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   int _navIndex = 0;
 
+  // Saved Rx / Dispense / Patients (indices 2-4) used to be built
+  // unconditionally in the IndexedStack below, so all three fired their own
+  // network fetches the instant HomeDashboardScreen mounted — duplicating
+  // work _loadAll() below was already doing concurrently, which is why the
+  // dashboard was slow right after login. Deferring first construction
+  // until a tab is actually visited fixes that; IndexedStack already keeps
+  // every *built* child mounted permanently regardless of active index, so
+  // once visited a tab stays cached for the rest of the session with no
+  // extra keep-alive needed.
+  final Set<int> _visitedTabs = {0};
+
   final DashboardRepository _repo = DashboardRepository();
 
   bool _isLoading = true;
@@ -224,9 +235,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             _navIndex == 1
                 ? const FunctionalQrScannerScreen(showBackButton: false)
                 : const SizedBox.shrink(),
-            const SavedPrescriptionsListScreen(),
-            const DispenseScreen(),
-            const PatientAdherenceScreen(),
+            _visitedTabs.contains(2)
+                ? const SavedPrescriptionsListScreen()
+                : const SizedBox.shrink(),
+            _visitedTabs.contains(3)
+                ? const DispenseScreen()
+                : const SizedBox.shrink(),
+            _visitedTabs.contains(4)
+                ? const PatientAdherenceScreen()
+                : const SizedBox.shrink(),
           ],
         ),
       ),
@@ -909,7 +926,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   Widget _buildBottomNav() {
     return BottomNavBar(
       currentIndex: _navIndex,
-      onTap: (i) => setState(() => _navIndex = i),
+      onTap: (i) => setState(() {
+        _navIndex = i;
+        _visitedTabs.add(i);
+      }),
       items: BottomNavBar.pharmacistItems,
     );
   }

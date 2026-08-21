@@ -277,10 +277,29 @@ class SavedPrescriptionsStore {
     }
   }
 
+  // The dashboard, SavedPrescriptionsListScreen, and DispenseScreen each
+  // call fetchFromBackend() independently on their own first load — without
+  // this guard, near-simultaneous calls (e.g. tapping a nav tab while the
+  // dashboard's own fetch is still in flight) fire duplicate HTTP requests
+  // and duplicate the sequential adherence-fetch chain below. Sharing one
+  // in-flight Future means every concurrent caller awaits the same fetch
+  // and gets the same result (or the same thrown exception).
+  Future<void>? _inFlightFetch;
+
   /// Fetches all prescriptions from the backend and merges them into the local store.
   /// Existing entries are updated; new entries from the backend are added.
   /// Throws on network or API errors so callers can handle loading/error UI.
-  Future<void> fetchFromBackend() async {
+  Future<void> fetchFromBackend() {
+    final existing = _inFlightFetch;
+    if (existing != null) return existing;
+    final future = _fetchFromBackendInternal().whenComplete(() {
+      _inFlightFetch = null;
+    });
+    _inFlightFetch = future;
+    return future;
+  }
+
+  Future<void> _fetchFromBackendInternal() async {
     final prescriptions = await _api.fetchPrescriptions();
 
     for (final p in prescriptions) {
@@ -435,7 +454,16 @@ class SavedPrescriptionsStore {
         .toSet()
         .toList();
 
-    for (final pid in uniquePatientIds) {
+    // Was a sequential await-per-patient loop — one of the two N+1 chains
+    // that made the dashboard/Saved Rx/Dispense screens slow right after
+    // login. Running every patient's fetch concurrently instead cuts this
+    // from O(patients) sequential round trips to one. Each iteration's
+    // _items mutation happens synchronously right after its own await with
+    // nothing else awaited in between, so concurrent completions can't
+    // interleave and corrupt shared state (Dart's single-threaded event
+    // loop). Per-patient failures are still isolated exactly as before —
+    // one patient's failed fetch doesn't affect any other's.
+    await Future.wait(uniquePatientIds.map((pid) async {
       try {
         final statusJson = await _api.fetchPatientAdherence(pid);
         debugPrint(
@@ -455,7 +483,7 @@ class SavedPrescriptionsStore {
       } catch (e) {
         debugPrint('STORE: patient=$pid adherence fetch failed: $e');
       }
-    }
+    }));
   }
 
   static DispensingStatus _parseDispensingStatus(String? value) {

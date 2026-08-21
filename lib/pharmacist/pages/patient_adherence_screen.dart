@@ -44,113 +44,28 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
       final patients = await api.fetchPatients();
       debugPrint('Pharmacist adherence: fetched ${patients.length} patients');
 
+      // Was a sequential await-per-patient loop — one of the two N+1 chains
+      // that made this screen (and the dashboard, which pre-warms it) slow.
+      // Future.wait preserves input order, so `results` lines up with
+      // `patients` exactly as the old sequential loop did — no change to
+      // list ordering or per-patient behavior, just concurrency.
+      final results = await Future.wait(
+        patients.map((patient) => _loadOneRecord(api, patient)),
+      );
+
       final List<_PharmacistAdherenceRecord> records = [];
       int adherenceSuccessCount = 0;
       int adherenceFailCount = 0;
       String? adherenceError;
 
-      for (final patient in patients) {
-        final patientId = patient['patient_id']?.toString() ?? '';
-        AdherenceStatus adherence;
-        bool adherenceLoaded = false;
-        Map<String, dynamic>? statusJson;
-        try {
-          statusJson = await api.fetchPatientAdherence(patientId);
-          debugPrint(
-            'LIST: patient=$patientId adherence keys=${statusJson.keys.toList()}',
-          );
-          debugPrint(
-            'LIST: patient=$patientId has medications=${statusJson['medications'] != null || statusJson['items'] != null || statusJson['medication_details'] != null || statusJson['medicine_list'] != null || statusJson['prescription_items'] != null || statusJson['drugs'] != null} has refill_history=${statusJson['refill_history'] != null || statusJson['refillHistory'] != null || statusJson['dispensing_history'] != null || statusJson['dispensingHistory'] != null || statusJson['dispensing_logs'] != null || statusJson['dispensingLogs'] != null}',
-          );
-          adherence = AdherenceStatus.fromJson(statusJson);
-          debugPrint(
-            'LIST: patient=$patientId medNames=${adherence.medicationNames} refillCount=${adherence.refillHistory.length} score=${adherence.score} hasData=${adherence.hasData}',
-          );
-          adherenceLoaded = true;
+      for (final r in results) {
+        records.add(r.record);
+        if (r.adherenceOk) {
           adherenceSuccessCount++;
-        } catch (e) {
+        } else {
           adherenceFailCount++;
-          final errorStr = e.toString();
-          adherenceError ??= errorStr;
-          debugPrint('LIST: patient=$patientId adherence fetch failed: $e');
-          adherence = AdherenceStatus(
-            status: 'good',
-            reason: adherenceLoaded
-                ? 'No dispensing history yet.'
-                : 'Failed to load adherence data.',
-            lastCalculatedAt: DateTime.now(),
-          );
+          adherenceError ??= r.error;
         }
-
-        final medications = <String>[];
-        medications.addAll(
-          adherence.medicationNames.where(
-            (name) => name.isNotEmpty && !medications.contains(name),
-          ),
-        );
-        final lastFillRaw =
-            patient['last_fill']?.toString() ??
-            patient['lastFill']?.toString() ??
-            statusJson?['last_fill']?.toString() ??
-            statusJson?['lastFill']?.toString() ??
-            '';
-        DateTime lastFill =
-            DateTime.tryParse(lastFillRaw) ??
-            DateTime.fromMillisecondsSinceEpoch(0);
-
-        // Use refill_history already parsed by AdherenceStatus.fromJson, fall back to separate endpoint
-        for (final item in adherence.refillHistory) {
-          if (item.medicineName.isNotEmpty &&
-              !medications.contains(item.medicineName)) {
-            medications.add(item.medicineName);
-          }
-          if (item.dispensedAt.isAfter(lastFill)) {
-            lastFill = item.dispensedAt;
-          }
-        }
-
-        if (medications.isEmpty &&
-            lastFill.millisecondsSinceEpoch == 0 &&
-            patientId.isNotEmpty) {
-          try {
-            final historyJson = await api.fetchPatientDispensingHistory(
-              patientId,
-            );
-            for (final e in historyJson) {
-              final item = AdherenceHistoryItem.fromJson(e);
-              if (item.medicineName.isNotEmpty &&
-                  !medications.contains(item.medicineName)) {
-                medications.add(item.medicineName);
-              }
-              if (item.dispensedAt.isAfter(lastFill)) {
-                lastFill = item.dispensedAt;
-              }
-            }
-          } catch (e) {
-            debugPrint(
-              'Pharmacist adherence: failed to load dispensing history for patient $patientId: $e',
-            );
-          }
-        }
-
-        if (!adherence.hasData && medications.isNotEmpty) {
-          adherence = adherence.copyWith(hasData: true, hasHistory: true);
-        }
-
-        records.add(
-          _PharmacistAdherenceRecord(
-            patientId: patientId,
-            name: patient['name']?.toString() ?? 'Unknown',
-            age: patient['age'] ?? patient['patient_age'] ?? 0,
-            sex:
-                patient['gender']?.toString() ??
-                patient['sex']?.toString() ??
-                '',
-            lastFill: lastFill,
-            adherence: adherence,
-            medications: medications,
-          ),
-        );
       }
 
       debugPrint(
@@ -219,6 +134,114 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
         });
       }
     }
+  }
+
+  /// One patient's adherence lookup, extracted from the old sequential loop
+  /// so _loadRecords() can run every patient concurrently via Future.wait.
+  /// Logic is unchanged from the original loop body — only the surrounding
+  /// concurrency changed.
+  Future<
+    ({_PharmacistAdherenceRecord record, bool adherenceOk, String? error})
+  >
+  _loadOneRecord(LaravelApiService api, Map<String, dynamic> patient) async {
+    final patientId = patient['patient_id']?.toString() ?? '';
+    AdherenceStatus adherence;
+    bool adherenceLoaded = false;
+    bool adherenceOk = false;
+    String? error;
+    Map<String, dynamic>? statusJson;
+    try {
+      statusJson = await api.fetchPatientAdherence(patientId);
+      debugPrint(
+        'LIST: patient=$patientId adherence keys=${statusJson.keys.toList()}',
+      );
+      debugPrint(
+        'LIST: patient=$patientId has medications=${statusJson['medications'] != null || statusJson['items'] != null || statusJson['medication_details'] != null || statusJson['medicine_list'] != null || statusJson['prescription_items'] != null || statusJson['drugs'] != null} has refill_history=${statusJson['refill_history'] != null || statusJson['refillHistory'] != null || statusJson['dispensing_history'] != null || statusJson['dispensingHistory'] != null || statusJson['dispensing_logs'] != null || statusJson['dispensingLogs'] != null}',
+      );
+      adherence = AdherenceStatus.fromJson(statusJson);
+      debugPrint(
+        'LIST: patient=$patientId medNames=${adherence.medicationNames} refillCount=${adherence.refillHistory.length} score=${adherence.score} hasData=${adherence.hasData}',
+      );
+      adherenceLoaded = true;
+      adherenceOk = true;
+    } catch (e) {
+      error = e.toString();
+      debugPrint('LIST: patient=$patientId adherence fetch failed: $e');
+      adherence = AdherenceStatus(
+        status: 'good',
+        reason: adherenceLoaded
+            ? 'No dispensing history yet.'
+            : 'Failed to load adherence data.',
+        lastCalculatedAt: DateTime.now(),
+      );
+    }
+
+    final medications = <String>[];
+    medications.addAll(
+      adherence.medicationNames.where(
+        (name) => name.isNotEmpty && !medications.contains(name),
+      ),
+    );
+    final lastFillRaw =
+        patient['last_fill']?.toString() ??
+        patient['lastFill']?.toString() ??
+        statusJson?['last_fill']?.toString() ??
+        statusJson?['lastFill']?.toString() ??
+        '';
+    DateTime lastFill =
+        DateTime.tryParse(lastFillRaw) ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+
+    // Use refill_history already parsed by AdherenceStatus.fromJson, fall back to separate endpoint
+    for (final item in adherence.refillHistory) {
+      if (item.medicineName.isNotEmpty &&
+          !medications.contains(item.medicineName)) {
+        medications.add(item.medicineName);
+      }
+      if (item.dispensedAt.isAfter(lastFill)) {
+        lastFill = item.dispensedAt;
+      }
+    }
+
+    if (medications.isEmpty &&
+        lastFill.millisecondsSinceEpoch == 0 &&
+        patientId.isNotEmpty) {
+      try {
+        final historyJson = await api.fetchPatientDispensingHistory(
+          patientId,
+        );
+        for (final e in historyJson) {
+          final item = AdherenceHistoryItem.fromJson(e);
+          if (item.medicineName.isNotEmpty &&
+              !medications.contains(item.medicineName)) {
+            medications.add(item.medicineName);
+          }
+          if (item.dispensedAt.isAfter(lastFill)) {
+            lastFill = item.dispensedAt;
+          }
+        }
+      } catch (e) {
+        debugPrint(
+          'Pharmacist adherence: failed to load dispensing history for patient $patientId: $e',
+        );
+      }
+    }
+
+    if (!adherence.hasData && medications.isNotEmpty) {
+      adherence = adherence.copyWith(hasData: true, hasHistory: true);
+    }
+
+    final record = _PharmacistAdherenceRecord(
+      patientId: patientId,
+      name: patient['name']?.toString() ?? 'Unknown',
+      age: patient['age'] ?? patient['patient_age'] ?? 0,
+      sex: patient['gender']?.toString() ?? patient['sex']?.toString() ?? '',
+      lastFill: lastFill,
+      adherence: adherence,
+      medications: medications,
+    );
+
+    return (record: record, adherenceOk: adherenceOk, error: error);
   }
 
   List<_PharmacistAdherenceRecord> get _filtered {

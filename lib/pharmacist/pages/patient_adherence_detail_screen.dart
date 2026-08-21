@@ -46,6 +46,12 @@ class _PatientAdherenceDetailScreenState
     _loadDetail();
   }
 
+  bool get _hasUsableAdherence =>
+      widget.adherence != null &&
+      (widget.adherence!.hasData ||
+          widget.adherence!.medicationNames.isNotEmpty ||
+          widget.adherence!.refillHistory.isNotEmpty);
+
   Future<void> _loadDetail() async {
     setState(() {
       _isLoading = true;
@@ -60,27 +66,38 @@ class _PatientAdherenceDetailScreenState
       _patient ??= await api.fetchPatient(widget.patientId);
       debugPrint('DETAIL: patient keys=${_patient?.keys.toList()}');
 
-      AdherenceStatus? adherence;
-      Map<String, dynamic>? statusJson;
-      try {
-        statusJson = await api.fetchPatientAdherence(widget.patientId);
-        debugPrint('DETAIL adherence: keys=${statusJson.keys.toList()}');
-        debugPrint(
-          'DETAIL adherence: has medications=${statusJson['medications'] != null || statusJson['items'] != null || statusJson['medication_details'] != null || statusJson['medicine_list'] != null || statusJson['prescription_items'] != null || statusJson['drugs'] != null}',
-        );
-        debugPrint(
-          'DETAIL adherence: has refill_history=${statusJson['refill_history'] != null || statusJson['refillHistory'] != null || statusJson['dispensing_history'] != null || statusJson['dispensingHistory'] != null || statusJson['dispensing_logs'] != null || statusJson['dispensingLogs'] != null}',
-        );
-        debugPrint(
-          'DETAIL adherence: adherence_percent=${statusJson['adherence_percent'] ?? statusJson['adherencePercent'] ?? statusJson['score'] ?? statusJson['percentage']}',
-        );
-        adherence = AdherenceStatus.fromJson(statusJson);
-        debugPrint(
-          'DETAIL: parsed adherence score=${adherence.score} hasData=${adherence.hasData} medNames=${adherence.medicationNames} refillHistoryCount=${adherence.refillHistory.length}',
-        );
-      } catch (e) {
-        debugPrint('DETAIL: adherence fetch failed: $e');
-        adherence = AdherenceStatus.noData();
+      AdherenceStatus adherence;
+      if (_hasUsableAdherence) {
+        // The list screen already resolved this patient's adherence data
+        // (medications/refill history) and passed it via widget.adherence —
+        // re-fetching it here duplicated a network call the list just made
+        // seconds ago, which is why this screen always showed "Loading
+        // patient data..." regardless of how fresh the list was. Mirrors
+        // AdminPatientAdherenceDetailPage's hasAdherenceData short-circuit.
+        debugPrint('DETAIL: reusing adherence passed from list screen');
+        adherence = widget.adherence!;
+      } else {
+        Map<String, dynamic>? statusJson;
+        try {
+          statusJson = await api.fetchPatientAdherence(widget.patientId);
+          debugPrint('DETAIL adherence: keys=${statusJson.keys.toList()}');
+          debugPrint(
+            'DETAIL adherence: has medications=${statusJson['medications'] != null || statusJson['items'] != null || statusJson['medication_details'] != null || statusJson['medicine_list'] != null || statusJson['prescription_items'] != null || statusJson['drugs'] != null}',
+          );
+          debugPrint(
+            'DETAIL adherence: has refill_history=${statusJson['refill_history'] != null || statusJson['refillHistory'] != null || statusJson['dispensing_history'] != null || statusJson['dispensingHistory'] != null || statusJson['dispensing_logs'] != null || statusJson['dispensingLogs'] != null}',
+          );
+          debugPrint(
+            'DETAIL adherence: adherence_percent=${statusJson['adherence_percent'] ?? statusJson['adherencePercent'] ?? statusJson['score'] ?? statusJson['percentage']}',
+          );
+          adherence = AdherenceStatus.fromJson(statusJson);
+          debugPrint(
+            'DETAIL: parsed adherence score=${adherence.score} hasData=${adherence.hasData} medNames=${adherence.medicationNames} refillHistoryCount=${adherence.refillHistory.length}',
+          );
+        } catch (e) {
+          debugPrint('DETAIL: adherence fetch failed: $e');
+          adherence = AdherenceStatus.noData();
+        }
       }
 
       List<AdherenceHistoryItem> history = List.from(adherence.refillHistory);

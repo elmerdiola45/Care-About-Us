@@ -409,6 +409,14 @@ class _DispenseScreenState extends State<DispenseScreen> {
         _quantityErrors[name] = null;
       }
     });
+    // Mirrors _incrementMedicine/_decrementMedicine: without writing the
+    // clamped value back into the visible field, typing e.g. "13" against a
+    // cap of 12 left "13" displayed while only 12 was actually submitted —
+    // silently misleading rather than blocked (reported: dispensed 13,
+    // recorded 12, no visible indication why).
+    if (parsed != null && parsed > maxAllowed) {
+      _qtyControllers[name]?.text = '$maxAllowed';
+    }
   }
 
   String _formatDate(DateTime dt) {
@@ -1505,7 +1513,51 @@ class _DispenseScreenState extends State<DispenseScreen> {
   // ---------- BACKEND DISPENSING LOGS CARD ----------
   Widget _buildBackendHistoryCard() {
     if (_backendLogs.isEmpty && !_historyLoading) {
-      return const SizedBox.shrink();
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.history_outlined,
+              size: 20,
+              color: const Color(0xFF8A8F9C).withValues(alpha: 0.6),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'No dispensing history yet',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1D29),
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Records will appear here once this prescription is dispensed.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF8A8F9C)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (_backendLogs.isEmpty && _historyLoading) {
