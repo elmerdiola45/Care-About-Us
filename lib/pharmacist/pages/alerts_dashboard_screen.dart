@@ -347,6 +347,8 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
         return Icons.copy_rounded;
       case AlertType.crossPharmacyDuplicate:
         return Icons.store_rounded;
+      case AlertType.crossPharmacyDispense:
+        return Icons.sync_alt_rounded;
     }
   }
 
