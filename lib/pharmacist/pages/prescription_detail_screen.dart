@@ -352,12 +352,15 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: _buildImageThumbnail(
-              widget.entry.imageBytes,
-              64,
-              widget.entry.imageUrl,
+          GestureDetector(
+            onTap: () => _openImageViewer(context),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: _buildImageThumbnail(
+                widget.entry.imageBytes,
+                64,
+                widget.entry.imageUrl,
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -984,6 +987,43 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
   }
 
   String _formatDate(DateTime dt) => formatPhilippineDateTime(dt);
+
+  void _openImageViewer(BuildContext context) {
+    final bytes = widget.entry.imageBytes;
+    final imageUrl = widget.entry.imageUrl;
+    if (bytes.isEmpty && (imageUrl == null || imageUrl.isEmpty)) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4,
+              child: bytes.isNotEmpty
+                  ? Image.memory(bytes, fit: BoxFit.contain)
+                  : AuthenticatedNetworkImage(
+                      imageUrl: imageUrl!,
+                      token: AppSession.instance.token,
+                      fit: BoxFit.contain,
+                      errorWidget: Icon(
+                        Icons.image_not_supported_outlined,
+                        size: 64,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildImageThumbnail(
     Uint8List bytes,
