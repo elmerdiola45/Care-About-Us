@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-import '../../admin/data/cross_pharmacy_request_store.dart';
 import '../../common/session.dart';
 import '../../common/services/laravel_api_service.dart';
+import '../../common/utils/qr_token_parser.dart';
 import '../widgets/branch_info_card.dart';
 
 class CrossPharmacyScanColors {
@@ -20,6 +20,39 @@ class CrossPharmacyScanColors {
   static const border = Color(0xFF334155);
   static const warning = Color(0xFFF59E0B);
   static const warningBg = Color(0xFFFEF3D9);
+  static const danger = Color(0xFFEF4444);
+  static const dangerBg = Color(0xFFFEE2E2);
+}
+
+/// Verifies a scanned/pasted QR value against the real backend — extracting
+/// the secret token from either a raw {"token": "..."} JSON payload or a
+/// bare `.../verify/{token}` URL (the format printed QR codes now encode).
+/// Throws [LaravelApiException] on an invalid/expired/already-used token.
+/// There is deliberately no demo-data fallback here: a cross-pharmacy scan
+/// is about to modify another pharmacy's real records.
+Future<LaravelVerifiedPrescription> verifyCrossPharmacyQr(String rawValue) async {
+  String token = '';
+  try {
+    final decoded = jsonDecode(rawValue);
+    if (decoded is Map) {
+      token = (decoded['token'] ?? decoded['t'])?.toString() ?? '';
+    }
+  } catch (_) {
+    // Not JSON — fall through to URL extraction below.
+  }
+  if (token.isEmpty) {
+    token = extractTokenFromUrl(rawValue);
+  }
+  if (token.isEmpty) {
+    throw const LaravelApiException('This QR code could not be recognized.');
+  }
+
+  final api = LaravelApiService(token: AppSession.instance.token);
+  final verified = await api.verifyQrToken(token);
+  if (!verified.valid) {
+    throw LaravelApiException(verified.message ?? 'This QR code is invalid or already used.');
+  }
+  return verified;
 }
 
 class CrossPharmacyScanScreen extends StatefulWidget {
@@ -67,7 +100,7 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
     WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
-}
+  }
 
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_processing) return;
@@ -77,12 +110,30 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
 
     setState(() => _processing = true);
     await _controller.stop();
-    await Future<void>.delayed(const Duration(milliseconds: 800));
+
+    LaravelVerifiedPrescription? prescription;
+    String? error;
+    try {
+      prescription = await verifyCrossPharmacyQr(rawValue);
+    } on LaravelApiException catch (e) {
+      error = e.message;
+    } catch (_) {
+      error = 'Could not verify this QR code. Please try again.';
+    }
 
     if (!mounted) return;
 
-    final prescription = _parseQr(rawValue);
-    final confirmed = await _showVerificationSheet(prescription);
+    if (error != null) {
+      setState(() => _processing = false);
+      await _controller.start();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: CrossPharmacyScanColors.danger, duration: const Duration(seconds: 3)),
+      );
+      return;
+    }
+
+    final confirmed = await _showVerificationSheet(prescription!);
 
     if (!mounted) return;
     setState(() => _processing = false);
@@ -91,7 +142,7 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
     if (!mounted) return;
 
     if (confirmed == true) {
-      _submitCrossPharmacyRequest(prescription);
+      _submitCrossPharmacyDispense(prescription);
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -100,63 +151,58 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
     }
   }
 
-  Future<void> _submitCrossPharmacyRequest(Map<String, dynamic> prescription) async {
+  Future<void> _submitCrossPharmacyDispense(LaravelVerifiedPrescription prescription) async {
     final branchInfo = await _showBranchInfoSheet();
     if (branchInfo == null || !mounted) return;
 
-    final rxNumber = prescription['rxNo']?.toString() ?? prescription['rxNumber']?.toString() ?? 'Unknown';
-    final patientName = prescription['patientName']?.toString() ?? prescription['patient']?.toString() ?? 'Unknown Patient';
-    final pharmacyName = branchInfo['pharmacyName']?.toString() ?? 'Unknown Pharmacy';
-    final pharmacyLocation = '${branchInfo['branch'] ?? ''} · ${branchInfo['address'] ?? ''}';
-    final staffName = branchInfo['staff']?.toString() ?? 'Unknown Staff';
-    final medicines = (prescription['medicines'] is List ? prescription['medicines'] as List<dynamic> : const <dynamic>[])
-        .whereType<Map>()
-        .map((m) => <String, dynamic>{
-              'name': m['name']?.toString() ?? 'Unknown',
-              'quantity': int.tryParse(m['qty']?.toString() ?? m['quantity']?.toString() ?? '1') ?? 1,
-            })
+    final pharmacyName = branchInfo['pharmacyName']?.trim().isNotEmpty == true
+        ? branchInfo['pharmacyName']!.trim()
+        : 'Unknown Pharmacy';
+    final staffName = branchInfo['staff']?.trim().isNotEmpty == true
+        ? branchInfo['staff']!.trim()
+        : 'Unknown Staff';
+    final items = prescription.remainingItems
+        .where((i) => i.remainingQuantity > 0)
+        .map((i) => {'item_id': i.itemId, 'quantity': i.remainingQuantity})
         .toList();
 
-    final request = CrossPharmacyRequest(
-      id: 'REQ-${DateTime.now().millisecondsSinceEpoch}',
-      rxNumber: rxNumber,
-      patientName: patientName,
-      requestingPharmacyName: pharmacyName,
-      requestingPharmacyLocation: pharmacyLocation,
-      requestingStaffName: staffName,
-      medicines: medicines.map((m) => MapEntry(m['name'] as String, m['quantity'] as int)).toList(),
-      submittedAt: DateTime.now(),
-    );
-
-    CrossPharmacyRequestStore.instance.submit(request);
+    if (items.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nothing remains to dispense on this prescription.'), backgroundColor: CrossPharmacyScanColors.danger),
+      );
+      return;
+    }
 
     try {
       final api = LaravelApiService(token: AppSession.instance.token);
-      await api.submitCrossPharmacyRequest(
-        rxNumber: rxNumber,
-        patientName: patientName,
-        requestingPharmacyName: pharmacyName,
-        requestingPharmacyLocation: pharmacyLocation,
-        requestingStaffName: staffName,
-        medicines: medicines,
+      await api.submitCrossPharmacyDispense(
+        token: prescription.token,
+        pharmacyName: pharmacyName,
+        branch: branchInfo['branch'],
+        address: branchInfo['address'] ?? '',
+        licenseNumber: branchInfo['license'] ?? '',
+        staffDispensing: staffName,
+        items: items,
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Request submitted to $pharmacyName. Awaiting approval.'),
+          content: Text('Dispensed and recorded for $pharmacyName.'),
           backgroundColor: CrossPharmacyScanColors.primary,
           duration: const Duration(seconds: 3),
         ),
       );
+    } on LaravelApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: CrossPharmacyScanColors.danger, duration: const Duration(seconds: 4)),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit request: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
+        SnackBar(content: Text('Failed to submit dispense: $e'), backgroundColor: CrossPharmacyScanColors.danger, duration: const Duration(seconds: 4)),
       );
     }
   }
@@ -170,36 +216,13 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
     );
   }
 
-  Future<bool?> _showVerificationSheet(Map<String, dynamic> prescription) {
+  Future<bool?> _showVerificationSheet(LaravelVerifiedPrescription prescription) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _VerificationSheet(prescription: prescription),
     );
-  }
-
-  Map<String, dynamic> _parseQr(String rawValue) {
-    try {
-      final decoded = jsonDecode(rawValue);
-      if (decoded is Map) {
-        return Map<String, dynamic>.from(decoded);
-      }
-    } catch (_) {
-      // Non-JSON QR: return demo data
-    }
-    return {
-      'rxNo': 'RX-2024-00511',
-      'patientName': 'Maria Santos',
-      'patientAge': 58,
-      'patientSex': 'F',
-      'prescriber': 'Dr. Andrea Cruz',
-      'issuedDate': '05 July 2025',
-      'medicines': [
-        {'name': 'Amoxicillin', 'strength': '500 mg capsule', 'qty': 21, 'stock': 84},
-        {'name': 'Paracetamol', 'strength': '500 mg tablet', 'qty': 10, 'stock': 126},
-      ],
-    };
   }
 
   Future<void> _toggleTorch() async {
@@ -240,7 +263,7 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
                   Positioned(bottom: 28, left: 20, right: 20, child: Column(children: [
                     const Text('Align the prescription QR code within the frame', textAlign: TextAlign.center, style: TextStyle(color: CrossPharmacyScanColors.text, fontSize: 13.5)),
                     const SizedBox(height: 14),
-                    _approvalBanner(),
+                    _immediateRecordBanner(),
                   ])),
                   if (_processing) _verificationOverlay(),
                 ],
@@ -284,28 +307,6 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
         child: Container(width: 44, height: 44, decoration: BoxDecoration(color: CrossPharmacyScanColors.background.withValues(alpha: 0.72), shape: BoxShape.circle), child: Icon(icon, color: CrossPharmacyScanColors.text)),
       );
 
-  Widget _approvalBanner() => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: CrossPharmacyScanColors.warningBg,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: CrossPharmacyScanColors.warning.withValues(alpha: .45)),
-        ),
-        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.info_outline, color: CrossPharmacyScanColors.warning, size: 16),
-          SizedBox(width: 7),
-          Text('Requires home pharmacy approval before record updates.', style: TextStyle(color: CrossPharmacyScanColors.warning, fontSize: 11.5, fontWeight: FontWeight.w600)),
-        ]),
-      );
-
-  Widget _verificationOverlay() => Container(
-        color: CrossPharmacyScanColors.background.withValues(alpha: .93),
-        child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const SizedBox(width: 42, height: 42, child: CircularProgressIndicator(color: CrossPharmacyScanColors.primaryLight, strokeWidth: 3)),
-          const SizedBox(height: 16), Text('Verifying prescription…', style: TextStyle(color: CrossPharmacyScanColors.text, fontSize: 14)),
-        ])),
-      );
-
   Widget _cameraError(MobileScannerException error) {
     final denied = error.errorCode == MobileScannerErrorCode.permissionDenied;
     return Center(child: Padding(padding: const EdgeInsets.all(30), child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -316,7 +317,34 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> with 
       const SizedBox(height: 18), OutlinedButton(onPressed: _controller.start, child: const Text('Try camera again')),
     ])));
   }
+
+  Widget _verificationOverlay() => Container(
+        color: CrossPharmacyScanColors.background.withValues(alpha: .93),
+        child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(width: 42, height: 42, child: CircularProgressIndicator(color: CrossPharmacyScanColors.primaryLight, strokeWidth: 3)),
+          const SizedBox(height: 16), Text('Verifying prescription…', style: TextStyle(color: CrossPharmacyScanColors.text, fontSize: 14)),
+        ])),
+      );
 }
+
+// Shared "immediate record" banner — replaces the old "Requires home
+// pharmacy approval before record updates." copy, which is no longer
+// accurate now that CrossPharmacyDispenseService::commit() dispenses
+// atomically at submission time (same corrected messaging already applied
+// to verify.blade.php's public portal page).
+Widget _immediateRecordBanner() => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: CrossPharmacyScanColors.warningBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: CrossPharmacyScanColors.warning.withValues(alpha: .45)),
+      ),
+      child: const Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.info_outline, color: CrossPharmacyScanColors.warning, size: 16),
+        SizedBox(width: 7),
+        Text('Dispensed quantities are recorded immediately against the home pharmacy\'s prescription.', style: TextStyle(color: CrossPharmacyScanColors.warning, fontSize: 11.5, fontWeight: FontWeight.w600)),
+      ]),
+    );
 
 class _FrameCorner extends StatelessWidget {
   final Alignment alignment;
@@ -337,18 +365,15 @@ class _FrameCorner extends StatelessWidget {
 }
 
 class _VerificationSheet extends StatelessWidget {
-  final Map<String, dynamic> prescription;
+  final LaravelVerifiedPrescription prescription;
   const _VerificationSheet({required this.prescription});
 
   @override
   Widget build(BuildContext context) {
-    final medicines = (prescription['medicines'] is List ? prescription['medicines'] as List<dynamic> : const <dynamic>[])
-        .whereType<Map>()
-        .map((m) => '${m['name'] ?? 'Unknown'} × ${m['qty'] ?? m['quantity'] ?? 1}')
-        .toList();
+    final items = prescription.remainingItems;
 
     return Container(
-      margin: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
+      margin: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.3),
       decoration: const BoxDecoration(
         color: CrossPharmacyScanColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -371,31 +396,34 @@ class _VerificationSheet extends StatelessWidget {
                   children: [
                     const Icon(Icons.verified_outlined, color: CrossPharmacyScanColors.primaryLight, size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      'Cross-Pharmacy Request',
+                    const Text(
+                      'Cross-Pharmacy Dispense',
                       style: TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w800, fontSize: 16),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text('RX: ${prescription['rxNo'] ?? prescription['rxNumber'] ?? 'Unknown'}', style: TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13)),
+                Text('RX: ${prescription.ocrCode}', style: const TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13)),
                 const SizedBox(height: 4),
-                Text('Patient: ${prescription['patientName'] ?? prescription['patient'] ?? 'Unknown'}', style: TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w700, fontSize: 15)),
+                Text('Patient: ${prescription.patientName}', style: const TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w700, fontSize: 15)),
                 const SizedBox(height: 4),
-                Text('Prescriber: ${prescription['prescriber'] ?? prescription['doctor'] ?? 'Unknown'}', style: TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13)),
+                Text('Prescriber: ${prescription.doctorName}', style: const TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13)),
                 const SizedBox(height: 12),
                 const Divider(color: CrossPharmacyScanColors.border),
                 const SizedBox(height: 12),
-                const Text('Medicines', style: TextStyle(color: CrossPharmacyScanColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
+                const Text('Medicines to dispense (remaining)', style: TextStyle(color: CrossPharmacyScanColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
                 const SizedBox(height: 8),
-                ...medicines.map((m) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(children: [
-                        Container(width: 6, height: 6, decoration: const BoxDecoration(color: CrossPharmacyScanColors.primaryLight, shape: BoxShape.circle)),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(m, style: TextStyle(color: CrossPharmacyScanColors.text, fontSize: 14))),
-                      ]),
-                    )),
+                if (items.isEmpty)
+                  const Text('No remaining quantity on this prescription.', style: TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13))
+                else
+                  ...items.map((i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(children: [
+                          Container(width: 6, height: 6, decoration: const BoxDecoration(color: CrossPharmacyScanColors.primaryLight, shape: BoxShape.circle)),
+                          const SizedBox(width: 10),
+                          Expanded(child: Text('${i.medicineName} × ${i.remainingQuantity}', style: const TextStyle(color: CrossPharmacyScanColors.text, fontSize: 14))),
+                        ]),
+                      )),
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -414,7 +442,7 @@ class _VerificationSheet extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(true),
+                        onPressed: items.isEmpty ? null : () => Navigator.of(context).pop(true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: CrossPharmacyScanColors.primary,
                           foregroundColor: Colors.white,
@@ -458,8 +486,27 @@ class _WebCrossPharmacyScannerState extends State<_WebCrossPharmacyScanner> {
 
     setState(() => _processing = true);
 
-    final prescription = _parseQr(rawValue.trim());
-    final confirmed = await _showVerificationSheet(prescription);
+    LaravelVerifiedPrescription? prescription;
+    String? error;
+    try {
+      prescription = await verifyCrossPharmacyQr(rawValue.trim());
+    } on LaravelApiException catch (e) {
+      error = e.message;
+    } catch (_) {
+      error = 'Could not verify this QR code. Please try again.';
+    }
+
+    if (!mounted) return;
+
+    if (error != null) {
+      setState(() => _processing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: CrossPharmacyScanColors.danger, duration: const Duration(seconds: 3)),
+      );
+      return;
+    }
+
+    final confirmed = await _showVerificationSheet(prescription!);
 
     if (!mounted) return;
 
@@ -467,7 +514,7 @@ class _WebCrossPharmacyScannerState extends State<_WebCrossPharmacyScanner> {
     _textController.clear();
 
     if (confirmed == true) {
-      _submitCrossPharmacyRequest(prescription);
+      _submitCrossPharmacyDispense(prescription);
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -476,30 +523,7 @@ class _WebCrossPharmacyScannerState extends State<_WebCrossPharmacyScanner> {
     }
   }
 
-  Map<String, dynamic> _parseQr(String rawValue) {
-    try {
-      final decoded = jsonDecode(rawValue);
-      if (decoded is Map) {
-        return Map<String, dynamic>.from(decoded);
-      }
-    } catch (_) {
-      // Non-JSON QR: return demo data
-    }
-    return {
-      'rxNo': 'RX-2024-00511',
-      'patientName': 'Maria Santos',
-      'patientAge': 58,
-      'patientSex': 'F',
-      'prescriber': 'Dr. Andrea Cruz',
-      'issuedDate': '05 July 2025',
-      'medicines': [
-        {'name': 'Amoxicillin', 'strength': '500 mg capsule', 'qty': 21, 'stock': 84},
-        {'name': 'Paracetamol', 'strength': '500 mg tablet', 'qty': 10, 'stock': 126},
-      ],
-    };
-  }
-
-  Future<bool?> _showVerificationSheet(Map<String, dynamic> prescription) {
+  Future<bool?> _showVerificationSheet(LaravelVerifiedPrescription prescription) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -508,63 +532,58 @@ class _WebCrossPharmacyScannerState extends State<_WebCrossPharmacyScanner> {
     );
   }
 
-  Future<void> _submitCrossPharmacyRequest(Map<String, dynamic> prescription) async {
+  Future<void> _submitCrossPharmacyDispense(LaravelVerifiedPrescription prescription) async {
     final branchInfo = await _showBranchInfoSheet();
     if (branchInfo == null || !mounted) return;
 
-    final rxNumber = prescription['rxNo']?.toString() ?? prescription['rxNumber']?.toString() ?? 'Unknown';
-    final patientName = prescription['patientName']?.toString() ?? prescription['patient']?.toString() ?? 'Unknown Patient';
-    final pharmacyName = branchInfo['pharmacyName']?.toString() ?? 'Unknown Pharmacy';
-    final pharmacyLocation = '${branchInfo['branch'] ?? ''} · ${branchInfo['address'] ?? ''}';
-    final staffName = branchInfo['staff']?.toString() ?? 'Unknown Staff';
-    final medicines = (prescription['medicines'] is List ? prescription['medicines'] as List<dynamic> : const <dynamic>[])
-        .whereType<Map>()
-        .map((m) => <String, dynamic>{
-              'name': m['name']?.toString() ?? 'Unknown',
-              'quantity': int.tryParse(m['qty']?.toString() ?? m['quantity']?.toString() ?? '1') ?? 1,
-            })
+    final pharmacyName = branchInfo['pharmacyName']?.trim().isNotEmpty == true
+        ? branchInfo['pharmacyName']!.trim()
+        : 'Unknown Pharmacy';
+    final staffName = branchInfo['staff']?.trim().isNotEmpty == true
+        ? branchInfo['staff']!.trim()
+        : 'Unknown Staff';
+    final items = prescription.remainingItems
+        .where((i) => i.remainingQuantity > 0)
+        .map((i) => {'item_id': i.itemId, 'quantity': i.remainingQuantity})
         .toList();
 
-    final request = CrossPharmacyRequest(
-      id: 'REQ-${DateTime.now().millisecondsSinceEpoch}',
-      rxNumber: rxNumber,
-      patientName: patientName,
-      requestingPharmacyName: pharmacyName,
-      requestingPharmacyLocation: pharmacyLocation,
-      requestingStaffName: staffName,
-      medicines: medicines.map((m) => MapEntry(m['name'] as String, m['quantity'] as int)).toList(),
-      submittedAt: DateTime.now(),
-    );
-
-    CrossPharmacyRequestStore.instance.submit(request);
+    if (items.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nothing remains to dispense on this prescription.'), backgroundColor: CrossPharmacyScanColors.danger),
+      );
+      return;
+    }
 
     try {
       final api = LaravelApiService(token: AppSession.instance.token);
-      await api.submitCrossPharmacyRequest(
-        rxNumber: rxNumber,
-        patientName: patientName,
-        requestingPharmacyName: pharmacyName,
-        requestingPharmacyLocation: pharmacyLocation,
-        requestingStaffName: staffName,
-        medicines: medicines,
+      await api.submitCrossPharmacyDispense(
+        token: prescription.token,
+        pharmacyName: pharmacyName,
+        branch: branchInfo['branch'],
+        address: branchInfo['address'] ?? '',
+        licenseNumber: branchInfo['license'] ?? '',
+        staffDispensing: staffName,
+        items: items,
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Request submitted to $pharmacyName. Awaiting approval.'),
+          content: Text('Dispensed and recorded for $pharmacyName.'),
           backgroundColor: CrossPharmacyScanColors.primary,
           duration: const Duration(seconds: 3),
         ),
       );
+    } on LaravelApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: CrossPharmacyScanColors.danger, duration: const Duration(seconds: 4)),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit request: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
+        SnackBar(content: Text('Failed to submit dispense: $e'), backgroundColor: CrossPharmacyScanColors.danger, duration: const Duration(seconds: 4)),
       );
     }
   }
@@ -615,12 +634,12 @@ class _WebCrossPharmacyScannerState extends State<_WebCrossPharmacyScanner> {
                           children: [
                             const Icon(Icons.qr_code_scanner_outlined, color: CrossPharmacyScanColors.primaryLight, size: 48),
                             const SizedBox(height: 16),
-                            Text(
+                            const Text(
                               'Web Cross-Pharmacy Scanner',
                               style: TextStyle(color: CrossPharmacyScanColors.text, fontSize: 20, fontWeight: FontWeight.w700),
                             ),
                             const SizedBox(height: 8),
-                            Text(
+                            const Text(
                               'Paste the QR code content below to scan a prescription.',
                               textAlign: TextAlign.center,
                               style: TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 14),
@@ -632,9 +651,9 @@ class _WebCrossPharmacyScannerState extends State<_WebCrossPharmacyScanner> {
                               style: const TextStyle(color: CrossPharmacyScanColors.text, fontSize: 14),
                               decoration: InputDecoration(
                                 hintText: 'Paste QR content here...',
-                                hintStyle: TextStyle(color: CrossPharmacyScanColors.muted),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: CrossPharmacyScanColors.border)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: CrossPharmacyScanColors.border)),
+                                hintStyle: const TextStyle(color: CrossPharmacyScanColors.muted),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CrossPharmacyScanColors.border)),
+                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CrossPharmacyScanColors.border)),
                                 contentPadding: const EdgeInsets.all(12),
                               ),
                             ),
@@ -659,14 +678,7 @@ class _WebCrossPharmacyScannerState extends State<_WebCrossPharmacyScanner> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                        decoration: BoxDecoration(color: CrossPharmacyScanColors.warningBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: CrossPharmacyScanColors.warning.withValues(alpha: .45))),
-                        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.info_outline, color: CrossPharmacyScanColors.warning, size: 16), SizedBox(width: 7),
-                          Text('Requires home pharmacy approval before record updates.', style: TextStyle(color: CrossPharmacyScanColors.warning, fontSize: 11.5, fontWeight: FontWeight.w600)),
-                        ]),
-                      ),
+                      _immediateRecordBanner(),
                     ],
                   ),
                 ),

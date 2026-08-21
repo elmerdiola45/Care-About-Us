@@ -33,6 +33,10 @@ class AdminDashboardPage extends StatefulWidget {
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _topTab = 0;
   int _navIndex = 0;
+  // Records/Requests/Patients (indices 1-3) built only once visited, same
+  // lazy-construction pattern as the pharmacist side's HomeDashboardScreen —
+  // avoids all three firing their network fetches before they're ever seen.
+  final Set<int> _visitedTabs = {0};
   final AdminApiService _api = AdminApiService();
   String? _adminName; // ADD
   String? _adminRole;
@@ -55,6 +59,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   void initState() {
     super.initState();
+    // Nothing currently routes a Dispenser session here (login_screen.dart
+    // decides by which tab was tapped, not by the server's real user_type),
+    // but nothing prevented it either — this closes that gap client-side.
+    // Not server-side role enforcement; see the fix plan for why that's a
+    // deliberately separate, larger change.
+    if (AppSession.instance.userType == 'dispenser') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      });
+      return;
+    }
     _loadMe();
     _startAlertPolling();
   }
@@ -145,34 +164,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     }
   }
 
-  Future<void> _handleNav(int index) async {
-    if (index == 0) {
-      setState(() => _navIndex = 0);
-      return;
-    }
-
-    setState(() => _navIndex = index);
-
-    Widget destination;
-    switch (index) {
-      case 1:
-        destination = const QrOcrRecordsScreen();
-        break;
-      case 2:
-        destination = const RequestsScreen();
-        break;
-      case 3:
-        destination = const AdminPatientAdherencePage();
-        break;
-      default:
-        return;
-    }
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => destination),
-    );
-    if (mounted) setState(() => _navIndex = 0);
+  void _handleNav(int index) {
+    setState(() {
+      _navIndex = index;
+      _visitedTabs.add(index);
+    });
   }
 
   @override
@@ -180,20 +176,34 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
-        child: Column(
+        child: IndexedStack(
+          index: _navIndex,
           children: [
-            _buildHeader(),
-            _buildTopTabs(),
-            Expanded(
-              child: IndexedStack(
-                index: _topTab,
-                children: [
-                  _OverviewTab(api: _api),
-                  _UsersTab(api: _api, isAdmin: _isAdmin),
-                  _ReportsTab(api: _api),
-                ],
-              ),
+            Column(
+              children: [
+                _buildHeader(),
+                _buildTopTabs(),
+                Expanded(
+                  child: IndexedStack(
+                    index: _topTab,
+                    children: [
+                      _OverviewTab(api: _api),
+                      _UsersTab(api: _api, isAdmin: _isAdmin),
+                      _ReportsTab(api: _api),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            _visitedTabs.contains(1)
+                ? const QrOcrRecordsScreen()
+                : const SizedBox.shrink(),
+            _visitedTabs.contains(2)
+                ? const RequestsScreen()
+                : const SizedBox.shrink(),
+            _visitedTabs.contains(3)
+                ? const AdminPatientAdherencePage()
+                : const SizedBox.shrink(),
           ],
         ),
       ),

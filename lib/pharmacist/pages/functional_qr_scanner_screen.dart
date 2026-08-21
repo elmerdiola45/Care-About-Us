@@ -5,6 +5,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
+import '../../common/utils/qr_token_parser.dart';
 
 import 'dispense_screen.dart';
 
@@ -176,7 +177,7 @@ class ScannedPrescription {
       // Fallback to local parsing
     }
 
-    final tokenFromUrl = _extractTokenFromUrl(rawValue);
+    final tokenFromUrl = extractTokenFromUrl(rawValue);
     if (tokenFromUrl.isNotEmpty) {
       try {
         final api = LaravelApiService(token: AppSession.instance.token);
@@ -212,16 +213,6 @@ class ScannedPrescription {
     }
 
     return ScannedPrescription.fromQr(rawValue);
-  }
-
-  static String _extractTokenFromUrl(String value) {
-    final uri = Uri.tryParse(value.trim());
-    if (uri == null) return '';
-    final segments = uri.pathSegments;
-    if (segments.length >= 2 && segments[segments.length - 2] == 'verify') {
-      return segments.last;
-    }
-    return '';
   }
 
   static String _formatDateTime(DateTime dt) {

@@ -27,7 +27,10 @@ class _BranchInfoCardState extends State<BranchInfoCard> {
     super.dispose();
   }
 
-  // bool get _isValid => _formKey.currentState?.validate() ?? false;
+  void _submit(BuildContext context) {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.of(context).pop(values);
+  }
 
   Map<String, String> get values => {
         'pharmacyName': _pharmacyNameController.text.trim(),
@@ -79,6 +82,37 @@ class _BranchInfoCardState extends State<BranchInfoCard> {
             _field('Pharmacist on Duty', _pharmacistController, required: true),
             const SizedBox(height: 10),
             _field('FDA License No.', _licenseController, required: true),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF6B7280),
+                      side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _submit(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0B7B77),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Continue', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

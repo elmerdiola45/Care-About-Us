@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
-import '../../admin/models/admin_models.dart';
 import '../../pharmacist/models/dispense_alert.dart';
 import 'app_config.dart';
 
@@ -70,15 +69,6 @@ bool _safeBool(dynamic value, [bool fallback = false]) {
   final str = value.toString().toLowerCase().trim();
   if (str == 'true' || str == '1') return true;
   if (str == 'false' || str == '0') return false;
-  return fallback;
-}
-
-T _safeEnumValue<T>(Iterable<T> values, dynamic raw, T fallback) {
-  if (raw == null) return fallback;
-  final str = raw.toString().toLowerCase();
-  for (final v in values) {
-    if (v.toString().toLowerCase() == str) return v;
-  }
   return fallback;
 }
 
@@ -361,6 +351,13 @@ class LaravelVerifiedPrescription {
   final bool valid;
   final String? message;
   final String? verifyUrl;
+  // Live per-item remaining quantity + price, keyed off the same
+  // secret-verified token — NOT the static QR-payload snapshot `medicines`
+  // above. Cross-pharmacy dispensing must validate/price against this,
+  // never against QR-embedded fields. Empty when the token has no linked
+  // prescription (additive field, defaults to [] when absent from an
+  // older/cached response shape).
+  final List<LaravelPrescriptionItemQuantity> remainingItems;
 
   const LaravelVerifiedPrescription({
     required this.token,
@@ -379,6 +376,7 @@ class LaravelVerifiedPrescription {
     required this.valid,
     this.message,
     this.verifyUrl,
+    this.remainingItems = const [],
   });
 
   factory LaravelVerifiedPrescription.fromJson(Map<String, dynamic> json) {
@@ -389,6 +387,9 @@ class LaravelVerifiedPrescription {
     final medicines = _safeList(
       payload['medicines'],
     ).map((e) => LaravelVerifiedMedicine.fromJson(_safeMap(e))).toList();
+    final remainingItems = _safeList(json['prescription_items'])
+        .map((e) => LaravelPrescriptionItemQuantity.fromJson(_safeMap(e)))
+        .toList();
 
     return LaravelVerifiedPrescription(
       token: json['token']?.toString() ?? '',
@@ -425,6 +426,36 @@ class LaravelVerifiedPrescription {
       message: json['message']?.toString(),
       verifyUrl:
           json['verify_url']?.toString() ?? json['verifyUrl']?.toString() ?? '',
+      remainingItems: remainingItems,
+    );
+  }
+}
+
+class LaravelPrescriptionItemQuantity {
+  final String itemId;
+  final String medicineName;
+  final int prescribedQuantity;
+  final int dispensedQuantity;
+  final int remainingQuantity;
+  final double unitPrice;
+
+  const LaravelPrescriptionItemQuantity({
+    required this.itemId,
+    required this.medicineName,
+    required this.prescribedQuantity,
+    required this.dispensedQuantity,
+    required this.remainingQuantity,
+    required this.unitPrice,
+  });
+
+  factory LaravelPrescriptionItemQuantity.fromJson(Map<String, dynamic> json) {
+    return LaravelPrescriptionItemQuantity(
+      itemId: json['item_id']?.toString() ?? '',
+      medicineName: json['medicine_name']?.toString() ?? 'Unknown',
+      prescribedQuantity: _safeInt(json['prescribed_quantity']),
+      dispensedQuantity: _safeInt(json['dispensed_quantity']),
+      remainingQuantity: _safeInt(json['remaining_quantity']),
+      unitPrice: _safeDouble(json['unit_price']),
     );
   }
 }
@@ -763,106 +794,38 @@ class LaravelApiService {
     }
   }
 
-  Future<Map<String, dynamic>> submitCrossPharmacyRequest({
-    required String rxNumber,
-    required String patientName,
-    required String requestingPharmacyName,
-    required String requestingPharmacyLocation,
-    required String requestingStaffName,
-    required List<Map<String, dynamic>> medicines,
+  /// Authenticated equivalent of the public web portal's submit — commits a
+  /// cross-pharmacy dispense atomically and immediately (no pending/approval
+  /// state), via CrossPharmacyController::submitInApp().
+  Future<Map<String, dynamic>> submitCrossPharmacyDispense({
+    required String token,
+    required String pharmacyName,
+    String? branch,
+    required String address,
+    required String licenseNumber,
+    required String staffDispensing,
+    required List<Map<String, dynamic>> items,
   }) async {
     final response = await http
         .post(
-          _buildUri(['cross-pharmacy-requests']),
+          _buildUri(['cross-pharmacy', 'dispense']),
           headers: {..._headers, 'Content-Type': 'application/json'},
           body: jsonEncode({
-            'rx_number': rxNumber,
-            'patient_name': patientName,
-            'requesting_pharmacy_name': requestingPharmacyName,
-            'requesting_pharmacy_location': requestingPharmacyLocation,
-            'requesting_staff_name': requestingStaffName,
-            'medicines': medicines,
+            'token': token,
+            'pharmacy_name': pharmacyName,
+            'branch': branch,
+            'address': address,
+            'license_number': licenseNumber,
+            'staff_dispensing': staffDispensing,
+            'items': items,
           }),
         )
         .timeout(_timeout);
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return _decodeJsonMap(response);
     }
-    _throwForError(response, 'Failed to submit cross-pharmacy request');
-  }
-
-  Future<Map<String, dynamic>> reportCrossPharmacyDispensing({
-    required String requestId,
-    required List<Map<String, dynamic>> medicines,
-    String? notes,
-  }) async {
-    final response = await http
-        .post(
-          _buildUri(['cross-pharmacy-requests', requestId, 'dispense']),
-          headers: {..._headers, 'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'medicines': medicines,
-            if (notes != null && notes.isNotEmpty) 'notes': notes,
-          }),
-        )
-        .timeout(_timeout);
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      return _decodeJsonMap(response);
-    }
-    _throwForError(response, 'Failed to report cross-pharmacy dispensing');
-  }
-
-  Future<List<CrossPharmacyRequestResponse>>
-  fetchApprovedCrossPharmacyRequests() async {
-    final response = await http
-        .get(
-          _buildUri(['cross-pharmacy-requests'], {'status': 'approved'}),
-          headers: _headers,
-        )
-        .timeout(_timeout);
-
-    if (response.statusCode == 200) {
-      final data = _decodeJsonMap(response);
-      final requests = _safeList(data['requests']);
-      return requests.map((e) {
-        final m = _safeMap(e);
-        final requestId =
-            m['request_id']?.toString() ?? m['id']?.toString() ?? '';
-        return CrossPharmacyRequestResponse(
-          requestId: requestId,
-          requestingPharmacyName:
-              m['requesting_pharmacy_name']?.toString() ?? '',
-          requestingPharmacyLocation:
-              m['requesting_pharmacy_location']?.toString() ?? '',
-          rxNumber: m['rx_number']?.toString() ?? m['rx_no']?.toString() ?? '',
-          patientName: m['patient_name']?.toString() ?? '',
-          medicines: _safeList(m['medicines']).map((e) {
-            final me = _safeMap(e);
-            return MedicineItem(
-              name: me['name']?.toString() ?? '',
-              quantity: _safeInt(me['quantity']),
-            );
-          }).toList(),
-          requestingStaffName: m['requesting_staff_name']?.toString() ?? '',
-          rejectionReason: m['rejection_reason']?.toString(),
-          status: _safeEnumValue(
-            RequestStatus.values,
-            m['status'],
-            RequestStatus.pending,
-          ),
-          dispensingStatus: m['dispensing_status']?.toString(),
-          dispensedBy: m['dispensed_by']?.toString(),
-          dispensedAt: m['dispensed_at']?.toString(),
-        );
-      }).toList();
-    }
-
-    _throwForError(
-      response,
-      'Failed to fetch approved cross-pharmacy requests',
-    );
+    _throwForError(response, 'Failed to submit cross-pharmacy dispense');
   }
 
   Future<LaravelPrescription> createPrescription({

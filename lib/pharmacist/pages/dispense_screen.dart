@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import '../models/prescription.dart';
 import '../data/saved_prescriptions_store.dart';
-import '../../admin/models/admin_models.dart' hide MedicineItem;
 import '../../common/services/laravel_api_service.dart';
 import '../../common/session.dart';
 import '../../common/theme/app_colors.dart';
@@ -966,39 +965,6 @@ class _DispenseScreenState extends State<DispenseScreen> {
           builder: (_) => DispensingSummaryScreen(transaction: transaction),
         ),
       );
-
-      if (mounted) {
-        try {
-          final approvedRequests = await _api
-              .fetchApprovedCrossPharmacyRequests();
-          final matchingRequest = approvedRequests
-              .cast<CrossPharmacyRequestResponse?>()
-              .firstWhere(
-                (r) => r?.rxNumber == updatedPrescription.ocrCode,
-                orElse: () => null,
-              );
-          if (matchingRequest != null) {
-            final medsList = updatedPrescription.medicines
-                .map(
-                  (m) => <String, dynamic>{
-                    'name': m.name,
-                    'quantity': m.disposedQuantity,
-                    'prescribed_quantity': m.quantity,
-                  },
-                )
-                .toList();
-            await _api.reportCrossPharmacyDispensing(
-              requestId: matchingRequest.requestId,
-              medicines: medsList,
-              notes: 'Dispensed via pharmacist app',
-            );
-          }
-        } on LaravelApiException catch (_) {
-          // Ignore cross-pharmacy reporting errors
-        } catch (_) {
-          // Ignore other errors
-        }
-      }
 
       if (mounted) {
         setState(() {

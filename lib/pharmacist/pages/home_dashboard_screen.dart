@@ -11,6 +11,7 @@ import '../../common/widgets/bottom_nav_bar.dart';
 import '../../common/widgets/responsive_center.dart';
 import '../data/saved_prescriptions_store.dart';
 import '../models/prescription.dart';
+import 'cross_pharmacy_scan_screen.dart';
 import 'functional_qr_scanner_screen.dart';
 import 'ocr_scan_screen.dart';
 import 'saved_prescriptions_list_screen.dart';
@@ -82,6 +83,21 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    // Mirror of the guard in AdminDashboardPage.initState() — nothing
+    // currently routes a Pharmacist-table session here (login_screen.dart
+    // decides by which tab was tapped, not by the server's real user_type),
+    // but nothing prevented it either. Client-side only, not server-side
+    // role enforcement.
+    if (AppSession.instance.userType == 'pharmacist') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      });
+      return;
+    }
     _setDefaultMonthRange();
     _loadAll();
     _startPolling();
@@ -710,47 +726,67 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildScanCardsRow() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _scanCard(
-            icon: Icons.qr_code_2,
-            title: 'Home Scan',
-            subtitle: 'Your branch prescriptions',
-            highlighted: true,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const FunctionalQrScannerScreen(),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _scanCard(
-            icon: Icons.camera_alt_outlined,
-            title: 'OCR Scan',
-            subtitle: 'Capture handwritten Rx',
-            highlighted: false,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => OCRScanScreen(
-                  pharmacyId: AppSession.instance.pharmacyId ?? '',
-                  onSave: (prescription, ocrCode, {confirmNew = false}) =>
-                      PrescriptionApiService.save(
-                        prescription,
-                        ocrCode,
-                        confirmNew: confirmNew,
-                      ),
-                  onViewSavedList: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const SavedPrescriptionsListScreen(),
-                      ),
-                    );
-                  },
+        Row(
+          children: [
+            Expanded(
+              child: _scanCard(
+                icon: Icons.qr_code_2,
+                title: 'Home Scan',
+                subtitle: 'Your branch prescriptions',
+                highlighted: true,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const FunctionalQrScannerScreen(),
+                  ),
                 ),
               ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _scanCard(
+                icon: Icons.camera_alt_outlined,
+                title: 'OCR Scan',
+                subtitle: 'Capture handwritten Rx',
+                highlighted: false,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => OCRScanScreen(
+                      pharmacyId: AppSession.instance.pharmacyId ?? '',
+                      onSave: (prescription, ocrCode, {confirmNew = false}) =>
+                          PrescriptionApiService.save(
+                            prescription,
+                            ocrCode,
+                            confirmNew: confirmNew,
+                          ),
+                      onViewSavedList: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const SavedPrescriptionsListScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Separate, explicit entry point — a prescription belonging to
+        // another pharmacy is scanned here, not auto-detected from Home
+        // Scan. Full-width below the 2-up row so the two existing cards
+        // stay uncramped.
+        _scanCard(
+          icon: Icons.storefront_outlined,
+          title: 'Cross-Pharmacy Scan',
+          subtitle: 'Dispense for another branch',
+          highlighted: false,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const CrossPharmacyScanScreen(),
             ),
           ),
         ),
