@@ -175,7 +175,10 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
   Future<void> _fetchPrescriptions() async {
     try {
-      await SavedPrescriptionsStore.instance.fetchFromBackend();
+      // force: true — this is called both on first load and from the
+      // manual refresh button; the manual refresh must always bypass the
+      // store's freshness TTL, and forcing on first load is harmless.
+      await SavedPrescriptionsStore.instance.fetchFromBackend(force: true);
       if (_selectedOcrCode != null) {
         PrescriptionEntry? entry;
         try {

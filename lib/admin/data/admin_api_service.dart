@@ -16,34 +16,6 @@ class StaffValidationException implements Exception {
   StaffValidationException({required this.message, required this.fieldErrors});
 }
 
-/// Thrown by the cross-pharmacy approve/reject calls with the backend's
-/// actual message (e.g. "Cannot approve: prescription is already fully
-/// dispensed.") instead of the raw JSON response body, so the UI can show
-/// something readable instead of a dumped error string. [blocked] mirrors
-/// CrossPharmacyController::approve()'s hard 422 block (already-fully-
-/// dispensed).
-class CrossPharmacyApiException implements Exception {
-  final String message;
-  final bool blocked;
-
-  const CrossPharmacyApiException(this.message, {this.blocked = false});
-
-  @override
-  String toString() => message;
-}
-
-/// Successful (200) result of approving/rejecting a cross-pharmacy request.
-/// [critical] mirrors CrossPharmacyController::approve()'s 200-with-
-/// critical-status response — the request WAS approved, but flagged as an
-/// over-dispense the admin should still notice, not treated as a plain
-/// success.
-class CrossPharmacyActionResult {
-  final String message;
-  final bool critical;
-
-  const CrossPharmacyActionResult(this.message, {this.critical = false});
-}
-
 class AdminApiService {
   static const Duration _timeout = Duration(seconds: 30);
 
@@ -235,85 +207,6 @@ class AdminApiService {
       'CrossPharmacy: fetch failed with status ${response.statusCode}',
     );
     throw Exception('Failed to fetch cross-pharmacy requests');
-  }
-
-  Future<CrossPharmacyActionResult> approveCrossPharmacyRequest(
-    String requestId,
-  ) async {
-    debugPrint('CrossPharmacy: approving requestId=$requestId');
-    final response = await http
-        .post(
-          Uri.parse(
-            '$_baseUrl/admin/cross-pharmacy-requests/$requestId/approve',
-          ),
-          headers: {..._headers, 'Content-Type': 'application/json'},
-          body: '{}',
-        )
-        .timeout(_timeout);
-
-    debugPrint(
-      'CrossPharmacy: approve response status=${response.statusCode} body=${response.body}',
-    );
-
-    Map<String, dynamic> body = {};
-    try {
-      body = safeMap(jsonDecode(response.body)) ?? {};
-    } catch (_) {
-      // Non-JSON body (e.g. an HTML error page) — fall through with an
-      // empty map so the status-code-based fallback message below is used.
-    }
-
-    if (response.statusCode != 200) {
-      throw CrossPharmacyApiException(
-        body['message']?.toString() ??
-            'Failed to approve request (status ${response.statusCode}).',
-        blocked: body['blocked'] == true,
-      );
-    }
-
-    return CrossPharmacyActionResult(
-      body['message']?.toString() ?? 'Request approved',
-      critical: body['status'] == 'critical',
-    );
-  }
-
-  Future<CrossPharmacyActionResult> rejectCrossPharmacyRequest(
-    String requestId,
-    String reason,
-  ) async {
-    debugPrint('CrossPharmacy: rejecting requestId=$requestId reason=$reason');
-    final response = await http
-        .post(
-          Uri.parse(
-            '$_baseUrl/admin/cross-pharmacy-requests/$requestId/reject',
-          ),
-          headers: {..._headers, 'Content-Type': 'application/json'},
-          body: jsonEncode({'reason': reason}),
-        )
-        .timeout(_timeout);
-
-    debugPrint(
-      'CrossPharmacy: reject response status=${response.statusCode} body=${response.body}',
-    );
-
-    Map<String, dynamic> body = {};
-    try {
-      body = safeMap(jsonDecode(response.body)) ?? {};
-    } catch (_) {
-      // Non-JSON body (e.g. an HTML error page) — fall through with an
-      // empty map so the status-code-based fallback message below is used.
-    }
-
-    if (response.statusCode == 200) {
-      return CrossPharmacyActionResult(
-        body['message']?.toString() ?? 'Request rejected',
-      );
-    }
-
-    throw CrossPharmacyApiException(
-      body['message']?.toString() ??
-          'Failed to reject request (status ${response.statusCode}).',
-    );
   }
 
   Future<List<CrossPharmacyRequestResponse>>

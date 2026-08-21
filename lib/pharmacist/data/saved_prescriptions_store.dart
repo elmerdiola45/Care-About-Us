@@ -4,7 +4,6 @@
 // Keeps local state for offline use, and pushes to backend when available.
 
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
@@ -81,11 +80,12 @@ class SavedPrescriptionsStore {
     final updated = _items[idx].copyWith(
       qrToken: token,
       backendVerifyUrl: verifyUrl,
-      qrData: jsonEncode({
-        'token': token,
-        'ocrCode': ocrCode,
-        'verifyUrl': verifyUrl,
-      }),
+      // Must be the bare verify URL, not a JSON blob — a generic external
+      // QR reader (Google Lens, phone camera) only offers to open a link
+      // when the QR encodes a URL directly; JSON text just displays as
+      // text and never redirects. Mirrors the same fix already applied to
+      // _inlineQrPayload() in saved_prescriptions_list_screen.dart.
+      qrData: verifyUrl,
       prescription: _items[idx].prescription.copyWith(
         status: QrStatus.qrGenerated,
       ),
@@ -286,12 +286,30 @@ class SavedPrescriptionsStore {
   // and gets the same result (or the same thrown exception).
   Future<void>? _inFlightFetch;
 
+  // Guards against sequential redundant refetches (distinct from
+  // _inFlightFetch above, which only guards concurrent ones) — e.g. the
+  // dashboard's own load followed a few seconds later by navigating to
+  // Saved Rx or Dispense, each triggering their own independent
+  // fetchFromBackend() call for data that's still fresh.
+  DateTime? _lastFetchedAt;
+  static const _fetchTtl = Duration(seconds: 15);
+
   /// Fetches all prescriptions from the backend and merges them into the local store.
   /// Existing entries are updated; new entries from the backend are added.
   /// Throws on network or API errors so callers can handle loading/error UI.
-  Future<void> fetchFromBackend() {
+  /// Pass [force] to bypass the freshness TTL — always do this for an
+  /// explicit user-initiated refresh (pull-to-refresh, manual reload).
+  Future<void> fetchFromBackend({bool force = false}) {
+    final lastFetch = _lastFetchedAt;
+    if (!force &&
+        lastFetch != null &&
+        DateTime.now().difference(lastFetch) < _fetchTtl) {
+      return Future.value();
+    }
+
     final existing = _inFlightFetch;
     if (existing != null) return existing;
+    _lastFetchedAt = DateTime.now();
     final future = _fetchFromBackendInternal().whenComplete(() {
       _inFlightFetch = null;
     });

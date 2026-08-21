@@ -1038,7 +1038,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     if (prescriptionId.isEmpty) return;
     bool refreshFailed = false;
     try {
-      await SavedPrescriptionsStore.instance.fetchFromBackend();
+      // force: true — this needs the just-saved/duplicate record to
+      // actually be present, so a stale cached result isn't acceptable
+      // here even within the TTL window.
+      await SavedPrescriptionsStore.instance.fetchFromBackend(force: true);
     } catch (_) {
       refreshFailed = true;
     }

@@ -55,12 +55,23 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   final DashboardRepository _repo = DashboardRepository();
 
-  bool _isLoading = true;
-  bool _isRefreshing = false;
+  // Split from a single _isLoading bool so each dashboard section can
+  // render as soon as its own fetch resolves, instead of the whole tab
+  // waiting on the slowest of the three (fetchFromBackend(), which
+  // internally awaits per-patient adherence data). No staff-loading flag
+  // is needed — _buildHeader() already renders immediately from
+  // widget.staffName/branchName while _staffProfile is still null, so
+  // there's nothing for a staff section to gate on.
+  bool _summaryLoading = true;
+  bool _recentLoading = true;
   String? _errorMessage;
 
   DashboardSummary? _summary;
   StaffProfile? _staffProfile;
+  // Staff profile doesn't change mid-shift — once fetched, silent 30s
+  // polls skip re-fetching it; only a first load or explicit manual
+  // refresh does.
+  DateTime? _staffFetchedAt;
 
   String _selectedPeriod = 'month';
   DateTime? _dateFrom;
@@ -94,55 +105,64 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     });
   }
 
-  Future<void> _loadAll({bool silent = false}) async {
+  Future<void> _loadAll({bool silent = false, bool forceStaff = false}) async {
     if (!silent) {
       setState(() {
-        _isLoading = true;
+        _summaryLoading = true;
+        _recentLoading = true;
         _errorMessage = null;
       });
     }
 
-    try {
-      final fromStr = _dateFrom != null ? _formatDateForApi(_dateFrom!) : null;
-      final toStr = _dateTo != null ? _formatDateForApi(_dateTo!) : null;
+    final fromStr = _dateFrom != null ? _formatDateForApi(_dateFrom!) : null;
+    final toStr = _dateTo != null ? _formatDateForApi(_dateTo!) : null;
 
-      final summaryFuture = _safeCall(
-        () => _repo.fetchSummary(
-          period: _selectedPeriod,
-          dateFrom: fromStr,
-          dateTo: toStr,
-        ),
-      );
-      final staffFuture = _safeCall(() => _repo.fetchStaffProfile());
-      // Also used by the "Recent Prescriptions" section below — reuses the
-      // same store/fetch already used by dispense_screen.dart and
-      // saved_prescriptions_list_screen.dart rather than a new endpoint.
-      final recentFuture = _safeCall<void>(
-        () => SavedPrescriptionsStore.instance.fetchFromBackend(),
-      );
+    final summaryFuture =
+        _safeCall(
+          () => _repo.fetchSummary(
+            period: _selectedPeriod,
+            dateFrom: fromStr,
+            dateTo: toStr,
+          ),
+        ).then((value) {
+          if (!mounted) return;
+          setState(() {
+            _summary = value;
+            _summaryLoading = false;
+          });
+        });
 
-      final results = await Future.wait([
-        summaryFuture,
-        staffFuture,
-        recentFuture,
-      ]);
+    // Profile is static mid-session (see _staffFetchedAt) — skip the
+    // network call entirely on a silent poll once it's already been
+    // fetched once, instead of re-fetching all three every 30s.
+    final shouldFetchStaff = forceStaff || _staffFetchedAt == null;
+    final staffFuture = shouldFetchStaff
+        ? _safeCall(() => _repo.fetchStaffProfile()).then((value) {
+            if (!mounted || value == null) return;
+            setState(() {
+              _staffProfile = value;
+              _staffFetchedAt = DateTime.now();
+            });
+          })
+        : Future<void>.value();
 
-      if (!mounted) return;
+    // Also used by the "Recent Prescriptions" section below — reuses the
+    // same store/fetch already used by dispense_screen.dart and
+    // saved_prescriptions_list_screen.dart rather than a new endpoint.
+    // force: !silent so the initial load and a manual pull-to-refresh
+    // always bypass the store's own TTL guard, while the 30s background
+    // poll respects it.
+    final recentFuture =
+        _safeCall<void>(
+          () => SavedPrescriptionsStore.instance.fetchFromBackend(
+            force: !silent,
+          ),
+        ).then((_) {
+          if (!mounted) return;
+          setState(() => _recentLoading = false);
+        });
 
-      setState(() {
-        _summary = results[0] as DashboardSummary?;
-        _staffProfile = results[1] as StaffProfile?;
-        _isLoading = false;
-        _isRefreshing = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _isRefreshing = false;
-        _errorMessage = e.toString();
-      });
-    }
+    await Future.wait([summaryFuture, staffFuture, recentFuture]);
   }
 
   Future<T?> _safeCall<T>(Future<T> Function() call) async {
@@ -154,11 +174,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Future<void> _onRefresh() async {
-    setState(() {
-      _isRefreshing = true;
-      _errorMessage = null;
-    });
-    await _loadAll();
+    setState(() => _errorMessage = null);
+    await _loadAll(forceStaff: true);
   }
 
   String _getGreeting() {
@@ -257,9 +274,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       color: AppColors.teal,
       child: ResponsiveCenter.dashboard(
         padding: EdgeInsets.zero,
-        child: _isLoading && !_isRefreshing
-            ? _buildLoadingShimmer()
-            : _errorMessage != null && _summary == null
+        // Nothing has ever loaded (all three fetches failed on first
+        // load) — everything else is progressive, per-section loading
+        // below, not a single whole-tab gate.
+        child:
+            _errorMessage != null &&
+                _summary == null &&
+                _staffProfile == null &&
+                SavedPrescriptionsStore.instance.items.isEmpty
             ? _buildErrorState()
             : ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -283,48 +305,27 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
-  Widget _buildLoadingShimmer() {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+  Widget _statShimmer() {
+    return Row(
+      children: List.generate(2, (_) {
+        return Expanded(
+          child: Container(
+            height: 80,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _recentShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 60,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        Row(
-          children: List.generate(2, (_) {
-            return Expanded(
-              child: Container(
-                height: 80,
-                margin: const EdgeInsets.only(right: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: 22),
         Container(
           height: 20,
           width: 120,
@@ -515,6 +516,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildStatRow() {
+    if (_summaryLoading && _summary == null) {
+      return _statShimmer();
+    }
+
     final rxLabel = switch (_selectedPeriod) {
       'today' => 'Rx Today',
       'week' => 'Rx This Week',
@@ -816,6 +821,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildRecentPrescriptions() {
+    if (_recentLoading && SavedPrescriptionsStore.instance.items.isEmpty) {
+      return _recentShimmer();
+    }
+
     final recent = SavedPrescriptionsStore.instance.items.take(3).toList();
     if (recent.isEmpty) {
       return const SizedBox.shrink();

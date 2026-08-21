@@ -99,7 +99,13 @@ class _SavedPrescriptionsListScreenState
       _errorMessage = null;
     });
     try {
-      await SavedPrescriptionsStore.instance.fetchFromBackend();
+      // force: true — this is called on first load, from the weekly
+      // background timer, and from RefreshIndicator's manual
+      // pull-to-refresh; the manual refresh must always bypass the
+      // store's freshness TTL, and forcing in the other two cases is
+      // harmless (first load has nothing to skip, and the weekly interval
+      // is far longer than the TTL anyway).
+      await SavedPrescriptionsStore.instance.fetchFromBackend(force: true);
       if (mounted) {
         setState(() {
           _isLoading = false;
