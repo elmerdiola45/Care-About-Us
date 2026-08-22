@@ -11,7 +11,6 @@ import '../../common/widgets/bottom_nav_bar.dart';
 import '../../common/widgets/responsive_center.dart';
 import '../data/saved_prescriptions_store.dart';
 import '../models/prescription.dart';
-import 'cross_pharmacy_scan_screen.dart';
 import 'functional_qr_scanner_screen.dart';
 import 'ocr_scan_screen.dart';
 import 'saved_prescriptions_list_screen.dart';
@@ -726,67 +725,47 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildScanCardsRow() {
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _scanCard(
-                icon: Icons.qr_code_2,
-                title: 'Home Scan',
-                subtitle: 'Your branch prescriptions',
-                highlighted: true,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const FunctionalQrScannerScreen(),
-                  ),
-                ),
+        Expanded(
+          child: _scanCard(
+            icon: Icons.qr_code_2,
+            title: 'Home Scan',
+            subtitle: 'Your branch prescriptions',
+            highlighted: true,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const FunctionalQrScannerScreen(),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _scanCard(
-                icon: Icons.camera_alt_outlined,
-                title: 'OCR Scan',
-                subtitle: 'Capture handwritten Rx',
-                highlighted: false,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => OCRScanScreen(
-                      pharmacyId: AppSession.instance.pharmacyId ?? '',
-                      onSave: (prescription, ocrCode, {confirmNew = false}) =>
-                          PrescriptionApiService.save(
-                            prescription,
-                            ocrCode,
-                            confirmNew: confirmNew,
-                          ),
-                      onViewSavedList: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (_) => const SavedPrescriptionsListScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 12),
-        // Separate, explicit entry point — a prescription belonging to
-        // another pharmacy is scanned here, not auto-detected from Home
-        // Scan. Full-width below the 2-up row so the two existing cards
-        // stay uncramped.
-        _scanCard(
-          icon: Icons.storefront_outlined,
-          title: 'Cross-Pharmacy Scan',
-          subtitle: 'Dispense for another branch',
-          highlighted: false,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const CrossPharmacyScanScreen(),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _scanCard(
+            icon: Icons.camera_alt_outlined,
+            title: 'OCR Scan',
+            subtitle: 'Capture handwritten Rx',
+            highlighted: false,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => OCRScanScreen(
+                  pharmacyId: AppSession.instance.pharmacyId ?? '',
+                  onSave: (prescription, ocrCode, {confirmNew = false}) =>
+                      PrescriptionApiService.save(
+                        prescription,
+                        ocrCode,
+                        confirmNew: confirmNew,
+                      ),
+                  onViewSavedList: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => const SavedPrescriptionsListScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ),
