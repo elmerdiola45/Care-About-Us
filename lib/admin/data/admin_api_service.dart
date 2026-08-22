@@ -258,6 +258,50 @@ class AdminApiService {
     throw Exception('Failed to fetch approved cross-pharmacy requests');
   }
 
+  /// Admin-only — applies a pending/flagged request to the prescription
+  /// record (see CrossPharmacyController::approve()).
+  Future<void> approveCrossPharmacyRequest(String requestId) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/admin/cross-pharmacy-requests/$requestId/approve'),
+          headers: _headers,
+        )
+        .timeout(_timeout);
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    final data = safeMap(jsonDecode(response.body)) ?? {};
+    throw Exception(
+      data['error']?.toString() ??
+          data['message']?.toString() ??
+          'Failed to approve request',
+    );
+  }
+
+  /// Admin-only — flags a pending request as a risk. The request stays on
+  /// record and can still be approved later; there is no reject/decline
+  /// action (see CrossPharmacyController::flag()).
+  Future<void> flagCrossPharmacyRequest(String requestId, String reason) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/admin/cross-pharmacy-requests/$requestId/flag'),
+          headers: {..._headers, 'Content-Type': 'application/json'},
+          body: jsonEncode({'reason': reason}),
+        )
+        .timeout(_timeout);
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    final data = safeMap(jsonDecode(response.body)) ?? {};
+    throw Exception(
+      data['message']?.toString() ?? 'Failed to flag request',
+    );
+  }
+
   Future<ScanRecordsResponse> fetchScanRecords({
     String type = 'all',
     String date = 'today',

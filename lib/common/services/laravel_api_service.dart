@@ -794,9 +794,11 @@ class LaravelApiService {
     }
   }
 
-  /// Authenticated equivalent of the public web portal's submit — commits a
-  /// cross-pharmacy dispense atomically and immediately (no pending/approval
-  /// state), via CrossPharmacyController::submitInApp().
+  /// Authenticated equivalent of the public web portal's submit — stages a
+  /// cross-pharmacy dispense as a pending request via
+  /// CrossPharmacyController::submitInApp(). Nothing is applied to the
+  /// prescription until the home pharmacy's admin approves it; the response
+  /// is 202 with the pending request's reference, not a finished dispense.
   Future<Map<String, dynamic>> submitCrossPharmacyDispense({
     required String token,
     required String pharmacyName,
@@ -822,7 +824,9 @@ class LaravelApiService {
         )
         .timeout(_timeout);
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
+    if (response.statusCode == 200 ||
+        response.statusCode == 201 ||
+        response.statusCode == 202) {
       return _decodeJsonMap(response);
     }
     _throwForError(response, 'Failed to submit cross-pharmacy dispense');

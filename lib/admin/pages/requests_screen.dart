@@ -166,7 +166,9 @@ class _RequestsScreenState extends State<RequestsScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
-            ..._requests.map((r) => _RequestCard(request: r)),
+            ..._requests.map(
+              (r) => _RequestCard(request: r, api: _api, onChanged: _load),
+            ),
           ],
         ),
       ),
@@ -174,17 +176,80 @@ class _RequestsScreenState extends State<RequestsScreen> {
   }
 }
 
-// Cross-pharmacy dispenses are committed atomically at the point of
-// dispensing (see CrossPharmacyDispenseService::commit()) — there is no
-// more admin approve/reject action. This card is a read-only record of an
-// already-completed transaction: what was dispensed, by whom, and when.
-class _RequestCard extends StatelessWidget {
+// A cross-pharmacy request starts 'pending' (staged, nothing applied to the
+// prescription yet) and either becomes 'dispensed' via Approve or 'flagged'
+// via Flag as risk — there is no reject/decline action, so a flagged
+// request stays actionable and can still be approved later. See
+// CrossPharmacyDispenseService::stage()/approve()/flag() on the backend.
+class _RequestCard extends StatefulWidget {
   final CrossPharmacyRequestResponse request;
-  const _RequestCard({required this.request});
+  final AdminApiService api;
+  final VoidCallback onChanged;
+
+  const _RequestCard({
+    required this.request,
+    required this.api,
+    required this.onChanged,
+  });
+
+  @override
+  State<_RequestCard> createState() => _RequestCardState();
+}
+
+class _RequestCardState extends State<_RequestCard> {
+  bool _acting = false;
+
+  Future<void> _approve() async {
+    setState(() => _acting = true);
+    try {
+      await widget.api.approveCrossPharmacyRequest(widget.request.requestId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request approved and applied.')),
+      );
+      widget.onChanged();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _acting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e'), backgroundColor: AppColors.danger),
+      );
+    }
+  }
+
+  Future<void> _flagAsRisk() async {
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (_) => const _FlagReasonDialog(),
+    );
+    if (reason == null || reason.trim().isEmpty) return;
+
+    setState(() => _acting = true);
+    try {
+      await widget.api.flagCrossPharmacyRequest(
+        widget.request.requestId,
+        reason.trim(),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request flagged for review.')),
+      );
+      widget.onChanged();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _acting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e'), backgroundColor: AppColors.danger),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isRejected = request.status == RequestStatus.rejected;
+    final request = widget.request;
+    final isFlagged = request.status == RequestStatus.flagged;
+    final isActionable =
+        request.status == RequestStatus.pending || isFlagged;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -245,7 +310,7 @@ class _RequestCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      '${m.name} × ${m.quantity} dispensed',
+                      '${m.name} × ${m.quantity} claimed',
                       style: const TextStyle(
                         fontSize: 12.5,
                         color: AppColors.teal,
@@ -257,30 +322,147 @@ class _RequestCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Dispensed by: ${request.dispensedBy ?? request.requestingStaffName}'
+            'Submitted by: ${request.dispensedBy ?? request.requestingStaffName}'
             '${request.dispensedAt != null ? ' · ${request.dispensedAt}' : ''}',
             style: TextStyle(fontSize: 11.5, color: AppColors.textFaint),
           ),
-          if (isRejected && request.rejectionReason != null) ...[
+          if (isFlagged && request.rejectionReason != null) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.redLight,
+                color: AppColors.amberLight,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                'Rejected: ${request.rejectionReason}',
+                'Flagged: ${request.rejectionReason}',
                 style: const TextStyle(
                   fontSize: 12,
-                  color: AppColors.danger,
+                  color: AppColors.warning,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ],
+          if (isActionable) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _acting ? null : _flagAsRisk,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.danger,
+                      side: const BorderSide(color: AppColors.danger),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Flag as risk',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _acting ? null : _approve,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.teal,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: _acting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Approve',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _FlagReasonDialog extends StatefulWidget {
+  const _FlagReasonDialog();
+
+  @override
+  State<_FlagReasonDialog> createState() => _FlagReasonDialogState();
+}
+
+class _FlagReasonDialogState extends State<_FlagReasonDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text(
+        'Flag as risk',
+        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'This request stays on record for later review — the '
+            'prescription is not updated. Describe the concern:',
+            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'e.g. duplicate scan of the same QR by another branch',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.danger,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('Flag'),
+        ),
+      ],
     );
   }
 }
@@ -309,6 +491,11 @@ class _StatusBadge extends StatelessWidget {
         bg = AppColors.redLight;
         fg = AppColors.danger;
         label = 'Rejected';
+        break;
+      case RequestStatus.flagged:
+        bg = AppColors.redLight;
+        fg = AppColors.danger;
+        label = 'Flagged';
         break;
       case RequestStatus.dispensed:
         bg = AppColors.tealPale;

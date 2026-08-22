@@ -170,7 +170,7 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Dispensed and recorded for $pharmacyName.'),
+          content: Text('Submitted for $pharmacyName — awaiting home pharmacy verification.'),
           backgroundColor: CrossPharmacyScanColors.primary,
           duration: const Duration(seconds: 3),
         ),
@@ -295,11 +295,12 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
   }
 }
 
-// Shared "immediate record" banner — replaces the old "Requires home
-// pharmacy approval before record updates." copy, which is no longer
-// accurate now that CrossPharmacyDispenseService::commit() dispenses
-// atomically at submission time (same corrected messaging already applied
-// to verify.blade.php's public portal page).
+// Shared "pending review" banner. This used to say dispensed quantities
+// are recorded immediately — that stopped being true once
+// CrossPharmacyDispenseService::commit() was split into stage()/approve():
+// a submission from this screen is now held as a pending request until the
+// home pharmacy's admin reviews and approves it (same corrected messaging
+// applied to verify.blade.php's public portal page).
 Widget _immediateRecordBanner() => Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
@@ -310,7 +311,7 @@ Widget _immediateRecordBanner() => Container(
       child: const Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.info_outline, color: CrossPharmacyScanColors.warning, size: 16),
         SizedBox(width: 7),
-        Text('Dispensed quantities are recorded immediately against the home pharmacy\'s prescription.', style: TextStyle(color: CrossPharmacyScanColors.warning, fontSize: 11.5, fontWeight: FontWeight.w600)),
+        Text('Submissions are held for home pharmacy review before the prescription record updates.', style: TextStyle(color: CrossPharmacyScanColors.warning, fontSize: 11.5, fontWeight: FontWeight.w600)),
       ]),
     );
 

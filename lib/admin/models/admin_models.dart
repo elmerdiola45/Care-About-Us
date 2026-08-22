@@ -403,7 +403,10 @@ class MedicineItem {
   MedicineItem({required this.name, required this.quantity});
 }
 
-enum RequestStatus { pending, approved, rejected, dispensed }
+// 'rejected' is legacy/unused by the current flow — there is no
+// reject/decline action. A pending request is either approved (becomes
+// 'dispensed') or flagged as a risk ('flagged', still approvable later).
+enum RequestStatus { pending, approved, rejected, dispensed, flagged }
 
 class CrossPharmacyRequestResponse {
   final String requestId;
