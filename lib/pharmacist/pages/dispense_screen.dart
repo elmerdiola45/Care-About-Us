@@ -648,27 +648,39 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
   /// Shows a blocking dialog telling the pharmacist that this fill was NOT
   /// recorded on the server, so they don't walk away believing it was.
-  Future<void> _showSyncFailureDialog(List<String> failedMeds) async {
+  Future<void> _showSyncFailureDialog({
+    List<String> succeededMeds = const [],
+    required List<String> failedMeds,
+  }) async {
     if (!mounted) return;
+    final isPartial = succeededMeds.isNotEmpty;
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
-          children: const [
-            Icon(Icons.cloud_off_rounded, color: Colors.red, size: 24),
-            SizedBox(width: 10),
+          children: [
+            Icon(
+              isPartial ? Icons.warning_amber_rounded : Icons.cloud_off_rounded,
+              color: isPartial ? Colors.orange : Colors.red,
+              size: 24,
+            ),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Not saved to server',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                isPartial ? 'Partially saved to server' : 'Not saved to server',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
               ),
             ),
           ],
         ),
         content: Text(
-          failedMeds.isEmpty
+          isPartial
+              ? 'Recorded: ${succeededMeds.join(', ')}. Not recorded: '
+                    '${failedMeds.join(', ')} — check your connection and tap '
+                    'Dispense again to retry ${failedMeds.length > 1 ? 'those' : 'that one'}.'
+              : failedMeds.isEmpty
               ? 'This dispensing could not be recorded on the server. '
                     'Nothing was marked as dispensed. Check your connection and try again.'
               : 'This dispensing could not be recorded on the server for: '
@@ -746,21 +758,26 @@ class _DispenseScreenState extends State<DispenseScreen> {
     if (entry == null) return;
     final prescription = entry.prescription;
 
-    final canProceed = await _validateDispense();
-    if (canProceed != true) return;
-
-    // Senior citizen dispenses need an OR number recorded for the
-    // discount compliance report — collect it up front so the fill isn't
-    // marked complete without it.
-    String? orNumber;
-    if (prescription.isSenior) {
-      orNumber = await _promptForOrNumber();
-      if (orNumber == null) return;
-    }
-
+    // Set this immediately, before any awaited step, so the Dispense
+    // button (gated on !_isDispensing) disables on the very first tap —
+    // otherwise a fast double-tap during _validateDispense()'s network
+    // round-trip or the OR-number prompt below could invoke this function
+    // twice concurrently and submit the same fill to the server twice.
     setState(() => _isDispensing = true);
 
     try {
+      final canProceed = await _validateDispense();
+      if (canProceed != true) return;
+
+      // Senior citizen dispenses need an OR number recorded for the
+      // discount compliance report — collect it up front so the fill
+      // isn't marked complete without it.
+      String? orNumber;
+      if (prescription.isSenior) {
+        orNumber = await _promptForOrNumber();
+        if (orNumber == null) return;
+      }
+
       // Build the current fill record.
       //
       // `_dispensedQuantities[m.name]` is how much to dispense THIS visit
@@ -926,10 +943,102 @@ class _DispenseScreenState extends State<DispenseScreen> {
           statusSynced = false;
         }
 
-        if (failedMeds.isNotEmpty || !statusSynced) {
+        final succeededNames = currentFillMeds
+            .map((m) => m.name)
+            .where((name) => !failedMeds.contains(name))
+            .toSet();
+
+        if (succeededNames.isEmpty) {
+          // Total failure — nothing recorded server-side. Leave local
+          // state and the typed quantities untouched so the whole fill
+          // can be retried as-is.
           if (mounted) setState(() => _isDispensing = false);
-          await _showSyncFailureDialog(failedMeds);
-          return; // Abort: local store untouched, no success screen shown.
+          await _showSyncFailureDialog(failedMeds: failedMeds);
+          return;
+        }
+
+        if (failedMeds.isNotEmpty) {
+          // Partial success: some medicines are already durably recorded
+          // on the server, others aren't. Reflect only the confirmed
+          // subset locally — never claim the failed ones were dispensed —
+          // and only clear the typed quantity for medicines that actually
+          // succeeded, so a retry only resubmits what actually failed
+          // instead of double-submitting what already went through.
+          final partialMedicines = <MedicineItem>[];
+          for (final m in prescription.medicines) {
+            final servedThisFill = succeededNames.contains(m.name)
+                ? (_dispensedQuantities[m.name] ?? 0)
+                : 0;
+            partialMedicines.add(
+              m.copyWith(
+                disposedQuantity: m.disposedQuantity + servedThisFill,
+              ),
+            );
+          }
+          final partialStatus =
+              partialMedicines.any((m) => m.disposedQuantity > m.quantity)
+              ? DispensingStatus.overDispensing
+              : partialMedicines.every(
+                  (m) => m.disposedQuantity >= m.quantity,
+                )
+              ? DispensingStatus.fullyDispensed
+              : DispensingStatus.partiallyDispensed;
+          final partialEntry = entry.copyWith(
+            prescription: prescription.copyWith(
+              medicines: partialMedicines,
+              dispensingStatus: partialStatus,
+            ),
+          );
+
+          SavedPrescriptionsStore.instance.replaceOrInsert(partialEntry);
+          SavedPrescriptionsStore.instance.updateDispensingStatus(
+            entry.ocrCode,
+            partialStatus,
+          );
+          // Best-effort — the per-item logs already written above are the
+          // source of truth for what was actually dispensed; this
+          // denormalized status field is secondary and safe to leave
+          // stale until the next successful sync.
+          try {
+            final partialStatusString =
+                partialStatus == DispensingStatus.fullyDispensed
+                ? 'fully_dispensed'
+                : partialStatus == DispensingStatus.overDispensing
+                ? 'over_dispensing'
+                : 'partially_dispensed';
+            await _api.updatePrescription(entry.backendId!, {
+              'dispensing_status': partialStatusString,
+            });
+          } catch (_) {}
+
+          if (mounted) {
+            setState(() {
+              _isDispensing = false;
+              for (final name in succeededNames) {
+                _dispensedQuantities[name] = 0;
+              }
+            });
+            for (final name in succeededNames) {
+              _qtyControllers[name]?.text = '0';
+            }
+          }
+          await _showSyncFailureDialog(
+            succeededMeds: succeededNames.toList(),
+            failedMeds: failedMeds,
+          );
+          return;
+        }
+
+        if (!statusSynced) {
+          // Every medicine's dispense IS durably recorded (via the logs
+          // above) — only the secondary dispensing_status field failed to
+          // sync. That's not "nothing was dispensed", so fall through to
+          // the normal success path below instead of showing the blocking
+          // failure dialog; just note the miss for later reconciliation.
+          debugPrint(
+            'Dispensing recorded for ${entry.ocrCode}, but the '
+            'dispensing_status field failed to sync to the server.',
+          );
         }
       }
 
