@@ -1088,7 +1088,23 @@ class _SavedPrescriptionsListScreenState
   Future<void> _onActionPressed(PrescriptionEntry entry) async {
     final shouldExpand = _expandedOcrCode != entry.ocrCode;
 
-    if (entry.prescription.status == QrStatus.pendingQr) {
+    // Trigger on missing backendVerifyUrl, not just QrStatus.pendingQr.
+    // pendingQr always lacks a link (covered either way), but an entry
+    // already marked qr_generated can ALSO have no working link — the
+    // in-memory store loses backendVerifyUrl on every app restart, and
+    // fetchFromBackend() deliberately can't reconstruct it (the server
+    // only ever stores the token's hash, never the raw secret — see the
+    // comment in saved_prescriptions_store.dart's fetchFromBackend). The
+    // old status-only check meant those entries never got a fresh token
+    // and _inlineQrPayload() fell back to a dead local-JSON QR forever.
+    // The backend has no problem minting a second token for an
+    // already-generated prescription (QrTokenController@generate has no
+    // such guard — it just supersedes the prescription's token pointer),
+    // so it's always safe to request a fresh one whenever the client
+    // doesn't currently hold a working link.
+    final hasWorkingLink =
+        entry.backendVerifyUrl != null && entry.backendVerifyUrl!.isNotEmpty;
+    if (!hasWorkingLink) {
       await _generateBackendQrToken(entry);
     }
 
