@@ -114,11 +114,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               action: SnackBarAction(
                 label: 'View',
                 textColor: Colors.white,
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AlertsDashboardScreen(),
-                  ),
-                ),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AlertsDashboardScreen(),
+                    ),
+                  );
+                  if (mounted) _pollAlerts();
+                },
               ),
             ),
           );
@@ -241,9 +244,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             ),
           ),
           TapTarget(
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AlertsDashboardScreen()),
-            ),
+            onTap: () async {
+              // The badge shows the true unresolved count, not a "seen"
+              // flag — it's correct for it to stay put while just viewing.
+              // But it also shouldn't wait up to 30s (the poll interval)
+              // to reflect alerts actually resolved/approved while this
+              // screen was open, so re-poll the moment we're back instead
+              // of leaving it stale until the next timer tick.
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AlertsDashboardScreen()),
+              );
+              if (mounted) _pollAlerts();
+            },
             semanticLabel: 'Dispensing alerts',
             borderRadius: BorderRadius.circular(12),
             child: SizedBox(
