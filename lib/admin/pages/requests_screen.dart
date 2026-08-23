@@ -249,8 +249,7 @@ class _RequestCardState extends State<_RequestCard> {
     final request = widget.request;
     final isFlagged = request.status == RequestStatus.flagged;
     final isRejected = request.status == RequestStatus.rejected;
-    final isActionable =
-        request.status == RequestStatus.pending || isFlagged;
+    final isActionable = request.status == RequestStatus.pending;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -342,6 +341,62 @@ class _RequestCardState extends State<_RequestCard> {
                   color: isRejected ? AppColors.danger : AppColors.warning,
                   fontWeight: FontWeight.w600,
                 ),
+              ),
+            ),
+          ],
+          if (request.wouldExceedRemaining && request.exceedDetails.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.redLight,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.block, size: 16, color: AppColors.danger),
+                      SizedBox(width: 6),
+                      Text(
+                        'OVERDISPENSING RISK',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.danger,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  for (final d in request.exceedDetails)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '${d.medicine}: this request wants ${d.requested}, another '
+                        'pending request wants ${d.otherPending} — combined that\'s '
+                        'more than the ${d.remaining} remaining on this prescription.',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.redDark,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Approving will record only the remaining amount and flag this '
+                    'request as a critical over-dispense attempt for audit.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.redDark.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
