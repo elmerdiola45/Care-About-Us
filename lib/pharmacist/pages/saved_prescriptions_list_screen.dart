@@ -47,7 +47,6 @@ enum _Filter {
   pendingQr,
   qrGenerated,
   fullyDispensed,
-  overdispensing,
   partiallyDispensed,
 }
 
@@ -155,16 +154,6 @@ class _SavedPrescriptionsListScreenState
               )
             : e.prescription.dispensingStatus;
         return actual == DispensingStatus.fullyDispensed;
-      }).toList();
-    } else if (_filter == _Filter.overdispensing) {
-      list = list.where((e) {
-        final actual =
-            e.prescription.dispensingStatus == DispensingStatus.pending
-            ? SavedPrescriptionsStore.computeDispensingStatus(
-                e.prescription.medicines,
-              )
-            : e.prescription.dispensingStatus;
-        return actual == DispensingStatus.overDispensing;
       }).toList();
     } else if (_filter == _Filter.partiallyDispensed) {
       list = list.where((e) {
@@ -384,12 +373,6 @@ class _SavedPrescriptionsListScreenState
           ),
           const SizedBox(width: 8),
           _chip(
-            'Overdispensing',
-            _Filter.overdispensing,
-            Icons.warning_amber_outlined,
-          ),
-          const SizedBox(width: 8),
-          _chip(
             'Partial',
             _Filter.partiallyDispensed,
             Icons.warning_amber_outlined,
@@ -401,8 +384,7 @@ class _SavedPrescriptionsListScreenState
 
   Widget _chip(String label, _Filter value, IconData icon) {
     final selected = _filter == value;
-    final isAlert =
-        value == _Filter.overdispensing || value == _Filter.partiallyDispensed;
+    final isAlert = value == _Filter.partiallyDispensed;
     final isSuccess = value == _Filter.fullyDispensed;
 
     return ChoiceChip(
@@ -493,11 +475,6 @@ class _SavedPrescriptionsListScreenState
           title = 'No fully dispensed prescriptions';
           subtitle =
               'Prescriptions will appear here once all medicines are dispensed.';
-          break;
-        case _Filter.overdispensing:
-          title = 'No overdispensing flags';
-          subtitle =
-              'Prescriptions will appear here if a fill exceeds what was prescribed.';
           break;
         case _Filter.partiallyDispensed:
           title = 'No partially dispensed prescriptions';
