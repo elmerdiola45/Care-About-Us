@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-enum AlertType { overDispense, earlyRefill, duplicateDispense, crossPharmacyDuplicate, crossPharmacyDispense, duplicateOcrScan }
+enum AlertType { overDispense, earlyRefill, duplicateDispense, crossPharmacyDuplicate, crossPharmacyDispense, duplicateOcrScan, crossPharmacyOverlapRisk }
 
 enum AlertPriority { normal, high }
 
@@ -72,6 +72,8 @@ class DispenseAlert {
         return AlertType.crossPharmacyDispense;
       case 'duplicate_ocr_scan':
         return AlertType.duplicateOcrScan;
+      case 'cross_pharmacy_overlap_risk':
+        return AlertType.crossPharmacyOverlapRisk;
       default:
         return AlertType.overDispense;
     }
@@ -100,6 +102,8 @@ class DispenseAlert {
         return 'Cross-Pharmacy Dispense Request';
       case AlertType.duplicateOcrScan:
         return 'Duplicate OCR Scan';
+      case AlertType.crossPharmacyOverlapRisk:
+        return 'Overdispensing Risk';
     }
   }
 
@@ -116,6 +120,8 @@ class DispenseAlert {
       case AlertType.crossPharmacyDispense:
         return note;
       case AlertType.duplicateOcrScan:
+        return note;
+      case AlertType.crossPharmacyOverlapRisk:
         return note;
     }
   }
