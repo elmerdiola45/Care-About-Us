@@ -272,6 +272,13 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: AppColors.teal),
+            tooltip: 'Refresh',
+            onPressed: _isLoading ? null : _loadRecords,
+          ),
+        ],
       ),
       body: Column(
         children: [
