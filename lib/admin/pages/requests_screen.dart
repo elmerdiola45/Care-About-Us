@@ -248,6 +248,7 @@ class _RequestCardState extends State<_RequestCard> {
   Widget build(BuildContext context) {
     final request = widget.request;
     final isFlagged = request.status == RequestStatus.flagged;
+    final isRejected = request.status == RequestStatus.rejected;
     final isActionable =
         request.status == RequestStatus.pending || isFlagged;
 
@@ -326,19 +327,19 @@ class _RequestCardState extends State<_RequestCard> {
             '${request.dispensedAt != null ? ' · ${request.dispensedAt}' : ''}',
             style: TextStyle(fontSize: 11.5, color: AppColors.textFaint),
           ),
-          if (isFlagged && request.rejectionReason != null) ...[
+          if ((isFlagged || isRejected) && request.rejectionReason != null) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.amberLight,
+                color: isRejected ? AppColors.redLight : AppColors.amberLight,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                'Flagged: ${request.rejectionReason}',
-                style: const TextStyle(
+                '${isRejected ? 'Rejected' : 'Flagged'}: ${request.rejectionReason}',
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.warning,
+                  color: isRejected ? AppColors.danger : AppColors.warning,
                   fontWeight: FontWeight.w600,
                 ),
               ),
