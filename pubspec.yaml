@@ -50,6 +50,7 @@ dependencies:
   pdf: ^3.13.0
   image: ^4.5.4
   qr_scanner_overlay: ^0.0.1
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
