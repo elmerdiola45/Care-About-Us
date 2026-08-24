@@ -214,13 +214,25 @@ class _RequestCardState extends State<_RequestCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$e'), backgroundColor: AppColors.danger),
       );
+      // A blocked approve leaves the request exactly as it was (still
+      // pending) — refresh anyway so the card reflects anything else that
+      // may have changed (e.g. another admin acted on it concurrently).
+      widget.onChanged();
     }
   }
 
   Future<void> _flagAsRisk() async {
     final reason = await showDialog<String>(
       context: context,
-      builder: (_) => const _FlagReasonDialog(),
+      builder: (_) => const _FlagReasonDialog(
+        title: 'Flag as risk',
+        description: 'The medication was actually dispensed, but this claim '
+            'creates an over-dispense condition. The prescription will be '
+            'reconciled and this will be logged as an audit alert. Describe '
+            'the concern:',
+        hintText: 'e.g. dispensed before the home pharmacy could review',
+        confirmLabel: 'Flag',
+      ),
     );
     if (reason == null || reason.trim().isEmpty) return;
 
@@ -232,7 +244,40 @@ class _RequestCardState extends State<_RequestCard> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request flagged for review.')),
+        const SnackBar(content: Text('Request flagged as an over-dispense risk.')),
+      );
+      widget.onChanged();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _acting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e'), backgroundColor: AppColors.danger),
+      );
+    }
+  }
+
+  Future<void> _reject() async {
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (_) => const _FlagReasonDialog(
+        title: 'Reject request',
+        description: 'This request will be denied outright — the '
+            'prescription is not touched. Describe why:',
+        hintText: 'e.g. unrecognized pharmacy, suspicious claim',
+        confirmLabel: 'Reject',
+      ),
+    );
+    if (reason == null || reason.trim().isEmpty) return;
+
+    setState(() => _acting = true);
+    try {
+      await widget.api.rejectCrossPharmacyRequest(
+        widget.request.requestId,
+        reason.trim(),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request rejected.')),
       );
       widget.onChanged();
     } catch (e) {
@@ -406,6 +451,24 @@ class _RequestCardState extends State<_RequestCard> {
               children: [
                 Expanded(
                   child: OutlinedButton(
+                    onPressed: _acting ? null : _reject,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textSecondary,
+                      side: BorderSide(color: AppColors.textSecondary),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Reject',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
                     onPressed: _acting ? null : _flagAsRisk,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.danger,
@@ -458,7 +521,17 @@ class _RequestCardState extends State<_RequestCard> {
 }
 
 class _FlagReasonDialog extends StatefulWidget {
-  const _FlagReasonDialog();
+  const _FlagReasonDialog({
+    required this.title,
+    required this.description,
+    required this.hintText,
+    required this.confirmLabel,
+  });
+
+  final String title;
+  final String description;
+  final String hintText;
+  final String confirmLabel;
 
   @override
   State<_FlagReasonDialog> createState() => _FlagReasonDialogState();
@@ -478,18 +551,17 @@ class _FlagReasonDialogState extends State<_FlagReasonDialog> {
     return AlertDialog(
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text(
-        'Flag as risk',
-        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+      title: Text(
+        widget.title,
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'This request stays on record for later review — the '
-            'prescription is not updated. Describe the concern:',
-            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+          Text(
+            widget.description,
+            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -497,7 +569,7 @@ class _FlagReasonDialogState extends State<_FlagReasonDialog> {
             autofocus: true,
             maxLines: 3,
             decoration: InputDecoration(
-              hintText: 'e.g. duplicate scan of the same QR by another branch',
+              hintText: widget.hintText,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -516,7 +588,7 @@ class _FlagReasonDialogState extends State<_FlagReasonDialog> {
             foregroundColor: Colors.white,
           ),
           onPressed: () => Navigator.of(context).pop(_controller.text),
-          child: const Text('Flag'),
+          child: Text(widget.confirmLabel),
         ),
       ],
     );
