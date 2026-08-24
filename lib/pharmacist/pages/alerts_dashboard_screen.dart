@@ -33,10 +33,10 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
 
     try {
       final api = LaravelApiService(token: AppSession.instance.token);
-      final alerts = await api.fetchAlerts(
-        priority: _selectedPriority == AlertPriority.high ? 'high' : null,
-        unresolvedOnly: true,
-      );
+      // Always fetch the full unresolved set — the priority chips filter
+      // it locally via `_filtered` (below), so there's no need to refetch
+      // from the network every time the selected chip changes.
+      final alerts = await api.fetchAlerts(unresolvedOnly: true);
 
       if (mounted) {
         setState(() {
@@ -188,7 +188,6 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
               selected: isSelected,
               onSelected: (_) {
                 setState(() => _selectedPriority = value);
-                _loadAlerts();
               },
               showCheckmark: false,
               labelStyle: TextStyle(

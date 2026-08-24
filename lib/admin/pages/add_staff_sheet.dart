@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
+import '../../../admin/models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
 import '../../../common/widgets/responsive_center.dart';
 import '../../../common/widgets/tap_target.dart';
@@ -11,11 +12,11 @@ class AddStaffSheet extends StatefulWidget {
   final String defaultPharmacyId;
   const AddStaffSheet({super.key, required this.defaultPharmacyId});
 
-  static Future<bool?> show(
+  static Future<StaffAccount?> show(
     BuildContext context, {
     required String defaultPharmacyId,
   }) {
-    return showModalBottomSheet<bool>(
+    return showModalBottomSheet<StaffAccount>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -123,7 +124,7 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
     setState(() => _submitting = true);
 
     try {
-      await _api.createStaff(
+      final created = await _api.createStaff(
         role: _role == StaffRole.dispenser ? 'dispenser' : 'pharmacist',
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
@@ -143,7 +144,7 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(created);
     } on StaffValidationException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -325,7 +326,7 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                           child: OutlinedButton(
                             onPressed: _submitting
                                 ? null
-                                : () => Navigator.of(context).pop(false),
+                                : () => Navigator.of(context).pop(),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.textFaint,
                               side: const BorderSide(color: AppColors.border),

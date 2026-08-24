@@ -1471,9 +1471,9 @@ class LaravelApiService {
   }
 
   /// Creates a new medicine or updates the price of an existing one
-  /// (matched by name on the backend). Returns nothing on success — throws
-  /// on any non-2xx response, including validation failures, so callers
-  /// never have to remember to check the status code themselves.
+  /// (matched by name on the backend). Returns the saved record on success
+  /// — throws on any non-2xx response, including validation failures, so
+  /// callers never have to remember to check the status code themselves.
   ///
   /// [sellingPrice] is intentionally nullable: the backend allows adding or
   /// importing a medicine before its price is known (stored as NULL, not
@@ -1482,7 +1482,7 @@ class LaravelApiService {
   /// [genericName], [brandName], and [dosageForm] are also optional, mirroring
   /// the source price list format (Medicine Name, Generic Name, Brand Name,
   /// Dosage/Form, Unit Price) — a row need not have all of them filled in.
-  Future<void> updateProductPrice({
+  Future<MedicinePrice> updateProductPrice({
     required String medicineName,
     required double? sellingPrice,
     String? genericName,
@@ -1506,6 +1506,8 @@ class LaravelApiService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       _throwForError(response, 'Failed to save price');
     }
+    final data = _decodeJsonMap(response);
+    return MedicinePrice.fromJson(_safeMap(data['data']));
   }
 
   Future<void> deleteProduct(int productId) async {

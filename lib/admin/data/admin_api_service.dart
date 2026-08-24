@@ -406,7 +406,7 @@ class AdminApiService {
     throw Exception('Failed to fetch next staff ID');
   }
 
-  Future<Map<String, dynamic>> createStaff({
+  Future<StaffAccount> createStaff({
     required String role,
     required String firstName,
     required String lastName,
@@ -432,7 +432,8 @@ class AdminApiService {
         .timeout(_timeout);
 
     if (response.statusCode == 201) {
-      return safeMap(jsonDecode(response.body)) ?? {};
+      final data = safeMap(jsonDecode(response.body)) ?? {};
+      return StaffAccount.fromJson(safeMap(data['staff']) ?? {});
     }
 
     if (response.statusCode == 422) {

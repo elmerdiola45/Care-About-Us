@@ -1221,7 +1221,7 @@ class _UsersTabState extends State<_UsersTab> {
   }
 
   Future<void> _openAddStaffSheet() async {
-    final result = await showModalBottomSheet<bool>(
+    final result = await showModalBottomSheet<StaffAccount>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -1229,7 +1229,9 @@ class _UsersTabState extends State<_UsersTab> {
         defaultPharmacyId: AppSession.instance.pharmacyId ?? '',
       ),
     );
-    if (result == true && mounted) _loadData();
+    if (result != null && mounted) {
+      setState(() => _staff = [..._staff, result]);
+    }
   }
 
   @override

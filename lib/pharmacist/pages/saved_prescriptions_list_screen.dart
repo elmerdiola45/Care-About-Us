@@ -75,13 +75,13 @@ class _SavedPrescriptionsListScreenState
   @override
   void initState() {
     super.initState();
-    _fetchFromBackend();
+    _fetchFromBackend(force: false);
     _startWeeklyRefresh();
   }
 
   void _startWeeklyRefresh() {
     _weeklyRefreshTimer = Timer.periodic(const Duration(days: 7), (_) {
-      if (mounted) _fetchFromBackend();
+      if (mounted) _fetchFromBackend(force: false);
     });
   }
 
@@ -92,19 +92,22 @@ class _SavedPrescriptionsListScreenState
     super.dispose();
   }
 
-  Future<void> _fetchFromBackend() async {
+  Future<void> _fetchFromBackend({bool force = true}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
-      // force: true — this is called on first load, from the weekly
-      // background timer, and from RefreshIndicator's manual
-      // pull-to-refresh; the manual refresh must always bypass the
-      // store's freshness TTL, and forcing in the other two cases is
-      // harmless (first load has nothing to skip, and the weekly interval
-      // is far longer than the TTL anyway).
-      await SavedPrescriptionsStore.instance.fetchFromBackend(force: true);
+      // force: false on first load and the weekly background timer, so
+      // they respect the store's 15s freshness TTL instead of always
+      // re-syncing the whole pharmacy dataset (e.g. right after another
+      // screen — like DispenseScreen — already refreshed it). Manual
+      // pull-to-refresh and the error-state Retry button always pass
+      // force: true, since both are a deliberate user action expecting an
+      // actual attempt — the store stamps its TTL clock before the fetch
+      // even runs, so a non-forced retry right after a failed fetch could
+      // otherwise silently no-op within the TTL window.
+      await SavedPrescriptionsStore.instance.fetchFromBackend(force: force);
       if (mounted) {
         setState(() {
           _isLoading = false;

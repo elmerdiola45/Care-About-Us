@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../admin/models/admin_models.dart';
@@ -31,12 +33,25 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
   bool _loading = true;
   String? _error;
   ScanRecordsResponse? _records;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
     _flaggedOnly = widget.initialFlaggedOnly;
     _load();
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String _) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), _load);
   }
 
   Future<void> _load() async {
@@ -115,7 +130,7 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: TextField(
               controller: _searchController,
-              onChanged: (_) => _load(),
+              onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 hintText: 'Search patient, RX number, staff...',
                 hintStyle: const TextStyle(

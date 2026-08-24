@@ -251,8 +251,10 @@ class _PriceListPageState extends State<PriceListPage> {
 
     try {
       // updateProductPrice throws on any non-2xx response, so reaching the
-      // line after it means the server actually confirmed the save.
-      await _api.updateProductPrice(
+      // line after it means the server actually confirmed the save; it
+      // returns the saved record so we can patch the list in place instead
+      // of refetching the whole price list.
+      final saved = await _api.updateProductPrice(
         medicineName: name,
         genericName: generic.isEmpty ? null : generic,
         brandName: brand.isEmpty ? null : brand,
@@ -269,7 +271,14 @@ class _PriceListPageState extends State<PriceListPage> {
           backgroundColor: AppColors.success,
         ),
       );
-      _fetchMedicines();
+      setState(() {
+        final idx = _medicines.indexWhere((m) => m.id == saved.id);
+        if (idx != -1) {
+          _medicines[idx] = saved;
+        } else {
+          _medicines = [..._medicines, saved];
+        }
+      });
     } catch (e) {
       _handleError(e, fallbackPrefix: 'Failed to save');
     }
@@ -313,7 +322,9 @@ class _PriceListPageState extends State<PriceListPage> {
           backgroundColor: AppColors.success,
         ),
       );
-      _fetchMedicines();
+      setState(() {
+        _medicines = _medicines.where((m) => m.id != medicine.id).toList();
+      });
     } catch (e) {
       _handleError(e, fallbackPrefix: 'Failed to remove medicine');
     }
@@ -463,7 +474,9 @@ class _PriceListPageState extends State<PriceListPage> {
                                               (t) => t.id == m.id,
                                             );
                                             setSheetState(() {});
-                                            _fetchMedicines();
+                                            setState(() {
+                                              _medicines = [..._medicines, m];
+                                            });
                                           } catch (e) {
                                             _handleError(
                                               e,
