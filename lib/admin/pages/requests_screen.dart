@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../admin/models/admin_models.dart';
@@ -17,11 +18,27 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
   bool _loading = true;
   String? _error;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _load();
+    // This screen lives inside an IndexedStack (see admin_dashboard_page.dart)
+    // which keeps it mounted forever once built, so initState()/_load() only
+    // ever fire once — a new request submitted by another pharmacy would
+    // never appear without this. Mirrors the same polling pattern already
+    // used for alerts on the dashboard page.
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _silentRefresh(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -31,15 +48,30 @@ class _RequestsScreenState extends State<RequestsScreen> {
     });
     try {
       final requests = await _api.fetchCrossPharmacyRequests();
+      if (!mounted) return;
       setState(() {
         _requests = requests;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = e.toString();
       });
+    }
+  }
+
+  // Background refresh — no loading spinner, no error banner, so a
+  // transient network hiccup during a periodic tick doesn't interrupt
+  // whatever the admin is doing on screen.
+  Future<void> _silentRefresh() async {
+    try {
+      final requests = await _api.fetchCrossPharmacyRequests();
+      if (!mounted) return;
+      setState(() => _requests = requests);
+    } catch (_) {
+      // Ignore — the next periodic tick or manual refresh will retry.
     }
   }
 
@@ -60,6 +92,13 @@ class _RequestsScreenState extends State<RequestsScreen> {
             color: AppColors.textPrimary,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
+            tooltip: 'Refresh',
+            onPressed: _loading ? null : _load,
+          ),
+        ],
       ),
       body: _buildBody(),
     );

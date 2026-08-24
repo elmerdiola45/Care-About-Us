@@ -2,10 +2,12 @@
 //
 // Holds the currently logged-in user so screens can tag created
 // prescriptions with the correct pharmacist/dispenser and home pharmacy.
-// Also mirrors the session to SharedPreferences so it survives a web page
-// refresh or app relaunch — see restore().
+// Also mirrors the session to persistent storage so it survives a page
+// refresh or app relaunch — see restore(). On web this is per-tab
+// (sessionStorage), everywhere else it's SharedPreferences — see
+// session_storage.dart.
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'session_storage.dart';
 
 class AppSession {
   AppSession._();
@@ -68,10 +70,8 @@ class AppSession {
   /// session that was explicitly cleared correctly reports false without
   /// touching the singleton's fields.
   Future<bool> restore() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final storedToken = prefs.getString(_kToken);
-    final storedUserId = prefs.getString(_kUserId);
+    final storedToken = await storageGet(_kToken);
+    final storedUserId = await storageGet(_kUserId);
     if (storedToken == null ||
         storedToken.isEmpty ||
         storedUserId == null ||
@@ -81,12 +81,12 @@ class AppSession {
 
     userId = storedUserId;
     token = storedToken;
-    userType = prefs.getString(_kUserType) ?? '';
-    pharmacyId = _emptyToNull(prefs.getString(_kPharmacyId));
-    staffName = _emptyToNull(prefs.getString(_kStaffName));
-    branchName = _emptyToNull(prefs.getString(_kBranchName));
-    shiftStart = _emptyToNull(prefs.getString(_kShiftStart));
-    shiftEnd = _emptyToNull(prefs.getString(_kShiftEnd));
+    userType = await storageGet(_kUserType) ?? '';
+    pharmacyId = _emptyToNull(await storageGet(_kPharmacyId));
+    staffName = _emptyToNull(await storageGet(_kStaffName));
+    branchName = _emptyToNull(await storageGet(_kBranchName));
+    shiftStart = _emptyToNull(await storageGet(_kShiftStart));
+    shiftEnd = _emptyToNull(await storageGet(_kShiftEnd));
     return true;
   }
 
@@ -97,26 +97,24 @@ class AppSession {
   // call site (e.g. login_screen.dart), so persistence is fire-and-forget
   // rather than changing setUser()'s public signature to async.
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kUserId, userId ?? '');
-    await prefs.setString(_kUserType, userType);
-    await prefs.setString(_kToken, token ?? '');
-    await prefs.setString(_kPharmacyId, pharmacyId ?? '');
-    await prefs.setString(_kStaffName, staffName ?? '');
-    await prefs.setString(_kBranchName, branchName ?? '');
-    await prefs.setString(_kShiftStart, shiftStart ?? '');
-    await prefs.setString(_kShiftEnd, shiftEnd ?? '');
+    await storageSet(_kUserId, userId ?? '');
+    await storageSet(_kUserType, userType);
+    await storageSet(_kToken, token ?? '');
+    await storageSet(_kPharmacyId, pharmacyId ?? '');
+    await storageSet(_kStaffName, staffName ?? '');
+    await storageSet(_kBranchName, branchName ?? '');
+    await storageSet(_kShiftStart, shiftStart ?? '');
+    await storageSet(_kShiftEnd, shiftEnd ?? '');
   }
 
   Future<void> _clearPersisted() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_kUserId);
-    await prefs.remove(_kUserType);
-    await prefs.remove(_kToken);
-    await prefs.remove(_kPharmacyId);
-    await prefs.remove(_kStaffName);
-    await prefs.remove(_kBranchName);
-    await prefs.remove(_kShiftStart);
-    await prefs.remove(_kShiftEnd);
+    await storageRemove(_kUserId);
+    await storageRemove(_kUserType);
+    await storageRemove(_kToken);
+    await storageRemove(_kPharmacyId);
+    await storageRemove(_kStaffName);
+    await storageRemove(_kBranchName);
+    await storageRemove(_kShiftStart);
+    await storageRemove(_kShiftEnd);
   }
 }
