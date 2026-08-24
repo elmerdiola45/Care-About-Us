@@ -77,6 +77,22 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
   void _retry() => _load();
 
+  // Replaces (or appends) a single request in _requests without touching
+  // _loading — the surrounding list stays visible, only the one card
+  // updates. Used after a successful approve/flag/reject so those actions
+  // no longer blank the whole screen just to reflect one row's new status.
+  void _patchRequest(CrossPharmacyRequestResponse updated) {
+    if (!mounted) return;
+    setState(() {
+      final idx = _requests.indexWhere((r) => r.requestId == updated.requestId);
+      if (idx != -1) {
+        _requests[idx] = updated;
+      } else {
+        _requests = [..._requests, updated];
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -206,7 +222,13 @@ class _RequestsScreenState extends State<RequestsScreen> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
             ..._requests.map(
-              (r) => _RequestCard(request: r, api: _api, onChanged: _load),
+              (r) => _RequestCard(
+                key: ValueKey(r.requestId),
+                request: r,
+                api: _api,
+                onUpdated: _patchRequest,
+                onActionFailed: _silentRefresh,
+              ),
             ),
           ],
         ),
@@ -223,12 +245,15 @@ class _RequestsScreenState extends State<RequestsScreen> {
 class _RequestCard extends StatefulWidget {
   final CrossPharmacyRequestResponse request;
   final AdminApiService api;
-  final VoidCallback onChanged;
+  final ValueChanged<CrossPharmacyRequestResponse> onUpdated;
+  final VoidCallback onActionFailed;
 
   const _RequestCard({
+    super.key,
     required this.request,
     required this.api,
-    required this.onChanged,
+    required this.onUpdated,
+    required this.onActionFailed,
   });
 
   @override
@@ -241,12 +266,18 @@ class _RequestCardState extends State<_RequestCard> {
   Future<void> _approve() async {
     setState(() => _acting = true);
     try {
-      await widget.api.approveCrossPharmacyRequest(widget.request.requestId);
+      final updated = await widget.api.approveCrossPharmacyRequest(
+        widget.request.requestId,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request approved and applied.')),
       );
-      widget.onChanged();
+      if (updated != null) {
+        widget.onUpdated(updated);
+      } else {
+        widget.onActionFailed();
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _acting = false);
@@ -254,9 +285,10 @@ class _RequestCardState extends State<_RequestCard> {
         SnackBar(content: Text('$e'), backgroundColor: AppColors.danger),
       );
       // A blocked approve leaves the request exactly as it was (still
-      // pending) — refresh anyway so the card reflects anything else that
-      // may have changed (e.g. another admin acted on it concurrently).
-      widget.onChanged();
+      // pending) — reconcile anyway (without a full-screen reload) so the
+      // card reflects anything else that may have changed (e.g. another
+      // admin acted on it concurrently).
+      widget.onActionFailed();
     }
   }
 
@@ -277,7 +309,7 @@ class _RequestCardState extends State<_RequestCard> {
 
     setState(() => _acting = true);
     try {
-      await widget.api.flagCrossPharmacyRequest(
+      final updated = await widget.api.flagCrossPharmacyRequest(
         widget.request.requestId,
         reason.trim(),
       );
@@ -285,7 +317,11 @@ class _RequestCardState extends State<_RequestCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request flagged as an over-dispense risk.')),
       );
-      widget.onChanged();
+      if (updated != null) {
+        widget.onUpdated(updated);
+      } else {
+        widget.onActionFailed();
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _acting = false);
@@ -310,7 +346,7 @@ class _RequestCardState extends State<_RequestCard> {
 
     setState(() => _acting = true);
     try {
-      await widget.api.rejectCrossPharmacyRequest(
+      final updated = await widget.api.rejectCrossPharmacyRequest(
         widget.request.requestId,
         reason.trim(),
       );
@@ -318,7 +354,11 @@ class _RequestCardState extends State<_RequestCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request rejected.')),
       );
-      widget.onChanged();
+      if (updated != null) {
+        widget.onUpdated(updated);
+      } else {
+        widget.onActionFailed();
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _acting = false);

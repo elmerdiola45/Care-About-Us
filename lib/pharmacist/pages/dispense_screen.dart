@@ -172,12 +172,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
     _fetchPrescriptions();
   }
 
-  Future<void> _fetchPrescriptions() async {
+  Future<void> _fetchPrescriptions({bool force = false}) async {
     try {
-      // force: true — this is called both on first load and from the
-      // manual refresh button; the manual refresh must always bypass the
-      // store's freshness TTL, and forcing on first load is harmless.
-      await SavedPrescriptionsStore.instance.fetchFromBackend(force: true);
+      // The manual refresh button always passes force: true to bypass the
+      // store's freshness TTL. The automatic call from initState() respects
+      // the TTL instead — this screen is pushed as a brand-new route on
+      // every QR scan, so forcing here was making every scan-dispense-scan
+      // cycle re-run a full pharmacy-wide sync (including adherence for
+      // every patient) even when the store was already fresh.
+      await SavedPrescriptionsStore.instance.fetchFromBackend(force: force);
       if (_selectedOcrCode != null) {
         PrescriptionEntry? entry;
         try {
@@ -1134,7 +1137,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
             tooltip: 'Refresh',
             onPressed: () {
               setState(() => _isLoading = true);
-              _fetchPrescriptions();
+              _fetchPrescriptions(force: true);
             },
           ),
         ],

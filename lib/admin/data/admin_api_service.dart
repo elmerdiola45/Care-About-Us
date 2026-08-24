@@ -141,6 +141,53 @@ class AdminApiService {
     throw Exception('Failed to fetch prescription');
   }
 
+  // Shared by fetchCrossPharmacyRequests(), fetchApprovedCrossPharmacyRequests(),
+  // and the approve/flag/reject responses below — same row shape every time
+  // (see CrossPharmacyController::shapeCrossPharmacyRow() on the backend).
+  CrossPharmacyRequestResponse _parseCrossPharmacyRequest(
+    Map<String, dynamic> m,
+  ) {
+    final requestId =
+        m['request_id']?.toString() ?? m['id']?.toString() ?? '';
+    return CrossPharmacyRequestResponse(
+      requestId: requestId,
+      requestingPharmacyName:
+          m['requesting_pharmacy_name']?.toString() ?? '',
+      requestingPharmacyLocation:
+          m['requesting_pharmacy_location']?.toString() ?? '',
+      rxNumber: m['rx_number']?.toString() ?? m['rx_no']?.toString() ?? '',
+      patientName: m['patient_name']?.toString() ?? '',
+      medicines: safeList(m['medicines']).map((e) {
+        final me = safeMap(e) ?? {};
+        return MedicineItem(
+          name: me['name']?.toString() ?? '',
+          quantity: safeInt(me['quantity']),
+        );
+      }).toList(),
+      requestingStaffName: m['requesting_staff_name']?.toString() ?? '',
+      rejectionReason: m['rejection_reason']?.toString(),
+      status: safeEnumValue(
+        RequestStatus.values,
+        m['status'],
+        RequestStatus.pending,
+      ),
+      dispensingStatus: m['dispensing_status']?.toString(),
+      dispensedBy: m['dispensed_by']?.toString(),
+      dispensedAt: m['dispensed_at']?.toString(),
+      wouldExceedRemaining: safeBool(m['would_exceed_remaining']),
+      exceedDetails: safeList(m['exceed_details']).map((ed) {
+        final edm = safeMap(ed) ?? {};
+        return ExceedDetailItem(
+          medicine: edm['medicine']?.toString() ?? '',
+          requested: safeInt(edm['requested']),
+          otherPending: safeInt(edm['other_pending']),
+          remaining: safeInt(edm['remaining']),
+        );
+      }).toList(),
+      fullyDispensed: safeBool(m['fully_dispensed']),
+    );
+  }
+
   Future<List<CrossPharmacyRequestResponse>>
   fetchCrossPharmacyRequests() async {
     final response = await http
@@ -158,48 +205,10 @@ class AdminApiService {
       );
       return requests.map((e) {
         final m = safeMap(e) ?? {};
-        final requestId =
-            m['request_id']?.toString() ?? m['id']?.toString() ?? '';
         debugPrint(
-          'CrossPharmacy: requestId=$requestId keys=${m.keys.toList()}',
+          'CrossPharmacy: requestId=${m['request_id'] ?? m['id']} keys=${m.keys.toList()}',
         );
-        return CrossPharmacyRequestResponse(
-          requestId: requestId,
-          requestingPharmacyName:
-              m['requesting_pharmacy_name']?.toString() ?? '',
-          requestingPharmacyLocation:
-              m['requesting_pharmacy_location']?.toString() ?? '',
-          rxNumber: m['rx_number']?.toString() ?? m['rx_no']?.toString() ?? '',
-          patientName: m['patient_name']?.toString() ?? '',
-          medicines: safeList(m['medicines']).map((e) {
-            final me = safeMap(e) ?? {};
-            return MedicineItem(
-              name: me['name']?.toString() ?? '',
-              quantity: safeInt(me['quantity']),
-            );
-          }).toList(),
-          requestingStaffName: m['requesting_staff_name']?.toString() ?? '',
-          rejectionReason: m['rejection_reason']?.toString(),
-          status: safeEnumValue(
-            RequestStatus.values,
-            m['status'],
-            RequestStatus.pending,
-          ),
-          dispensingStatus: m['dispensing_status']?.toString(),
-          dispensedBy: m['dispensed_by']?.toString(),
-          dispensedAt: m['dispensed_at']?.toString(),
-          wouldExceedRemaining: safeBool(m['would_exceed_remaining']),
-          exceedDetails: safeList(m['exceed_details']).map((ed) {
-            final edm = safeMap(ed) ?? {};
-            return ExceedDetailItem(
-              medicine: edm['medicine']?.toString() ?? '',
-              requested: safeInt(edm['requested']),
-              otherPending: safeInt(edm['other_pending']),
-              remaining: safeInt(edm['remaining']),
-            );
-          }).toList(),
-          fullyDispensed: safeBool(m['fully_dispensed']),
-        );
+        return _parseCrossPharmacyRequest(m);
       }).toList();
     }
 
@@ -223,35 +232,7 @@ class AdminApiService {
       final requests = safeList(data['requests']);
       return requests.map((e) {
         final m = safeMap(e) ?? {};
-        final requestId =
-            m['request_id']?.toString() ?? m['id']?.toString() ?? '';
-        return CrossPharmacyRequestResponse(
-          requestId: requestId,
-          requestingPharmacyName:
-              m['requesting_pharmacy_name']?.toString() ?? '',
-          requestingPharmacyLocation:
-              m['requesting_pharmacy_location']?.toString() ?? '',
-          rxNumber: m['rx_number']?.toString() ?? m['rx_no']?.toString() ?? '',
-          patientName: m['patient_name']?.toString() ?? '',
-          medicines: safeList(m['medicines']).map((e) {
-            final me = safeMap(e) ?? {};
-            return MedicineItem(
-              name: me['name']?.toString() ?? '',
-              quantity: safeInt(me['quantity']),
-            );
-          }).toList(),
-          requestingStaffName: m['requesting_staff_name']?.toString() ?? '',
-          rejectionReason: m['rejection_reason']?.toString(),
-          status: safeEnumValue(
-            RequestStatus.values,
-            m['status'],
-            RequestStatus.pending,
-          ),
-          dispensingStatus: m['dispensing_status']?.toString(),
-          dispensedBy: m['dispensed_by']?.toString(),
-          dispensedAt: m['dispensed_at']?.toString(),
-          fullyDispensed: safeBool(m['fully_dispensed']),
-        );
+        return _parseCrossPharmacyRequest(m);
       }).toList();
     }
 
@@ -259,8 +240,13 @@ class AdminApiService {
   }
 
   /// Admin-only — applies a pending/flagged request to the prescription
-  /// record (see CrossPharmacyController::approve()).
-  Future<void> approveCrossPharmacyRequest(String requestId) async {
+  /// record (see CrossPharmacyController::approve()). Returns the backend's
+  /// freshly-shaped row for this one request (buildSingleRequestRow()) so
+  /// the caller can patch it into a local list instead of refetching
+  /// everything; null only if the response omitted 'request' (defensive).
+  Future<CrossPharmacyRequestResponse?> approveCrossPharmacyRequest(
+    String requestId,
+  ) async {
     final response = await http
         .post(
           Uri.parse('$_baseUrl/admin/cross-pharmacy-requests/$requestId/approve'),
@@ -269,7 +255,9 @@ class AdminApiService {
         .timeout(_timeout);
 
     if (response.statusCode == 200) {
-      return;
+      final data = safeMap(jsonDecode(response.body)) ?? {};
+      final requestMap = safeMap(data['request']);
+      return requestMap != null ? _parseCrossPharmacyRequest(requestMap) : null;
     }
 
     final data = safeMap(jsonDecode(response.body)) ?? {};
@@ -282,8 +270,12 @@ class AdminApiService {
 
   /// Admin-only — flags a pending request as an over-dispense risk that was
   /// actually dispensed. Terminal — cannot be approved afterward (see
-  /// CrossPharmacyController::flag()).
-  Future<void> flagCrossPharmacyRequest(String requestId, String reason) async {
+  /// CrossPharmacyController::flag()). Returns the updated row, see
+  /// approveCrossPharmacyRequest() above.
+  Future<CrossPharmacyRequestResponse?> flagCrossPharmacyRequest(
+    String requestId,
+    String reason,
+  ) async {
     final response = await http
         .post(
           Uri.parse('$_baseUrl/admin/cross-pharmacy-requests/$requestId/flag'),
@@ -293,7 +285,9 @@ class AdminApiService {
         .timeout(_timeout);
 
     if (response.statusCode == 200) {
-      return;
+      final data = safeMap(jsonDecode(response.body)) ?? {};
+      final requestMap = safeMap(data['request']);
+      return requestMap != null ? _parseCrossPharmacyRequest(requestMap) : null;
     }
 
     final data = safeMap(jsonDecode(response.body)) ?? {};
@@ -303,8 +297,12 @@ class AdminApiService {
   }
 
   /// Admin-only — denies a pending request outright. No prescription change,
-  /// no over-dispense alert (see CrossPharmacyController::reject()).
-  Future<void> rejectCrossPharmacyRequest(String requestId, String reason) async {
+  /// no over-dispense alert (see CrossPharmacyController::reject()). Returns
+  /// the updated row, see approveCrossPharmacyRequest() above.
+  Future<CrossPharmacyRequestResponse?> rejectCrossPharmacyRequest(
+    String requestId,
+    String reason,
+  ) async {
     final response = await http
         .post(
           Uri.parse('$_baseUrl/admin/cross-pharmacy-requests/$requestId/reject'),
@@ -314,7 +312,9 @@ class AdminApiService {
         .timeout(_timeout);
 
     if (response.statusCode == 200) {
-      return;
+      final data = safeMap(jsonDecode(response.body)) ?? {};
+      final requestMap = safeMap(data['request']);
+      return requestMap != null ? _parseCrossPharmacyRequest(requestMap) : null;
     }
 
     final data = safeMap(jsonDecode(response.body)) ?? {};
