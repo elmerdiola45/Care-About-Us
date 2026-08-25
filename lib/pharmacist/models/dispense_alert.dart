@@ -19,6 +19,7 @@ class DispenseAlert {
   final bool resolved;
   final DateTime createdAt;
   final DateTime? resolvedAt;
+  final bool isRead;
 
   const DispenseAlert({
     required this.alertId,
@@ -34,6 +35,7 @@ class DispenseAlert {
     required this.resolved,
     required this.createdAt,
     this.resolvedAt,
+    this.isRead = false,
   });
 
   factory DispenseAlert.fromJson(Map<String, dynamic> json) {
@@ -55,7 +57,18 @@ class DispenseAlert {
       resolvedAt: json['resolved_at'] != null
           ? DateTime.tryParse(json['resolved_at']?.toString() ?? '')
           : null,
+      isRead: _parseBool(json['is_read']),
     );
+  }
+
+  static bool _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) {
+      final lower = value.toLowerCase().trim();
+      return lower == 'true' || lower == '1';
+    }
+    return false;
   }
 
   static AlertType _parseAlertType(String value) {

@@ -4,6 +4,7 @@ class DashboardSummary {
   final String dateTo;
   final int rxCount;
   final int activeAlerts;
+  final int alertsRaisedInPeriod;
   final int odFlagsLogged;
   final double avgAdherence;
   final int refillsDue;
@@ -14,6 +15,7 @@ class DashboardSummary {
     required this.dateTo,
     required this.rxCount,
     required this.activeAlerts,
+    this.alertsRaisedInPeriod = 0,
     required this.odFlagsLogged,
     required this.avgAdherence,
     this.refillsDue = 0,
@@ -35,6 +37,7 @@ class DashboardSummary {
       dateTo: dataMap['date_to']?.toString() ?? '',
       rxCount: (dataMap['rx_count'] as num?)?.toInt() ?? (dataMap['rx_today'] as num?)?.toInt() ?? 0,
       activeAlerts: (dataMap['active_alerts'] as num?)?.toInt() ?? 0,
+      alertsRaisedInPeriod: (dataMap['alerts_raised_in_period'] as num?)?.toInt() ?? 0,
       odFlagsLogged: (dataMap['od_flags_logged'] as num?)?.toInt() ?? 0,
       avgAdherence: (dataMap['avg_adherence'] as num?)?.toDouble() ?? 0.0,
       refillsDue: (dataMap['refills_due'] as num?)?.toInt() ?? (dataMap['refillDue'] as num?)?.toInt() ?? 0,

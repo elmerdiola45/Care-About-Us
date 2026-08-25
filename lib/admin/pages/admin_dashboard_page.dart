@@ -7,6 +7,7 @@ import '../models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
 import '../../../common/models/dashboard_models.dart';
 import '../../../common/services/laravel_api_service.dart';
+import '../../../common/services/alert_tracker.dart';
 import '../../common/session.dart';
 import '../../common/widgets/bottom_nav_bar.dart';
 import '../../common/widgets/tap_target.dart';
@@ -47,18 +48,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   // password reset. Defaults false until fetchMe() resolves.
   bool _isAdmin = false;
 
-  // Notification badge state — polls the same GET /alerts endpoint the
-  // dispenser side already uses (AlertsDashboardScreen), no new backend
-  // work. "Seen" tracking is in-memory only (resets on reload) since
-  // there's no unread/seen field on dispense_alerts to persist against.
-  int _unresolvedAlertCount = 0;
-  final Set<String> _seenAlertIds = {};
-  bool _alertsSeeded = false;
+  // Notification badge state — tracks unread alerts via AlertTracker.
+  // Badge remains visible as long as specific unread alerts exist.
+  int _unresolvedAlertCount = AlertTracker.instance.unreadCount;
   Timer? _alertPollTimer;
 
   @override
   void initState() {
     super.initState();
+    AlertTracker.instance.addListener(_onAlertTrackerChanged);
     // Nothing currently routes a Dispenser session here (login_screen.dart
     // decides by which tab was tapped, not by the server's real user_type),
     // but nothing prevented it either — this closes that gap client-side.
@@ -80,8 +78,17 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   @override
   void dispose() {
+    AlertTracker.instance.removeListener(_onAlertTrackerChanged);
     _alertPollTimer?.cancel();
     super.dispose();
+  }
+
+  void _onAlertTrackerChanged() {
+    if (mounted) {
+      setState(() {
+        _unresolvedAlertCount = AlertTracker.instance.unreadCount;
+      });
+    }
   }
 
   void _startAlertPolling() {
@@ -98,42 +105,34 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       final alerts = await api.fetchAlerts(unresolvedOnly: true);
       if (!mounted) return;
 
-      final currentIds = alerts.map((a) => a.alertId).toSet();
-
-      if (_alertsSeeded) {
-        final newIds = currentIds.difference(_seenAlertIds);
-        if (newIds.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                newIds.length == 1
-                    ? '1 new dispensing alert'
-                    : '${newIds.length} new dispensing alerts',
-              ),
-              backgroundColor: AppColors.warning,
-              action: SnackBarAction(
-                label: 'View',
-                textColor: Colors.white,
-                onPressed: () async {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const AlertsDashboardScreen(),
-                    ),
-                  );
-                  if (mounted) _pollAlerts();
-                },
-              ),
+      final newIds = AlertTracker.instance.processAlerts(alerts);
+      if (newIds.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newIds.length == 1
+                  ? '1 new dispensing alert'
+                  : '${newIds.length} new dispensing alerts',
             ),
-          );
-        }
+            backgroundColor: AppColors.warning,
+            action: SnackBarAction(
+              label: 'View',
+              textColor: Colors.white,
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const AlertsDashboardScreen(),
+                  ),
+                );
+                if (mounted) _pollAlerts();
+              },
+            ),
+          ),
+        );
       }
 
       setState(() {
-        _unresolvedAlertCount = alerts.length;
-        _seenAlertIds
-          ..clear()
-          ..addAll(currentIds);
-        _alertsSeeded = true;
+        _unresolvedAlertCount = AlertTracker.instance.unreadCount;
       });
     } catch (_) {
       // Silent — a failed poll shouldn't interrupt the dashboard; it just
@@ -252,7 +251,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               // screen was open, so re-poll the moment we're back instead
               // of leaving it stale until the next timer tick.
               await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AlertsDashboardScreen()),
+                MaterialPageRoute(
+                  builder: (_) => const AlertsDashboardScreen(),
+                ),
               );
               if (mounted) _pollAlerts();
             },
@@ -660,10 +661,10 @@ class _OverviewTabState extends State<_OverviewTab> {
             children: [
               Expanded(
                 child: _StatCard(
-                  value: '${_summary?.activeAlerts ?? 0}',
-                  label: 'Active Alerts',
+                  value: '${_summary?.alertsRaisedInPeriod ?? 0}',
+                  label: 'Alerts Received',
                   color: AppColors.warning,
-                  subtitle: 'Current snapshot',
+                  subtitle: periodLabel,
                 ),
               ),
               const SizedBox(width: 12),

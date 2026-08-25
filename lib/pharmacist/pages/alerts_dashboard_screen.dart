@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/services/laravel_api_service.dart';
+import '../../common/services/alert_tracker.dart';
 import '../../common/session.dart';
 import '../../common/widgets/responsive_center.dart';
 import '../models/dispense_alert.dart';
@@ -18,18 +21,38 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
   String? _errorMessage;
   final List<DispenseAlert> _alerts = [];
   AlertPriority? _selectedPriority;
+  Timer? _pollingTimer;
+  static const _pollingInterval = Duration(seconds: 30);
 
   @override
   void initState() {
     super.initState();
     _loadAlerts();
+    _startPolling();
   }
 
-  Future<void> _loadAlerts() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(_pollingInterval, (_) {
+      if (mounted && !_isLoading) {
+        _loadAlerts(silent: true);
+      }
     });
+  }
+
+  Future<void> _loadAlerts({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final api = LaravelApiService(token: AppSession.instance.token);
@@ -37,6 +60,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
       // it locally via `_filtered` (below), so there's no need to refetch
       // from the network every time the selected chip changes.
       final alerts = await api.fetchAlerts(unresolvedOnly: true);
+      AlertTracker.instance.processAlerts(alerts);
 
       if (mounted) {
         setState(() {
@@ -48,7 +72,9 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to load alerts: $e';
+          if (!silent) {
+            _errorMessage = 'Failed to load alerts: $e';
+          }
           _isLoading = false;
         });
       }
@@ -219,11 +245,21 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => AlertDetailScreen(alertId: alert.alertId),
-        ),
-      ),
+      onTap: () {
+        if (!alert.isRead && !AlertTracker.instance.isRead(alert.alertId)) {
+          AlertTracker.instance.markAsRead(alert.alertId);
+          LaravelApiService(token: AppSession.instance.token)
+              .markAlertAsRead(alert.alertId)
+              .catchError((_) => AlertTracker.instance.unmarkAsRead(alert.alertId));
+        }
+        if (mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => AlertDetailScreen(alertId: alert.alertId),
+            ),
+          );
+        }
+      },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

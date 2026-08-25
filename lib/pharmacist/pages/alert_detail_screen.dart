@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/services/laravel_api_service.dart';
+import '../../common/services/alert_tracker.dart';
 import '../../common/session.dart';
 import '../../common/theme/responsive_context.dart';
 import '../../common/widgets/responsive_center.dart';
@@ -23,7 +24,18 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
   @override
   void initState() {
     super.initState();
+    AlertTracker.instance.markAsRead(widget.alertId);
+    _markAsReadOnServer();
     _loadAlert();
+  }
+
+  Future<void> _markAsReadOnServer() async {
+    try {
+      final api = LaravelApiService(token: AppSession.instance.token);
+      await api.markAlertAsRead(widget.alertId);
+    } catch (_) {
+      AlertTracker.instance.unmarkAsRead(widget.alertId);
+    }
   }
 
   Future<void> _loadAlert() async {

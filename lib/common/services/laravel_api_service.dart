@@ -1433,6 +1433,16 @@ class LaravelApiService {
     _throwForError(response, 'Failed to resolve alert');
   }
 
+  Future<void> markAlertAsRead(String alertId) async {
+    final response = await http
+        .post(_buildUri(['alerts', alertId, 'read']), headers: _headers)
+        .timeout(_timeout);
+
+    if (response.statusCode != 200) {
+      _throwForError(response, 'Failed to mark alert as read');
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Product / price-list management
   // -------------------------------------------------------------------------
