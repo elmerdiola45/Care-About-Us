@@ -87,15 +87,16 @@ class GroqOcrService {
         request.headers['Authorization'] = 'Bearer $token';
       }
 
+      final httpSw = Stopwatch()..start();
       final streamedResponse = await request.send().timeout(
-        // Groq's own inference is fast, but this also covers the
-        // backend's resize step + the network round trip — kept in the
-        // same ballpark as OcrService's 10s so a stuck Groq call fails
-        // over to the OCR.space+Tesseract fallback about as quickly.
         const Duration(seconds: 15),
         onTimeout: () => throw TimeoutException('Groq OCR request timed out.'),
       );
       final response = await http.Response.fromStream(streamedResponse);
+      httpSw.stop();
+      // TEMP INSTRUMENTATION — HTTP round-trip only (network + Laravel + Groq)
+      // ignore: avoid_print
+      print('[TIMING] Groq HTTP round-trip (Flutter→Laravel→Groq→Flutter): ${httpSw.elapsedMilliseconds}ms');
 
       if (response.statusCode == 429) {
         return const GroqOcrResult(

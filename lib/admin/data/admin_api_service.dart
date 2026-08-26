@@ -74,17 +74,10 @@ class AdminApiService {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-      debugPrint('=== RAW ADHERENCE RESPONSE ===');
-      debugPrint(response.body);
-      debugPrint('=== END RAW RESPONSE ===');
       final data = safeMap(decoded) ?? {};
-      debugPrint('Top-level keys: ${data.keys.toList()}');
       final patients = safeList(data['patients']);
-      debugPrint('Patients count from data["patients"]: ${patients.length}');
       if (patients.isEmpty) {
-        debugPrint('Trying data["data"] as fallback...');
         final fallback = safeList(data['data']);
-        debugPrint('Fallback count: ${fallback.length}');
         return fallback.map((e) => safeMap(e) ?? {}).toList();
       }
       return patients.map((e) => safeMap(e) ?? {}).toList();
@@ -673,40 +666,29 @@ class AdminApiService {
   }
 
   Future<PatientDetailResponse> fetchPatientDetail(String patientId) async {
-    final uris = [
-      Uri.parse('$_baseUrl/admin/patients/$patientId/adherence-detail'),
-      Uri.parse('$_baseUrl/admin/patients/$patientId'),
-    ];
+    final uri = Uri.parse('$_baseUrl/admin/patients/$patientId');
 
-    for (final uri in uris) {
-      try {
-        final response = await http
-            .get(uri, headers: _headers)
-            .timeout(_timeout);
+    try {
+      final response = await http
+          .get(uri, headers: _headers)
+          .timeout(_timeout);
 
-        developer.log(
-          'AdminApiService.fetchPatientDetail: URL=$uri, statusCode=${response.statusCode}',
-        );
+      developer.log(
+        'AdminApiService.fetchPatientDetail: URL=$uri, statusCode=${response.statusCode}',
+      );
 
-        if (response.statusCode == 200) {
-          final data = safeMap(jsonDecode(response.body)) ?? {};
-          return PatientDetailResponse.fromJson(data);
-        }
-
-        if (response.statusCode == 404) {
-          continue;
-        }
-
-        final data = safeMap(jsonDecode(response.body));
-        final message =
-            data?['message']?.toString() ?? 'Failed to fetch patient detail';
-        throw Exception(message);
-      } on TimeoutException {
-        continue;
+      if (response.statusCode == 200) {
+        final data = safeMap(jsonDecode(response.body)) ?? {};
+        return PatientDetailResponse.fromJson(data);
       }
-    }
 
-    throw Exception('Patient not found');
+      final data = safeMap(jsonDecode(response.body));
+      final message =
+          data?['message']?.toString() ?? 'Failed to fetch patient detail';
+      throw Exception(message);
+    } on TimeoutException {
+      throw Exception('Request timed out while fetching patient detail');
+    }
   }
 
   Future<void> lockPrescription(String prescriptionId) async {

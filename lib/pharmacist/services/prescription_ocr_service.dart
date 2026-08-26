@@ -144,12 +144,12 @@ class PrescriptionOcrService {
         corrections: groqDictResults[1] as Map<String, String>,
       );
 
-      if (!PrescriptionResultScorer.isWeak(groqParsed)) {
+       if (!PrescriptionResultScorer.isWeak(groqParsed)) {
         totalSw.stop();
         // ignore: avoid_print
         print(
           '[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms '
-          '(Groq only — OCR.space skipped)',
+          '[PATH: Groq-only — OCR.space skipped]',
         );
         return groqParsed;
       }
@@ -186,11 +186,11 @@ class PrescriptionOcrService {
     final drugDictionary = results[0] as List<String>;
     final corrections = results[1] as Map<String, String>;
 
-    if (!ocrSpace2.success) {
-      totalSw.stop();
-      // ignore: avoid_print
-      print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms');
-      return PrescriptionScanResult(
+      if (!ocrSpace2.success) {
+        totalSw.stop();
+        // ignore: avoid_print
+        print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq failed+weak + Engine 2 failed]');
+        return PrescriptionScanResult(
         success: false,
         error: groqResult.success ? ocrSpace2.error : groqResult.error,
         engineUsed: 'groq+ocrspace',
@@ -207,12 +207,12 @@ class PrescriptionOcrService {
       corrections: corrections,
     );
 
-    if (!PrescriptionResultScorer.isWeak(engine2Parsed)) {
-      totalSw.stop();
-      // ignore: avoid_print
-      print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms');
-      return engine2Parsed;
-    }
+      if (!PrescriptionResultScorer.isWeak(engine2Parsed)) {
+        totalSw.stop();
+        // ignore: avoid_print
+        print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq weak + Engine 2 success]');
+        return engine2Parsed;
+      }
 
     // ---- Attempt 3: OCR.space Engine 3, merged with Engine 2 ------------
     // Engine 2's read also looked weak — one more OCR.space call on
@@ -227,14 +227,12 @@ class PrescriptionOcrService {
       '[TIMING] OCR.space Engine 3 retry (weak Engine 2 result): ${engine3Sw.elapsedMilliseconds}ms',
     );
 
-    if (!ocrSpace3.success) {
-      // Engine 3 failed too — Engine 2's weak result is still better
-      // than nothing.
-      totalSw.stop();
-      // ignore: avoid_print
-      print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms');
-      return engine2Parsed;
-    }
+      if (!ocrSpace3.success) {
+        totalSw.stop();
+        // ignore: avoid_print
+        print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq weak + Engine 2 weak + Engine 3 failed]');
+        return engine2Parsed;
+      }
 
     final mergedText = LineEnsembleService.merge(
       ocrSpace2.fullText,
@@ -248,9 +246,9 @@ class PrescriptionOcrService {
       corrections: corrections,
     );
 
-    totalSw.stop();
-    // ignore: avoid_print
-    print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms');
-    return finalParsed;
+      totalSw.stop();
+      // ignore: avoid_print
+      print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq weak + Engine 2 weak + Engine 3 success (merged)]');
+      return finalParsed;
   }
 }

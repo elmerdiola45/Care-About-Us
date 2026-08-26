@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -72,11 +73,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final Map<String, String> body = {'email': email, 'password': password};
 
-      final response = await http.post(
-        Uri.parse('${AppConfig.baseUrl}$endpoint'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: jsonEncode(body),
-      );
+      final response = await http
+          .post(
+            Uri.parse('${AppConfig.baseUrl}$endpoint'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (!mounted) return;
 
@@ -128,6 +134,13 @@ class _LoginScreenState extends State<LoginScreen> {
           _errorMessage = message;
         });
       }
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage =
+            'Server is starting up. Please try again in a moment.';
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {

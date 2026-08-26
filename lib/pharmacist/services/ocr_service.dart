@@ -67,15 +67,16 @@ class OcrService {
           ),
         );
 
+      final httpSw = Stopwatch()..start();
       final streamedResponse = await request.send().timeout(
-        // SPEED-FIRST (post-audit): was 15s. A request that's still
-        // hanging at 10s is unlikely to come back fast enough to be
-        // worth waiting for — better to fail over to the next engine or
-        // Tesseract sooner than let the user sit on a slow/stuck call.
         const Duration(seconds: 10),
         onTimeout: () => throw TimeoutException('OCR.space request timed out.'),
       );
       final response = await http.Response.fromStream(streamedResponse);
+      httpSw.stop();
+      // TEMP INSTRUMENTATION — HTTP round-trip only (network + Laravel + OCR.space)
+      // ignore: avoid_print
+      print('[TIMING] OCR.space Engine $engine HTTP round-trip: ${httpSw.elapsedMilliseconds}ms');
 
       if (response.statusCode == 429) {
         return const OcrResult(

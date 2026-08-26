@@ -52,6 +52,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   // Badge remains visible as long as specific unread alerts exist.
   int _unresolvedAlertCount = AlertTracker.instance.unreadCount;
   Timer? _alertPollTimer;
+  bool _isPollingAlerts = false;
 
   @override
   void initState() {
@@ -100,6 +101,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Future<void> _pollAlerts() async {
+    if (_isPollingAlerts) return;
+    _isPollingAlerts = true;
     try {
       final api = LaravelApiService(token: AppSession.instance.token);
       final alerts = await api.fetchAlerts(unresolvedOnly: true);
@@ -137,6 +140,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     } catch (_) {
       // Silent — a failed poll shouldn't interrupt the dashboard; it just
       // retries on the next 30s tick.
+    } finally {
+      _isPollingAlerts = false;
     }
   }
 
