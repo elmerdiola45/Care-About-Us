@@ -351,6 +351,7 @@ class LaravelVerifiedPrescription {
   final bool valid;
   final String? message;
   final String? verifyUrl;
+  final String? prescriptionId;
   // Live per-item remaining quantity + price, keyed off the same
   // secret-verified token — NOT the static QR-payload snapshot `medicines`
   // above. Cross-pharmacy dispensing must validate/price against this,
@@ -376,6 +377,7 @@ class LaravelVerifiedPrescription {
     required this.valid,
     this.message,
     this.verifyUrl,
+    this.prescriptionId,
     this.remainingItems = const [],
   });
 
@@ -426,6 +428,7 @@ class LaravelVerifiedPrescription {
       message: json['message']?.toString(),
       verifyUrl:
           json['verify_url']?.toString() ?? json['verifyUrl']?.toString() ?? '',
+      prescriptionId: json['prescription_id']?.toString(),
       remainingItems: remainingItems,
     );
   }

@@ -239,6 +239,7 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                 adherenceScore: adherenceScore,
                 adherenceStatus: apiStatus,
                 prescriptionId: a['prescription_id']?.toString(),
+                doctorName: a['doctor_name']?.toString(),
                 refillHistory: refillHistory,
               );
             }).toList(),
@@ -498,7 +499,7 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                 'prescription_id': record.prescriptionId,
                 'last_fill': record.lastFill.toIso8601String(),
                 'ocr_code': record.id,
-                'doctor_name': record.prescriptionId,
+                'doctor_name': record.doctorName,
                 'date_time': record.lastFill.toIso8601String(),
               }),
             ),

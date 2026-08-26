@@ -61,6 +61,7 @@ class ScannedPrescription {
   final List<PrescriptionMedicine> medicines;
   final bool isVerifiedQrData;
   final String rawValue;
+  final String? backendId;
 
   const ScannedPrescription({
     required this.rxNo,
@@ -72,6 +73,7 @@ class ScannedPrescription {
     required this.medicines,
     required this.isVerifiedQrData,
     required this.rawValue,
+    this.backendId,
   });
 
   factory ScannedPrescription.fromQr(String rawValue) {
@@ -167,6 +169,7 @@ class ScannedPrescription {
                   .toList(),
               isVerifiedQrData: true,
               rawValue: rawValue,
+              backendId: verified.prescriptionId,
             );
           }
         }
@@ -357,7 +360,10 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
 
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => DispenseScreen(initialOcrCode: prescription.rxNo),
+        builder: (_) => DispenseScreen(
+          initialOcrCode: prescription.rxNo,
+          scannedPrescription: prescription,
+        ),
       ),
     );
   }

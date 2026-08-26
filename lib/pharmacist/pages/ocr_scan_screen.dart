@@ -22,6 +22,7 @@
 //    itself (no `$e` interpolation into UI or logs).
 
 import 'dart:async';
+import 'dart:isolate';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -113,13 +114,23 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       if (photo == null) return;
       if (!mounted) return;
 
+      // Enter processing state IMMEDIATELY so the spinner renders
+      // before readAsBytes yields to the event loop. This prevents the
+      // "flash back to capture UI" that happens when _isProcessing
+      // stays false during the async read.
+      setState(() {
+        _isProcessing = true;
+        _errorMessage = null;
+        _isQuotaExceeded = false;
+        _processingStage = 'Enhancing image…';
+      });
+
       final rawBytes = await photo.readAsBytes();
       if (!mounted) return;
 
       if (rawBytes.isEmpty) {
-        // A zero-byte capture is a camera/picker glitch, not something
-        // worth sending through preprocessing or OCR.
         setState(() {
+          _isProcessing = false;
           _errorMessage =
               "That photo didn't come through. Please try capturing again.";
           _isQuotaExceeded = false;
@@ -128,35 +139,45 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
         return;
       }
 
-      setState(() {
-        _isProcessing = true;
-        _errorMessage = null;
-        _isQuotaExceeded = false;
-        _processingStage = 'Enhancing image…';
-      });
+      // Show the captured image immediately — the user sees what they
+      // just photographed while preprocessing runs in the background.
+      setState(() => _imageBytes = rawBytes);
+
+      // Yield so the framework can flush the captured-image frame before
+      // CPU-heavy preprocessing begins.
+      await Future.delayed(Duration.zero);
+      if (!mounted) return;
 
       // Clean up the photo on-device before it reaches OCR.space —
       // exposure/contrast correction, sharpen, then binarize. Falls back
       // to the raw photo if preprocessing can't run for any reason.
+      //
+      // This runs on a background isolate (Isolate.run) so the O(width*height)
+      // pixel loop in ImagePreprocessorService never blocks the main UI
+      // thread — the spinner and stage text stay responsive.
       final preprocessSw = Stopwatch()..start();
-      Uint8List bytes;
+      Uint8List preprocessedBytes;
       try {
-        bytes = ImagePreprocessorService.preprocessOrFallback(rawBytes);
+        preprocessedBytes = await Isolate.run(
+          () => ImagePreprocessorService.preprocessOrFallback(rawBytes),
+        );
       } catch (_) {
         // Belt-and-suspenders: even though preprocessOrFallback is
         // documented to fall back internally, never let a preprocessing
-        // failure take down the whole capture flow — fall back to the
-        // raw bytes here too.
-        bytes = rawBytes;
+        // failure (or an isolate crash) take down the whole capture flow —
+        // fall back to the raw bytes here too.
+        preprocessedBytes = rawBytes;
       }
       preprocessSw.stop();
       // Perf timing only — no image content, no OCR output.
       _debugLog('ocr_preprocess_timing_ms:${preprocessSw.elapsedMilliseconds}');
 
       if (!mounted) return;
-      setState(() => _imageBytes = bytes);
+      // Note: _imageBytes stays as rawBytes — the displayed image is the
+      // raw capture, not the preprocessed version. Only the OCR pipeline
+      // sees the preprocessed bytes.
 
-      await _processOcr(bytes);
+      await _processOcr(preprocessedBytes);
     } on TimeoutException {
       // Shouldn't normally surface here (picker itself has no timeout),
       // but keep the failure path uniform if the platform channel ever
@@ -201,7 +222,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
           if (!mounted) return;
           setState(() => _processingStage = stage);
         },
-      ).timeout(const Duration(seconds: 25));
+      ).timeout(const Duration(seconds: 35));
     } on TimeoutException {
       if (!mounted) return;
       setState(() {

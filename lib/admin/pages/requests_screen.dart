@@ -539,10 +539,19 @@ class _RequestCardState extends State<_RequestCard> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text(
-                      'Reject',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-                    ),
+                    child: _acting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.textSecondary,
+                            ),
+                          )
+                        : const Text(
+                            'Reject',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                          ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -557,10 +566,19 @@ class _RequestCardState extends State<_RequestCard> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text(
-                      'Flag as risk',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-                    ),
+                    child: _acting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.danger,
+                            ),
+                          )
+                        : const Text(
+                            'Flag as risk',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                          ),
                   ),
                 ),
                 const SizedBox(width: 10),

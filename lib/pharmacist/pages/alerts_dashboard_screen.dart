@@ -252,11 +252,15 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
               .catchError((_) => AlertTracker.instance.unmarkAsRead(alert.alertId));
         }
         if (mounted) {
-          Navigator.of(context).push(
+          Navigator.of(context)
+              .push(
             MaterialPageRoute(
               builder: (_) => AlertDetailScreen(alertId: alert.alertId),
             ),
-          );
+          )
+              .then((_) {
+            if (mounted) _loadAlerts(silent: true);
+          });
         }
       },
       child: Container(

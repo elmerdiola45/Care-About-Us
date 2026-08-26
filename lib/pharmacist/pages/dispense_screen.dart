@@ -13,11 +13,13 @@ import '../../common/widgets/tap_target.dart';
 import '../../common/widgets/authenticated_network_image.dart';
 import 'dispensing_summary_screen.dart';
 import 'saved_prescriptions_list_screen.dart';
+import 'functional_qr_scanner_screen.dart';
 
 class DispenseScreen extends StatefulWidget {
   final String? initialOcrCode;
+  final ScannedPrescription? scannedPrescription;
 
-  const DispenseScreen({super.key, this.initialOcrCode});
+  const DispenseScreen({super.key, this.initialOcrCode, this.scannedPrescription});
 
   @override
   State<DispenseScreen> createState() => _DispenseScreenState();
@@ -245,6 +247,43 @@ class _DispenseScreenState extends State<DispenseScreen> {
             _backendLogs.clear();
             _historyLoading = true;
             _loadBackendHistory(entry);
+          } else if (widget.scannedPrescription != null &&
+              widget.scannedPrescription!.isVerifiedQrData &&
+              widget.scannedPrescription!.rxNo.isNotEmpty) {
+            final sp = widget.scannedPrescription!;
+            final medicines = sp.medicines
+                .map((m) => MedicineItem(
+                      name: m.name,
+                      dosage: m.strength,
+                      quantity: m.prescribedQuantity,
+                      unitPrice: m.unitPrice,
+                      availableStock: m.stock,
+                    ))
+                .toList();
+            final rxDateTime = DateTime.tryParse(sp.issuedDate) ?? DateTime.now();
+            final virtualPrescription = Prescription(
+              patientName: sp.patientName,
+              patientAge: sp.patientAge ?? 0,
+              patientGender: sp.patientSex ?? '',
+              doctorName: sp.prescriber,
+              ocrCode: sp.rxNo,
+              dateTime: rxDateTime,
+              medicines: medicines,
+              totalPrice: medicines.fold<double>(
+                  0, (sum, m) => sum + m.unitPrice * m.quantity),
+              status: QrStatus.qrGenerated,
+              dispensingStatus: DispensingStatus.pending,
+            );
+            final virtualEntry = PrescriptionEntry(
+              ocrCode: sp.rxNo,
+              imageBytes: Uint8List(0),
+              rawExtractedText: '',
+              prescription: virtualPrescription,
+              backendId: sp.backendId,
+            );
+            SavedPrescriptionsStore.instance.replaceOrInsert(virtualEntry);
+            _selectedOcrCode = sp.rxNo;
+            _resetDispensedQuantities();
           }
         }
         setState(() => _isLoading = false);
@@ -1176,7 +1215,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Prescription may not exist or has been removed.',
+                      'This prescription may belong to another pharmacy. '
+                      'Use Cross-Pharmacy Scan to submit a dispensing request.',
                       style: TextStyle(
                         color: Color(0xFF8A8F9C),
                         fontSize: 12.5,
