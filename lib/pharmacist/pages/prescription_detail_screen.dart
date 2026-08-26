@@ -63,8 +63,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
   void _refreshEntryFromStore() {
     PrescriptionEntry? updatedEntry;
     for (final e in SavedPrescriptionsStore.instance.items) {
-      if (e.ocrCode == _currentEntry.ocrCode ||
-          e.backendId == _currentEntry.backendId) {
+      if (e.ocrCode == _currentEntry.ocrCode) {
         updatedEntry = e;
         break;
       }

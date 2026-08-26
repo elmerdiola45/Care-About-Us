@@ -140,8 +140,10 @@ class DispensingSummaryScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: () =>
-                      Navigator.of(context).popUntil((route) => route.isFirst),
+                   onPressed: () {
+                     Navigator.of(context).pop();
+                     Navigator.of(context).pop();
+                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: SummaryColors.green,
                     foregroundColor: Colors.white,

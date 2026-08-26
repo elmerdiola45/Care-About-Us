@@ -355,6 +355,13 @@ class SavedPrescriptionsStore {
             ? QrStatus.qrGenerated
             : QrStatus.pendingQr;
         final dispensingStatus = _parseDispensingStatus(p.dispensingStatus);
+        final localDispensingStatus = localEntry.prescription.dispensingStatus;
+        final effectiveDispensingStatus = _isForwardDispensingProgression(
+          localDispensingStatus,
+          dispensingStatus,
+        )
+            ? dispensingStatus
+            : localDispensingStatus;
 
         final updatedPrescription = localEntry.prescription.copyWith(
           patientName: p.patientName,
@@ -369,7 +376,7 @@ class SavedPrescriptionsStore {
           medicines: medicines,
           totalPrice: p.totalPrice,
           status: status,
-          dispensingStatus: dispensingStatus,
+          dispensingStatus: effectiveDispensingStatus,
           pharmacyId: p.pharmacyId ?? '',
         );
 
@@ -513,8 +520,33 @@ class SavedPrescriptionsStore {
       case 'over_dispensing':
         return DispensingStatus.overDispensing;
       default:
+        if (value != null && value.isNotEmpty) {
+          debugPrint('Unknown dispensing_status from backend: $value');
+        }
         return DispensingStatus.pending;
     }
+  }
+
+  static bool _isForwardDispensingProgression(
+    DispensingStatus local,
+    DispensingStatus backend,
+  ) {
+    if (local == backend) return true;
+    if (local == DispensingStatus.pending) return true;
+    if (local == DispensingStatus.partiallyDispensed &&
+        backend == DispensingStatus.fullyDispensed) {
+      return true;
+    }
+    return false;
+  }
+
+  static DispensingStatus effectiveDispensingStatus(
+    Prescription prescription,
+  ) {
+    if (prescription.dispensingStatus != DispensingStatus.pending) {
+      return prescription.dispensingStatus;
+    }
+    return computeDispensingStatus(prescription.medicines);
   }
 
   static DispensingStatus computeDispensingStatus(

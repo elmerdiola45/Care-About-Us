@@ -994,10 +994,6 @@ class _DispenseScreenState extends State<DispenseScreen> {
           );
 
           SavedPrescriptionsStore.instance.replaceOrInsert(partialEntry);
-          SavedPrescriptionsStore.instance.updateDispensingStatus(
-            entry.ocrCode,
-            partialStatus,
-          );
           // Best-effort — the per-item logs already written above are the
           // source of truth for what was actually dispensed; this
           // denormalized status field is secondary and safe to leave
@@ -1046,10 +1042,6 @@ class _DispenseScreenState extends State<DispenseScreen> {
       }
 
       SavedPrescriptionsStore.instance.replaceOrInsert(updatedEntry);
-      SavedPrescriptionsStore.instance.updateDispensingStatus(
-        entry.ocrCode,
-        newStatus,
-      );
 
       if (!mounted) return;
 

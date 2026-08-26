@@ -150,23 +150,15 @@ class _SavedPrescriptionsListScreenState
           .toList();
     } else if (_filter == _Filter.fullyDispensed) {
       list = list.where((e) {
-        final actual =
-            e.prescription.dispensingStatus == DispensingStatus.pending
-            ? SavedPrescriptionsStore.computeDispensingStatus(
-                e.prescription.medicines,
-              )
-            : e.prescription.dispensingStatus;
-        return actual == DispensingStatus.fullyDispensed;
+        return SavedPrescriptionsStore.effectiveDispensingStatus(
+          e.prescription,
+        ) == DispensingStatus.fullyDispensed;
       }).toList();
     } else if (_filter == _Filter.partiallyDispensed) {
       list = list.where((e) {
-        final actual =
-            e.prescription.dispensingStatus == DispensingStatus.pending
-            ? SavedPrescriptionsStore.computeDispensingStatus(
-                e.prescription.medicines,
-              )
-            : e.prescription.dispensingStatus;
-        return actual == DispensingStatus.partiallyDispensed;
+        return SavedPrescriptionsStore.effectiveDispensingStatus(
+          e.prescription,
+        ) == DispensingStatus.partiallyDispensed;
       }).toList();
     }
     if (_searchQuery.isNotEmpty) {
@@ -580,42 +572,42 @@ class _SavedPrescriptionsListScreenState
                             children: [
                               _statusPill(isPending: isPending),
                               const SizedBox(width: 8),
-                              _dispensingStatusPill(p.dispensingStatus),
+                               _dispensingStatusPill(
+                                 SavedPrescriptionsStore.effectiveDispensingStatus(
+                                   p,
+                                 ),
+                               ),
                               const SizedBox(width: 8),
-                              Builder(
-                                builder: (_) {
-                                  final tier =
-                                      entry.adherence?.tier ??
-                                      (p.dispensingStatus ==
-                                              DispensingStatus.fullyDispensed
-                                          ? AdherenceTier.fullyDispensed
-                                          : p.dispensingStatus ==
-                                                DispensingStatus.overDispensing
-                                          ? AdherenceTier.overDispensing
-                                          : AdherenceTier.good);
-                                  return Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      AdherenceBadge(
-                                        tier: tier,
-                                        compact: false,
-                                      ),
-                                      if (tier ==
-                                          AdherenceTier.fullyDispensed) ...[
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          '100%',
-                                          style: TextStyle(
-                                            color: const Color(0xFF6B7280),
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  );
-                                },
-                              ),
+                               Builder(
+                                 builder: (_) {
+                                   final adherence = entry.adherence;
+                                   if (adherence == null || !adherence.hasData) {
+                                     return const SizedBox.shrink();
+                                   }
+                                   final tier = adherence.tier;
+                                   return Row(
+                                     mainAxisSize: MainAxisSize.min,
+                                     children: [
+                                       AdherenceBadge(
+                                         tier: tier,
+                                         compact: false,
+                                       ),
+                                       if (tier ==
+                                           AdherenceTier.fullyDispensed) ...[
+                                         const SizedBox(width: 6),
+                                         Text(
+                                           '100%',
+                                           style: TextStyle(
+                                             color: const Color(0xFF6B7280),
+                                             fontWeight: FontWeight.w700,
+                                             fontSize: 12.5,
+                                           ),
+                                         ),
+                                       ],
+                                     ],
+                                   );
+                                 },
+                               ),
                             ],
                           ),
                         ),
@@ -682,8 +674,14 @@ class _SavedPrescriptionsListScreenState
                       ),
                     ),
                     const SizedBox(width: 8),
-                    if (p.dispensingStatus != DispensingStatus.fullyDispensed &&
-                        p.dispensingStatus != DispensingStatus.overDispensing)
+                    if (SavedPrescriptionsStore.effectiveDispensingStatus(
+                            p,
+                          ) !=
+                          DispensingStatus.fullyDispensed &&
+                        SavedPrescriptionsStore.effectiveDispensingStatus(
+                          p,
+                        ) !=
+                          DispensingStatus.overDispensing)
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () => _onDispensePressed(entry),
