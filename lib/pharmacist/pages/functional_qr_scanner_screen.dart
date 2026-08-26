@@ -149,6 +149,10 @@ class ScannedPrescription {
           final api = LaravelApiService(token: AppSession.instance.token);
           final verified = await api.verifyQrToken(token);
           if (verified.valid) {
+            final remainingByName = <String, LaravelPrescriptionItemQuantity>{
+              for (final r in verified.remainingItems)
+                r.medicineName.toLowerCase(): r,
+            };
             return ScannedPrescription(
               rxNo: verified.ocrCode,
               patientName: verified.patientName,
@@ -158,13 +162,16 @@ class ScannedPrescription {
               issuedDate: _formatDateTime(verified.dateTime),
               medicines: verified.medicines
                   .map(
-                    (m) => PrescriptionMedicine(
-                      name: m.name,
-                      strength: m.dosage ?? '',
-                      prescribedQuantity: m.quantity,
-                      stock: m.quantity * 3,
-                      unitPrice: 12.50,
-                    ),
+                    (m) {
+                      final r = remainingByName[m.name.toLowerCase()];
+                      return PrescriptionMedicine(
+                        name: m.name,
+                        strength: m.dosage ?? '',
+                        prescribedQuantity: m.quantity,
+                        stock: r?.remainingQuantity ?? m.quantity,
+                        unitPrice: r?.unitPrice ?? m.unitPrice,
+                      );
+                    },
                   )
                   .toList(),
               isVerifiedQrData: true,
@@ -186,6 +193,10 @@ class ScannedPrescription {
         final api = LaravelApiService(token: AppSession.instance.token);
         final verified = await api.verifyQrToken(tokenFromUrl);
         if (verified.valid) {
+          final remainingByName = <String, LaravelPrescriptionItemQuantity>{
+            for (final r in verified.remainingItems)
+              r.medicineName.toLowerCase(): r,
+          };
           return ScannedPrescription(
             rxNo: verified.ocrCode,
             patientName: verified.patientName,
@@ -195,13 +206,16 @@ class ScannedPrescription {
             issuedDate: _formatDateTime(verified.dateTime),
             medicines: verified.medicines
                 .map(
-                  (m) => PrescriptionMedicine(
-                    name: m.name,
-                    strength: m.dosage ?? '',
-                    prescribedQuantity: m.quantity,
-                    stock: m.quantity * 3,
-                    unitPrice: 12.50,
-                  ),
+                  (m) {
+                    final r = remainingByName[m.name.toLowerCase()];
+                    return PrescriptionMedicine(
+                      name: m.name,
+                      strength: m.dosage ?? '',
+                      prescribedQuantity: m.quantity,
+                      stock: r?.remainingQuantity ?? m.quantity,
+                      unitPrice: r?.unitPrice ?? m.unitPrice,
+                    );
+                  },
                 )
                 .toList(),
             isVerifiedQrData: true,
