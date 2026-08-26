@@ -1019,6 +1019,8 @@ class _SavedPrescriptionsListScreenState
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => PrescriptionDetailScreen(entry: entry)),
     );
+    if (!mounted) return;
+    setState(() {});
   }
 
   Future<void> _onDeletePressed(PrescriptionEntry entry) async {

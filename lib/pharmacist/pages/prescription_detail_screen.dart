@@ -7,6 +7,7 @@ import '../../common/session.dart';
 import '../../common/utils/ph_time.dart';
 import '../../common/widgets/responsive_center.dart';
 import '../../common/widgets/authenticated_network_image.dart';
+import '../../common/app_route_observer.dart';
 import '../models/prescription.dart';
 import '../data/saved_prescriptions_store.dart';
 import 'dispense_screen.dart';
@@ -21,7 +22,8 @@ class PrescriptionDetailScreen extends StatefulWidget {
       _PrescriptionDetailScreenState();
 }
 
-class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
+class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
+    with RouteAware {
   late TextEditingController _patientController;
   late TextEditingController _ageController;
   late TextEditingController _genderController;
@@ -33,11 +35,13 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
 
   bool _isSaving = false;
   bool _isEditing = false;
+  late PrescriptionEntry _currentEntry;
 
   @override
   void initState() {
     super.initState();
-    final p = widget.entry.prescription;
+    _currentEntry = widget.entry;
+    final p = _currentEntry.prescription;
     _patientController = TextEditingController(text: p.patientName);
     _ageController = TextEditingController(text: '${p.patientAge}');
     _genderController = TextEditingController(text: p.patientGender);
@@ -49,7 +53,41 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
   }
 
   @override
+  void didPopNext() {
+    // Refresh the prescription entry from the store after returning from
+    // another screen (e.g., DispenseScreen). This ensures the dispensing
+    // status and other fields reflect any changes made by the dispense flow.
+    _refreshEntryFromStore();
+  }
+
+  void _refreshEntryFromStore() {
+    PrescriptionEntry? updatedEntry;
+    for (final e in SavedPrescriptionsStore.instance.items) {
+      if (e.ocrCode == _currentEntry.ocrCode ||
+          e.backendId == _currentEntry.backendId) {
+        updatedEntry = e;
+        break;
+      }
+    }
+    if (updatedEntry != null && mounted) {
+      setState(() {
+        _currentEntry = updatedEntry as PrescriptionEntry;
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     _patientController.dispose();
     _ageController.dispose();
     _genderController.dispose();
@@ -89,7 +127,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
 
   Future<void> _saveDisposedQuantities() async {
     if (_isSaving) return;
-    if (widget.entry.backendId == null || widget.entry.backendId!.isEmpty) {
+    if (_currentEntry.backendId == null || _currentEntry.backendId!.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -104,17 +142,17 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final medicinesPayload = widget.entry.prescription.medicines
+      final medicinesPayload = _currentEntry.prescription.medicines
           .map((m) => {'id': m.name, 'disposed_quantity': m.disposedQuantity})
           .toList();
 
       await LaravelApiService(
         token: AppSession.instance.token,
-      ).updateDisposedQuantities(widget.entry.backendId!, medicinesPayload);
+      ).updateDisposedQuantities(_currentEntry.backendId!, medicinesPayload);
 
-      final updatedEntry = widget.entry.copyWith(
-        prescription: widget.entry.prescription.copyWith(
-          medicines: widget.entry.prescription.medicines,
+      final updatedEntry = _currentEntry.copyWith(
+        prescription: _currentEntry.prescription.copyWith(
+          medicines: _currentEntry.prescription.medicines,
         ),
       );
       SavedPrescriptionsStore.instance.replaceOrInsert(updatedEntry);
@@ -156,9 +194,9 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
 
     try {
       final age = int.tryParse(_ageController.text.trim()) ?? 0;
-      final totalPrice = widget.entry.prescription.totalPrice;
+      final totalPrice = _currentEntry.prescription.totalPrice;
 
-      final medicinesPayload = widget.entry.prescription.medicines
+      final medicinesPayload = _currentEntry.prescription.medicines
           .map(
             (m) => {
               'name': m.name,
@@ -176,18 +214,18 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
       final session = AppSession.instance;
       final api = LaravelApiService(token: session.token);
 
-      // Don't trust widget.entry.backendId alone — it's a snapshot from
+      // Don't trust _currentEntry.backendId alone — it's a snapshot from
       // whenever this screen was opened and may predate the store's own
       // background sync finishing (see SavedPrescriptionsStore.add()).
       // Check the store's live value first so we don't fire a second
       // createPrescription for an ocr_code that already exists.
       final liveBackendId =
-          SavedPrescriptionsStore.instance.backendIdFor(widget.entry.ocrCode) ??
-          widget.entry.backendId;
+          SavedPrescriptionsStore.instance.backendIdFor(_currentEntry.ocrCode) ??
+          _currentEntry.backendId;
 
       if (liveBackendId == null || liveBackendId.isEmpty) {
         await api.createPrescription(
-          ocrCode: widget.entry.ocrCode,
+          ocrCode: _currentEntry.ocrCode,
           patientName: _patientController.text.trim(),
           patientAge: age,
           patientGender: _genderController.text.trim(),
@@ -196,14 +234,14 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
           ptNo: _ptController.text.trim(),
           s2: _s2Controller.text.trim(),
           patientAddress: _addressController.text.trim(),
-          dateTime: widget.entry.prescription.dateTime,
+          dateTime: _currentEntry.prescription.dateTime,
           medicines: medicinesPayload,
           totalPrice: totalPrice,
-          rawExtractedText: widget.entry.rawExtractedText,
+          rawExtractedText: _currentEntry.rawExtractedText,
           pharmacistId: session.userType == 'admin' ? session.userId : null,
           dispenserId: session.userType == 'dispenser' ? session.userId : null,
           pharmacyId: session.pharmacyId,
-          imageBytes: widget.entry.imageBytes,
+          imageBytes: _currentEntry.imageBytes,
         );
       } else {
         await api.updatePrescription(liveBackendId, {
@@ -264,9 +302,9 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         actions: [
-          if (widget.entry.prescription.dispensingStatus !=
+          if (_currentEntry.prescription.dispensingStatus !=
                   DispensingStatus.fullyDispensed &&
-              widget.entry.prescription.dispensingStatus !=
+              _currentEntry.prescription.dispensingStatus !=
                   DispensingStatus.overDispensing)
             IconButton(
               onPressed: _isSaving
@@ -275,7 +313,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => DispenseScreen(
-                            initialOcrCode: widget.entry.ocrCode,
+                            initialOcrCode: _currentEntry.ocrCode,
                           ),
                         ),
                       );
@@ -328,11 +366,11 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
             const SizedBox(height: 12),
             _buildTotalCard(),
             const SizedBox(height: 16),
-            if (widget.entry.qrData != null) ...[
+            if (_currentEntry.qrData != null) ...[
               _buildQrSection(context),
               const SizedBox(height: 16),
             ],
-            if (widget.entry.rawExtractedText.isNotEmpty) ...[
+            if (_currentEntry.rawExtractedText.isNotEmpty) ...[
               _buildRawTextCard(),
               const SizedBox(height: 16),
             ],
@@ -357,9 +395,9 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: _buildImageThumbnail(
-                widget.entry.imageBytes,
+                _currentEntry.imageBytes,
                 64,
-                widget.entry.imageUrl,
+                _currentEntry.imageUrl,
               ),
             ),
           ),
@@ -369,7 +407,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.entry.prescription.patientName,
+                  _currentEntry.prescription.patientName,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
@@ -377,7 +415,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${widget.entry.prescription.patientGender} · ${widget.entry.prescription.patientAge} years old',
+                  '${_currentEntry.prescription.patientGender} · ${_currentEntry.prescription.patientAge} years old',
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                 ),
                 const SizedBox(height: 6),
@@ -388,10 +426,10 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
                   ),
                   decoration: BoxDecoration(
                     color:
-                        widget.entry.prescription.dispensingStatus ==
+                        _currentEntry.prescription.dispensingStatus ==
                             DispensingStatus.fullyDispensed
                         ? const Color(0xFFDCF3E8)
-                        : widget.entry.prescription.dispensingStatus ==
+                        : _currentEntry.prescription.dispensingStatus ==
                               DispensingStatus.partiallyDispensed
                         ? const Color(0xFFFFF7E6)
                         : const Color(0xFFFDF0D8),
@@ -399,13 +437,13 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
                   ),
                   child: Text(
                     _dispensingStatusLabel(
-                      widget.entry.prescription.dispensingStatus,
+                      _currentEntry.prescription.dispensingStatus,
                     ),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: _dispensingStatusColor(
-                        widget.entry.prescription.dispensingStatus,
+                        _currentEntry.prescription.dispensingStatus,
                       ),
                     ),
                   ),
@@ -455,12 +493,12 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
             _editableField('Gender', _genderController),
             _editableField('Address', _addressController),
           ] else ...[
-            _detailRow('Name', widget.entry.prescription.patientName),
-            _detailRow('Age', '${widget.entry.prescription.patientAge}'),
-            _detailRow('Gender', widget.entry.prescription.patientGender),
-            if (widget.entry.prescription.patientAddress != null &&
-                widget.entry.prescription.patientAddress!.isNotEmpty)
-              _detailRow('Address', widget.entry.prescription.patientAddress!),
+            _detailRow('Name', _currentEntry.prescription.patientName),
+            _detailRow('Age', '${_currentEntry.prescription.patientAge}'),
+            _detailRow('Gender', _currentEntry.prescription.patientGender),
+            if (_currentEntry.prescription.patientAddress != null &&
+                _currentEntry.prescription.patientAddress!.isNotEmpty)
+              _detailRow('Address', _currentEntry.prescription.patientAddress!),
           ],
         ],
       ),
@@ -504,14 +542,14 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
             _editableField('PT No.', _ptController),
             _editableField('S2', _s2Controller),
           ] else ...[
-            _detailRow('Doctor', widget.entry.prescription.doctorName),
-            if (widget.entry.prescription.licenseNo.isNotEmpty)
-              _detailRow('License No.', widget.entry.prescription.licenseNo),
-            if (widget.entry.prescription.ptNo.isNotEmpty)
-              _detailRow('PT No.', widget.entry.prescription.ptNo),
-            if (widget.entry.prescription.s2.isNotEmpty)
-              _detailRow('S2', widget.entry.prescription.s2),
-            _detailRow('Date', _formatDate(widget.entry.prescription.dateTime)),
+            _detailRow('Doctor', _currentEntry.prescription.doctorName),
+            if (_currentEntry.prescription.licenseNo.isNotEmpty)
+              _detailRow('License No.', _currentEntry.prescription.licenseNo),
+            if (_currentEntry.prescription.ptNo.isNotEmpty)
+              _detailRow('PT No.', _currentEntry.prescription.ptNo),
+            if (_currentEntry.prescription.s2.isNotEmpty)
+              _detailRow('S2', _currentEntry.prescription.s2),
+            _detailRow('Date', _formatDate(_currentEntry.prescription.dateTime)),
           ],
         ],
       ),
@@ -548,7 +586,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          ...widget.entry.prescription.medicines.map((m) {
+          ..._currentEntry.prescription.medicines.map((m) {
             final typeColor = m.isEssential
                 ? const Color(0xFF0B7B77)
                 : const Color(0xFFD97706);
@@ -656,10 +694,10 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
                             ),
                             onChanged: (val) {
                               final qty = int.tryParse(val) ?? 0;
-                              final idx = widget.entry.prescription.medicines
+                              final idx = _currentEntry.prescription.medicines
                                   .indexWhere((med) => med.name == m.name);
                               if (idx != -1) {
-                                widget.entry.prescription.medicines[idx] = m
+                                _currentEntry.prescription.medicines[idx] = m
                                     .copyWith(
                                       disposedQuantity: qty.clamp(
                                         0,
@@ -702,12 +740,12 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
   }
 
   Widget _buildDispensingActionCard() {
-    final hasDisposed = widget.entry.prescription.medicines.any(
+    final hasDisposed = _currentEntry.prescription.medicines.any(
       (m) => m.disposedQuantity > 0,
     );
     final allFullyDispensed =
-        widget.entry.prescription.medicines.isNotEmpty &&
-        widget.entry.prescription.medicines.every(
+        _currentEntry.prescription.medicines.isNotEmpty &&
+        _currentEntry.prescription.medicines.every(
           (m) => m.disposedQuantity >= m.quantity,
         );
 
@@ -791,7 +829,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
           ),
           const Spacer(),
           Text(
-            '₱${widget.entry.prescription.totalPrice.toStringAsFixed(2)}',
+            '₱${_currentEntry.prescription.totalPrice.toStringAsFixed(2)}',
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 22,
@@ -804,7 +842,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
   }
 
   Widget _buildQrSection(BuildContext context) {
-    final qrJson = widget.entry.qrData;
+    final qrJson = _currentEntry.qrData;
     if (qrJson == null) return const SizedBox.shrink();
 
     return Container(
@@ -831,9 +869,9 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          if (widget.entry.qrToken != null)
+          if (_currentEntry.qrToken != null)
             Text(
-              'Token: ${widget.entry.qrToken}',
+              'Token: ${_currentEntry.qrToken}',
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.grey.shade600,
@@ -862,7 +900,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            widget.entry.backendVerifyUrl ?? 'QR token ready for scanning',
+            _currentEntry.backendVerifyUrl ?? 'QR token ready for scanning',
             style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
             textAlign: TextAlign.center,
           ),
@@ -902,7 +940,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            widget.entry.rawExtractedText,
+            _currentEntry.rawExtractedText,
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey.shade700,
@@ -989,8 +1027,8 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen> {
   String _formatDate(DateTime dt) => formatPhilippineDateTime(dt);
 
   void _openImageViewer(BuildContext context) {
-    final bytes = widget.entry.imageBytes;
-    final imageUrl = widget.entry.imageUrl;
+    final bytes = _currentEntry.imageBytes;
+    final imageUrl = _currentEntry.imageUrl;
     if (bytes.isEmpty && (imageUrl == null || imageUrl.isEmpty)) return;
 
     Navigator.of(context).push(

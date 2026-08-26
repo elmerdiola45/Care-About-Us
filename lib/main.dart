@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'common/session.dart';
+import 'common/app_route_observer.dart';
 import 'pharmacist/pages/home_dashboard_screen.dart';
 import 'admin/pages/admin_dashboard_page.dart';
 
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const AuthGate(),
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [appRouteObserver],
     );
   }
 }
