@@ -5,7 +5,9 @@ import '../../common/services/alert_tracker.dart';
 import '../../common/session.dart';
 import '../../common/theme/responsive_context.dart';
 import '../../common/widgets/responsive_center.dart';
+import '../data/saved_prescriptions_store.dart';
 import '../models/dispense_alert.dart';
+import 'prescription_detail_screen.dart';
 
 class AlertDetailScreen extends StatefulWidget {
   final String alertId;
@@ -61,6 +63,46 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
         });
       }
     }
+  }
+
+  Future<void> _navigateToPrescription(String prescriptionId) async {
+    if (prescriptionId.isEmpty || prescriptionId == 'N/A') return;
+
+    // Try to find the prescription in the local store first
+    var match = SavedPrescriptionsStore.instance.items.where(
+      (entry) => entry.backendId == prescriptionId,
+    );
+
+    // If not found locally, force-refresh from backend
+    if (match.isEmpty) {
+      try {
+        await SavedPrescriptionsStore.instance.fetchFromBackend(force: true);
+      } catch (_) {
+        // ignore — we'll handle "not found" below
+      }
+      if (!mounted) return;
+      match = SavedPrescriptionsStore.instance.items.where(
+        (entry) => entry.backendId == prescriptionId,
+      );
+    }
+
+    if (!mounted) return;
+
+    if (match.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Prescription not found. It may have been deleted.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PrescriptionDetailScreen(entry: match.first),
+      ),
+    );
   }
 
   @override
@@ -211,7 +253,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                     height: 1.5,
                   ),
                 ),
-                if (alert.note.isNotEmpty) ...[
+                if (alert.note.isNotEmpty && alert.note != alert.description) ...[
                   const SizedBox(height: 8),
                   Text(
                     alert.note,
@@ -239,6 +281,27 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                 _detailRow('Resolved', alert.resolved ? 'Yes' : 'No'),
                 if (alert.resolved && alert.resolvedAt != null)
                   _detailRow('Resolved At', _fmtDate(alert.resolvedAt!)),
+                if (alert.prescriptionId != null &&
+                    alert.prescriptionId!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          _navigateToPrescription(alert.prescriptionId!),
+                      icon: const Icon(Icons.description, size: 18),
+                      label: const Text('View Prescription'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.teal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

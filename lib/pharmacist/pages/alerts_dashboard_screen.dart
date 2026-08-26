@@ -49,7 +49,6 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
   Future<void> _loadAlerts({bool silent = false}) async {
     if (!silent) {
       setState(() {
-        _isLoading = true;
         _errorMessage = null;
       });
     }
@@ -104,7 +103,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
             Expanded(
               child: ResponsiveCenter.dashboard(
                 padding: EdgeInsets.zero,
-                child: _isLoading
+                child: _isLoading && _alerts.isEmpty
                     ? const Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -118,7 +117,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                           ],
                         ),
                       )
-                    : _errorMessage != null
+                    : _errorMessage != null && _alerts.isEmpty
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
