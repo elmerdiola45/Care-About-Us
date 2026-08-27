@@ -21,14 +21,14 @@ class ImagePreprocessorService {
       throw const FormatException('Could not decode image for preprocessing.');
     }
 
-    // Resizing removed on request — the image is sharpened/binarized at
-    // its original resolution instead of being scaled down first. Note
-    // this means a larger upload to OCR.space and a slower on-device
-    // preprocessing pass (this loop is O(width*height), so it now scales
-    // with whatever resolution the camera captured), in exchange for not
-    // losing any detail on small/tightly-packed handwriting before OCR
-    // ever sees it.
-    final result = _fusedSharpenAndBinarize(decoded);
+    // Capped to keep the post-binarization JPEG under the backend's 5MB
+    // upload limit (PrescriptionController::store, 'image' => max:5120) on
+    // full-resolution modern camera photos, while staying well above what
+    // OCR needs for legible handwriting.
+    final capped =
+        decoded.width > 2000 ? img.copyResize(decoded, width: 2000) : decoded;
+
+    final result = _fusedSharpenAndBinarize(capped);
     // SPEED-FIRST (post-audit): quality dropped 88 -> 75. The output here
     // is already binarized to pure black/white, so JPEG artifacts from a
     // lower quality setting are far less visible than they'd be on a
