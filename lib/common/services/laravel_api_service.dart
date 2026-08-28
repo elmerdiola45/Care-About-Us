@@ -349,6 +349,12 @@ class LaravelVerifiedPrescription {
   final List<LaravelVerifiedMedicine> medicines;
   final double totalPrice;
   final bool valid;
+  // True when the backend rejected the scan specifically because the
+  // prescription has already been fully dispensed (HTTP 200, valid=false,
+  // fully_dispensed=true). Distinct from a generic invalid/expired token so
+  // the scanner can show the "already fully dispensed" message and stop
+  // instead of falling back to parsing the QR's stale embedded payload.
+  final bool fullyDispensed;
   final String? message;
   final String? verifyUrl;
   final String? prescriptionId;
@@ -375,6 +381,7 @@ class LaravelVerifiedPrescription {
     required this.medicines,
     required this.totalPrice,
     required this.valid,
+    this.fullyDispensed = false,
     this.message,
     this.verifyUrl,
     this.prescriptionId,
@@ -425,6 +432,7 @@ class LaravelVerifiedPrescription {
       medicines: medicines,
       totalPrice: _safeDouble(payload['total_price'] ?? payload['totalPrice']),
       valid: _safeBool(json['valid'], true),
+      fullyDispensed: _safeBool(json['fully_dispensed'], false),
       message: json['message']?.toString(),
       verifyUrl:
           json['verify_url']?.toString() ?? json['verifyUrl']?.toString() ?? '',

@@ -62,6 +62,10 @@ class ScannedPrescription {
   final bool isVerifiedQrData;
   final String rawValue;
   final String? backendId;
+  // Backend verified the token but the prescription is already fully
+  // dispensed — the scanner must show the "already fully dispensed"
+  // message and STOP, never open the Dispense screen.
+  final bool isFullyDispensed;
 
   const ScannedPrescription({
     required this.rxNo,
@@ -74,6 +78,7 @@ class ScannedPrescription {
     required this.isVerifiedQrData,
     required this.rawValue,
     this.backendId,
+    this.isFullyDispensed = false,
   });
 
   factory ScannedPrescription.fromQr(String rawValue) {
@@ -148,6 +153,9 @@ class ScannedPrescription {
         if (token.isNotEmpty) {
           final api = LaravelApiService(token: AppSession.instance.token);
           final verified = await api.verifyQrToken(token);
+          if (verified.fullyDispensed) {
+            return _fullyDispensedResult(verified, rawValue);
+          }
           if (verified.valid) {
             final remainingByName = <String, LaravelPrescriptionItemQuantity>{
               for (final r in verified.remainingItems)
@@ -192,6 +200,9 @@ class ScannedPrescription {
       try {
         final api = LaravelApiService(token: AppSession.instance.token);
         final verified = await api.verifyQrToken(tokenFromUrl);
+        if (verified.fullyDispensed) {
+          return _fullyDispensedResult(verified, rawValue);
+        }
         if (verified.valid) {
           final remainingByName = <String, LaravelPrescriptionItemQuantity>{
             for (final r in verified.remainingItems)
@@ -230,6 +241,25 @@ class ScannedPrescription {
     }
 
     return ScannedPrescription.fromQr(rawValue);
+  }
+
+  static ScannedPrescription _fullyDispensedResult(
+    LaravelVerifiedPrescription verified,
+    String rawValue,
+  ) {
+    return ScannedPrescription(
+      rxNo: verified.ocrCode,
+      patientName: verified.patientName,
+      patientAge: verified.patientAge,
+      patientSex: verified.patientGender,
+      prescriber: verified.doctorName,
+      issuedDate: _formatDateTime(verified.dateTime),
+      medicines: const [],
+      isVerifiedQrData: true,
+      rawValue: rawValue,
+      backendId: verified.prescriptionId,
+      isFullyDispensed: true,
+    );
   }
 
   static String _formatDateTime(DateTime dt) {
@@ -372,12 +402,51 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
 
     if (!mounted) return;
 
+    // Fully dispensed: show the completion message and STOP. Never open the
+    // Dispense screen — there is nothing left to dispense and its embedded
+    // QR payload would otherwise show stale "available" quantities.
+    if (prescription.isFullyDispensed) {
+      await _showFullyDispensedDialog();
+      return;
+    }
+
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => DispenseScreen(
           initialOcrCode: prescription.rxNo,
           scannedPrescription: prescription,
         ),
+      ),
+    );
+  }
+
+  Future<void> _showFullyDispensedDialog() async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: ScanColors.surface,
+        icon: const Icon(
+          Icons.check_circle,
+          color: ScanColors.teal,
+          size: 48,
+        ),
+        title: const Text(
+          'Already Fully Dispensed',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: ScanColors.text),
+        ),
+        content: const Text(
+          'This prescription has already been fully dispensed.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: ScanColors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
