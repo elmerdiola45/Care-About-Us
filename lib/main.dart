@@ -88,7 +88,13 @@ class _AuthGateState extends State<AuthGate> {
           );
         }
 
-        if (restored && session.userType == 'admin') {
+        // Both admin-role and pharmacist-role accounts log in through the
+        // "Pharmacist / Admin" tab and land on AdminDashboardPage; the
+        // backend reports either as user_type 'pharmacist' (see
+        // AuthController::pharmacistLogin), so accept both here or a refresh
+        // would drop a valid pharmacist/admin session back to login.
+        if (restored &&
+            (session.userType == 'admin' || session.userType == 'pharmacist')) {
           return AdminDashboardPage(
             token: session.token ?? '',
             userType: session.userType,
