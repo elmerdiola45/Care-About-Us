@@ -16,6 +16,13 @@ class MedicineItem {
   final String originalOcrName;
   final String genericName;
   final String brand;
+
+  /// The real `products.id` this line resolved to in the OCR review
+  /// screen (brand+dosage or generic+dosage catalog match), or null
+  /// when nothing specific was resolved. Sent to the backend on save
+  /// (medicines[i][product_id]) for traceability — existing stock and
+  /// dispensing logic stays name-based, so null is always safe.
+  final int? productId;
   final String dosage;
   final int quantity;
   final int disposedQuantity;
@@ -35,6 +42,7 @@ class MedicineItem {
     this.originalOcrName = '',
     this.genericName = '',
     this.brand = '',
+    this.productId,
     required this.dosage,
     required this.quantity,
     this.disposedQuantity = 0,
@@ -50,6 +58,7 @@ class MedicineItem {
     String? originalOcrName,
     String? genericName,
     String? brand,
+    int? productId,
     String? dosage,
     int? quantity,
     int? disposedQuantity,
@@ -64,6 +73,7 @@ class MedicineItem {
       originalOcrName: originalOcrName ?? this.originalOcrName,
       genericName: genericName ?? this.genericName,
       brand: brand ?? this.brand,
+      productId: productId ?? this.productId,
       dosage: dosage ?? this.dosage,
       quantity: quantity ?? this.quantity,
       disposedQuantity: disposedQuantity ?? this.disposedQuantity,

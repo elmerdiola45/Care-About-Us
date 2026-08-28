@@ -13,11 +13,13 @@ import '../../common/widgets/tap_target.dart';
 import '../../common/widgets/authenticated_network_image.dart';
 import 'dispensing_summary_screen.dart';
 import 'saved_prescriptions_list_screen.dart';
+import 'functional_qr_scanner_screen.dart';
 
 class DispenseScreen extends StatefulWidget {
   final String? initialOcrCode;
+  final ScannedPrescription? scannedPrescription;
 
-  const DispenseScreen({super.key, this.initialOcrCode});
+  const DispenseScreen({super.key, this.initialOcrCode, this.scannedPrescription});
 
   @override
   State<DispenseScreen> createState() => _DispenseScreenState();
@@ -245,6 +247,43 @@ class _DispenseScreenState extends State<DispenseScreen> {
             _backendLogs.clear();
             _historyLoading = true;
             _loadBackendHistory(entry);
+          } else if (widget.scannedPrescription != null &&
+              widget.scannedPrescription!.isVerifiedQrData &&
+              widget.scannedPrescription!.rxNo.isNotEmpty) {
+            final sp = widget.scannedPrescription!;
+            final medicines = sp.medicines
+                .map((m) => MedicineItem(
+                      name: m.name,
+                      dosage: m.strength,
+                      quantity: m.prescribedQuantity,
+                      unitPrice: m.unitPrice,
+                      availableStock: m.stock,
+                    ))
+                .toList();
+            final rxDateTime = DateTime.tryParse(sp.issuedDate) ?? DateTime.now();
+            final virtualPrescription = Prescription(
+              patientName: sp.patientName,
+              patientAge: sp.patientAge ?? 0,
+              patientGender: sp.patientSex ?? '',
+              doctorName: sp.prescriber,
+              ocrCode: sp.rxNo,
+              dateTime: rxDateTime,
+              medicines: medicines,
+              totalPrice: medicines.fold<double>(
+                  0, (sum, m) => sum + m.unitPrice * m.quantity),
+              status: QrStatus.qrGenerated,
+              dispensingStatus: DispensingStatus.pending,
+            );
+            final virtualEntry = PrescriptionEntry(
+              ocrCode: sp.rxNo,
+              imageBytes: Uint8List(0),
+              rawExtractedText: '',
+              prescription: virtualPrescription,
+              backendId: sp.backendId,
+            );
+            SavedPrescriptionsStore.instance.replaceOrInsert(virtualEntry);
+            _selectedOcrCode = sp.rxNo;
+            _resetDispensedQuantities();
           }
         }
         setState(() => _isLoading = false);
@@ -484,7 +523,26 @@ class _DispenseScreenState extends State<DispenseScreen> {
     final backendId = entry.backendId;
 
     if (backendId == null || backendId.isEmpty) {
-      return true;
+      // No verified server-side record for this prescription — this
+      // happens when a QR could not be verified with the backend
+      // (offline / server down) and the scanner fell back to local or
+      // demo data. Dispensing offline would skip the token check, the
+      // over-dispense lock, and cross-pharmacy approval, and would
+      // never be recorded server-side — so it is refused outright
+      // rather than shown as a successful fill.
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This prescription has not been verified with the server. '
+            'Connect to the internet and scan the QR again — dispensing '
+            "can't be recorded offline.",
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return false;
     }
 
     try {
@@ -759,6 +817,17 @@ class _DispenseScreenState extends State<DispenseScreen> {
   Future<void> _onDispense() async {
     final entry = _selectedEntry;
     if (entry == null) return;
+
+    // A dispense must be backed by a verified server-side prescription.
+    // _validateDispense() already blocks this case with a message; this
+    // is the belt-and-suspenders guard so no present or future entry
+    // path into this screen can reach the backend-skipping fill code
+    // and the success receipt below with no backendId.
+    if (entry.backendId == null || entry.backendId!.isEmpty) {
+      await _validateDispense();
+      return;
+    }
+
     final prescription = entry.prescription;
 
     // Set this immediately, before any awaited step, so the Dispense
@@ -1115,6 +1184,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
           if (_selectedOcrCode != null)
             IconButton(
               onPressed: () {
+                // Deep-link mode (opened with a specific initialOcrCode from
+                // Saved Rx / QR scanner / prescription detail): there is no
+                // list to fall back to — clearing the selection would just
+                // strand the screen on "No dispensing record found", since
+                // widget.initialOcrCode stays non-null. So X means "close".
+                if (widget.initialOcrCode != null) {
+                  Navigator.pop(context);
+                  return;
+                }
                 setState(() {
                   _selectedOcrCode = null;
                   _resetDispensedQuantities();
@@ -1176,7 +1254,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Prescription may not exist or has been removed.',
+                      'This prescription may belong to another pharmacy. '
+                      'Use Cross-Pharmacy Scan to submit a dispensing request.',
                       style: TextStyle(
                         color: Color(0xFF8A8F9C),
                         fontSize: 12.5,

@@ -15,6 +15,21 @@ class AlertTracker extends ChangeNotifier {
   final Set<String> _knownAlertIds = {};
   bool _isSeeded = false;
 
+  // Last alert list seen by processAlerts() — fed by the dashboard's 30s
+  // poll AND by the Alerts screen itself. Lets a revisit to the Alerts
+  // screen render immediately from this instead of showing a blocking
+  // spinner while it re-fetches (it still refreshes in the background).
+  List<DispenseAlert> _latestAlerts = const [];
+  DateTime? _latestAlertsAt;
+
+  /// The most recently fetched alert list (may be a few seconds stale —
+  /// see [latestAlertsAt]). Callers should still trigger a background
+  /// refresh.
+  List<DispenseAlert> get latestAlerts => List.unmodifiable(_latestAlerts);
+
+  /// When [latestAlerts] was last refreshed, or null if never.
+  DateTime? get latestAlertsAt => _latestAlertsAt;
+
   /// The set of alert IDs that are currently unread.
   Set<String> get unreadAlertIds => Set.unmodifiable(_unreadAlertIds);
 
@@ -48,6 +63,9 @@ class AlertTracker extends ChangeNotifier {
     final newIds = _isSeeded
         ? currentIds.difference(_knownAlertIds)
         : <String>{};
+
+    _latestAlerts = List.unmodifiable(alerts);
+    _latestAlertsAt = DateTime.now();
 
     for (final alert in alerts) {
       if (alert.isRead || _readAlertIds.contains(alert.alertId)) {
@@ -100,6 +118,8 @@ class AlertTracker extends ChangeNotifier {
     _readAlertIds.clear();
     _unreadAlertIds.clear();
     _knownAlertIds.clear();
+    _latestAlerts = const [];
+    _latestAlertsAt = null;
     _isSeeded = false;
     notifyListeners();
   }

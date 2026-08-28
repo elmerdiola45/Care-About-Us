@@ -6,12 +6,20 @@ class BottomNavBar extends StatelessWidget {
   final ValueChanged<int> onTap;
   final List<BottomNavigationBarItem>? items;
 
+  /// Pending cross-pharmacy request count shown as a badge on the admin
+  /// "Requests" tab (index [adminRequestsIndex]). 0 hides the badge.
+  /// Ignored when a custom [items] list is supplied.
+  final int requestBadgeCount;
+
   const BottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
     this.items,
+    this.requestBadgeCount = 0,
   });
+
+  static const int adminRequestsIndex = 2;
 
   static const List<BottomNavigationBarItem> adminItems = [
     BottomNavigationBarItem(
@@ -31,6 +39,24 @@ class BottomNavBar extends StatelessWidget {
       label: 'Patients',
     ),
   ];
+
+  /// [adminItems] with a count badge overlaid on the Requests tab.
+  static List<BottomNavigationBarItem> adminItemsWithBadge(int requestCount) {
+    if (requestCount <= 0) return adminItems;
+    return [
+      for (var i = 0; i < adminItems.length; i++)
+        if (i == adminRequestsIndex)
+          BottomNavigationBarItem(
+            icon: Badge(
+              label: Text(requestCount > 99 ? '99+' : '$requestCount'),
+              child: adminItems[i].icon,
+            ),
+            label: adminItems[i].label,
+          )
+        else
+          adminItems[i],
+    ];
+  }
 
   /// Single source of truth for the pharmacist shell's 5 tabs. Every screen
   /// that shows this nav bar (the home shell itself, and any screen pushed
@@ -72,7 +98,7 @@ class BottomNavBar extends StatelessWidget {
       selectedItemColor: AppColors.teal,
       unselectedItemColor: Colors.grey.shade400,
       showUnselectedLabels: true,
-      items: items ?? adminItems,
+      items: items ?? adminItemsWithBadge(requestBadgeCount),
     );
   }
 }

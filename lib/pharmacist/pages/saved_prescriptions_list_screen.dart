@@ -585,11 +585,23 @@ class _SavedPrescriptionsListScreenState
                                      return const SizedBox.shrink();
                                    }
                                    final tier = adherence.tier;
+                                   // Status-aware label, matching the
+                                   // pharmacist List/Detail screens. The
+                                   // shared AdherenceBadge defaults (e.g.
+                                   // "At Risk" / "Critical") are the wrong
+                                   // vocabulary here, so pass an explicit
+                                   // label derived from the raw backend
+                                   // status via the badge's `label:` override.
+                                   final badgeLabel = _adherenceLabel(
+                                     tier,
+                                     adherence.status,
+                                   );
                                    return Row(
                                      mainAxisSize: MainAxisSize.min,
                                      children: [
                                        AdherenceBadge(
                                          tier: tier,
+                                         label: badgeLabel,
                                          compact: false,
                                        ),
                                        if (tier ==
@@ -967,6 +979,25 @@ class _SavedPrescriptionsListScreenState
         ),
       ),
     );
+  }
+
+  // Status-aware adherence badge label (same vocabulary as the pharmacist
+  // patient_adherence_screen List card). `tier` alone can't distinguish
+  // `pending` from `no_data` (both are AdherenceTier.critical), so the raw
+  // backend status is the tiebreaker.
+  String _adherenceLabel(AdherenceTier tier, String rawStatus) {
+    switch (tier) {
+      case AdherenceTier.good:
+        return 'Good';
+      case AdherenceTier.atRisk:
+        return 'Partially Dispensed';
+      case AdherenceTier.critical:
+        return rawStatus == 'no_data' ? 'No Data' : 'Pending';
+      case AdherenceTier.overDispensing:
+        return 'Overdispensing';
+      case AdherenceTier.fullyDispensed:
+        return 'Fully Dispensed';
+    }
   }
 
   Widget _dispensingStatusPill(DispensingStatus status) {

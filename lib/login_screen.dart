@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -55,6 +56,30 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// Pulls a display name out of the dispenser/pharmacist object the login
+  /// endpoint returns. Returns null (not a placeholder) when nothing
+  /// usable is present, so the dashboard can decide how to render that.
+  static String? _extractStaffName(Map<String, dynamic> u) {
+    String s(dynamic v) => (v?.toString() ?? '').trim();
+
+    final first = [
+      s(u['dispenser_first_name']),
+      s(u['pharmacist_first_name']),
+      s(u['first_name']),
+    ].firstWhere((v) => v.isNotEmpty, orElse: () => '');
+    final last = [
+      s(u['dispenser_last_name']),
+      s(u['pharmacist_last_name']),
+      s(u['last_name']),
+    ].firstWhere((v) => v.isNotEmpty, orElse: () => '');
+
+    final full = '$first $last'.trim();
+    if (full.isNotEmpty) return full;
+
+    final name = s(u['name']);
+    return name.isNotEmpty ? name : null;
+  }
+
   Future<void> _handleSignIn() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -72,11 +97,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final Map<String, String> body = {'email': email, 'password': password};
 
-      final response = await http.post(
-        Uri.parse('${AppConfig.baseUrl}$endpoint'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: jsonEncode(body),
-      );
+      final response = await http
+          .post(
+            Uri.parse('${AppConfig.baseUrl}$endpoint'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (!mounted) return;
 
@@ -87,13 +117,20 @@ class _LoginScreenState extends State<LoginScreen> {
         final userType = data['user_type']?.toString() ?? '';
 
         final userObj = data['dispenser'] ?? data['pharmacist'] ?? {};
-        final userId = userObj is Map ? (userObj['dispenser_id'] ?? userObj['pharmacist_id']) : null;
-        final pharmacyId = userObj is Map ? userObj['pharmacy_id'] : null;
+        final userMap = userObj is Map
+            ? Map<String, dynamic>.from(userObj)
+            : <String, dynamic>{};
+        final userId = userMap['dispenser_id'] ?? userMap['pharmacist_id'];
+        final pharmacyId = userMap['pharmacy_id'];
         AppSession.instance.setUser(
           id: userId?.toString() ?? '',
           type: userType,
           pharmacyId: pharmacyId?.toString(),
           token: token,
+          // The login response already carries the real name — capture it
+          // here so the dashboard never has to show a "Pharmacist"
+          // placeholder while a second /me-style request resolves.
+          staffName: _extractStaffName(userMap),
         );
 
         setState(() => _isSubmitting = false);
@@ -128,6 +165,13 @@ class _LoginScreenState extends State<LoginScreen> {
           _errorMessage = message;
         });
       }
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage =
+            'Server is starting up. Please try again in a moment.';
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {

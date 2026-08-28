@@ -237,6 +237,7 @@ class AdminPatientAdherenceRecord {
   final int adherenceScore;
   final String? adherenceStatus;
   final String? prescriptionId;
+  final String? doctorName;
   final List<RefillEvent> refillHistory;
   bool isLocked;
   String? lockReason;
@@ -252,6 +253,7 @@ class AdminPatientAdherenceRecord {
     required this.adherenceScore,
     this.adherenceStatus,
     this.prescriptionId,
+    this.doctorName,
     required this.refillHistory,
     this.isLocked = false,
     this.lockReason,

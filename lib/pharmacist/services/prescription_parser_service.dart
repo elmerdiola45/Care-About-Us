@@ -745,6 +745,14 @@ class PrescriptionParserService {
         }
       }
 
+      // True when the generic text matched nothing but the brand text
+      // resolved to a real brand-type catalog entry — see the branch
+      // below. Hoisted so matchConfidence can reflect the brand match
+      // instead of scoring this as an unmatched 0.0 line.
+      final resolvedViaBrand = match.name == null &&
+          secondaryIsBrandType &&
+          (secondaryGeneric?.trim().isNotEmpty ?? false);
+
       String name;
       if (primaryIsBrandType && !secondaryIsBrandType) {
         // INVERTED: the main line's text resolved to a BRAND-type
@@ -753,6 +761,16 @@ class PrescriptionParserService {
         // what was originally matched as "name" becomes the brand.
         name = primaryGeneric ?? _cleanName(nameCandidate);
         brand = match.name!;
+      } else if (resolvedViaBrand) {
+        // The generic-name text matched NOTHING in the catalog, but the
+        // brand text resolved to a real BRAND-type entry — the OCR-read
+        // generic is almost certainly a misread ("Amoxicilin"). The
+        // catalog is the source of truth: take the brand's real
+        // underlying generic as the name, keep the matched brand. The
+        // review screen's brand+dosage lookup then confirms the exact
+        // DB row (and its product id / price).
+        name = secondaryGeneric!.trim();
+        brand = brandMatch.name!;
       } else {
         // NORMAL convention, or an ambiguous combination (both sides
         // resolved to the same type, or one/both didn't match at all)
@@ -830,10 +848,10 @@ class PrescriptionParserService {
         // brand-match, and (if snapped) dosage-match confidence, so a
         // confident generic-name match doesn't mask an unverified
         // brand or a guessed dosage correction.
-        matchConfidence: match.name == null
+        matchConfidence: (match.name == null && !resolvedViaBrand)
             ? 0.0
             : [
-                match.score,
+                if (match.name != null) match.score,
                 brandMatch.score,
                 if (dosageWasSnapped) dosageSnapConfidence,
               ].reduce((a, b) => a < b ? a : b),

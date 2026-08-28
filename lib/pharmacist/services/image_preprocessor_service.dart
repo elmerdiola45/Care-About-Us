@@ -21,14 +21,14 @@ class ImagePreprocessorService {
       throw const FormatException('Could not decode image for preprocessing.');
     }
 
-    // Resizing removed on request — the image is sharpened/binarized at
-    // its original resolution instead of being scaled down first. Note
-    // this means a larger upload to OCR.space and a slower on-device
-    // preprocessing pass (this loop is O(width*height), so it now scales
-    // with whatever resolution the camera captured), in exchange for not
-    // losing any detail on small/tightly-packed handwriting before OCR
-    // ever sees it.
-    final result = _fusedSharpenAndBinarize(decoded);
+    // Capped to keep the post-binarization JPEG under the backend's 5MB
+    // upload limit (PrescriptionController::store, 'image' => max:5120) on
+    // full-resolution modern camera photos, while staying well above what
+    // OCR needs for legible handwriting.
+    final capped =
+        decoded.width > 2000 ? img.copyResize(decoded, width: 2000) : decoded;
+
+    final result = _fusedSharpenAndBinarize(capped);
     // SPEED-FIRST (post-audit): quality dropped 88 -> 75. The output here
     // is already binarized to pure black/white, so JPEG artifacts from a
     // lower quality setting are far less visible than they'd be on a
@@ -43,6 +43,54 @@ class ImagePreprocessorService {
   static Uint8List preprocessOrFallback(Uint8List originalBytes) {
     try {
       return preprocess(originalBytes);
+    } catch (_) {
+      return originalBytes;
+    }
+  }
+
+  /// Lightweight, resize-only variant: decode, cap the longest edge to
+  /// [_liteMaxEdge], re-encode as JPEG. NO per-pixel adjust/sharpen/
+  /// binarize pass.
+  ///
+  /// This exists for **Flutter Web**, where there are no compute isolates —
+  /// the O(width*height) fused loop in [preprocess] runs on the main
+  /// thread there and freezes the UI for many seconds on a phone photo
+  /// ("the scan is hanging"). `copyResize` + `encodeJpg` are a single
+  /// bounded pass and finish in ~1-2s. The point of preprocessing on the
+  /// client is really just to get the upload under the OCR backends' size
+  /// limits (Groq/PHP upload cap; OCR.space free-tier ~1 MB) — the Groq
+  /// backend re-resizes to 1024px and OCR.space reads fine at this size,
+  /// so skipping the binarize costs little on the primary path.
+  static Uint8List preprocessLite(Uint8List originalBytes) {
+    final decoded = img.decodeImage(originalBytes);
+    if (decoded == null) {
+      throw const FormatException('Could not decode image for preprocessing.');
+    }
+
+    final longestEdge =
+        decoded.width > decoded.height ? decoded.width : decoded.height;
+
+    final img.Image resized;
+    if (longestEdge > _liteMaxEdge) {
+      resized = decoded.width >= decoded.height
+          ? img.copyResize(decoded, width: _liteMaxEdge)
+          : img.copyResize(decoded, height: _liteMaxEdge);
+    } else {
+      resized = decoded;
+    }
+
+    return Uint8List.fromList(img.encodeJpg(resized, quality: 80));
+  }
+
+  // Handwriting stays legible to both OCR engines well below this; the
+  // Groq backend re-resizes to 1024px anyway. Smaller = faster decode/
+  // encode on the web main thread and a smaller upload.
+  static const int _liteMaxEdge = 1200;
+
+  /// [preprocessLite] that never throws — raw bytes back on any failure.
+  static Uint8List preprocessLiteOrFallback(Uint8List originalBytes) {
+    try {
+      return preprocessLite(originalBytes);
     } catch (_) {
       return originalBytes;
     }

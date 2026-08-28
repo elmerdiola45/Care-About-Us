@@ -23,7 +23,7 @@
 
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show compute, kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -113,13 +113,23 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       if (photo == null) return;
       if (!mounted) return;
 
+      // Enter processing state IMMEDIATELY so the spinner renders
+      // before readAsBytes yields to the event loop. This prevents the
+      // "flash back to capture UI" that happens when _isProcessing
+      // stays false during the async read.
+      setState(() {
+        _isProcessing = true;
+        _errorMessage = null;
+        _isQuotaExceeded = false;
+        _processingStage = 'Enhancing image…';
+      });
+
       final rawBytes = await photo.readAsBytes();
       if (!mounted) return;
 
       if (rawBytes.isEmpty) {
-        // A zero-byte capture is a camera/picker glitch, not something
-        // worth sending through preprocessing or OCR.
         setState(() {
+          _isProcessing = false;
           _errorMessage =
               "That photo didn't come through. Please try capturing again.";
           _isQuotaExceeded = false;
@@ -128,35 +138,64 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
         return;
       }
 
-      setState(() {
-        _isProcessing = true;
-        _errorMessage = null;
-        _isQuotaExceeded = false;
-        _processingStage = 'Enhancing image…';
-      });
+      // Show the captured image immediately — the user sees what they
+      // just photographed while preprocessing runs in the background.
+      setState(() => _imageBytes = rawBytes);
 
-      // Clean up the photo on-device before it reaches OCR.space —
-      // exposure/contrast correction, sharpen, then binarize. Falls back
-      // to the raw photo if preprocessing can't run for any reason.
+      // Yield so the framework can flush the captured-image frame before
+      // CPU-heavy preprocessing begins.
+      await Future.delayed(Duration.zero);
+      if (!mounted) return;
+
+      // Clean up the photo on-device before it's uploaded — resize to
+      // <=2000px, sharpen, then binarize (ImagePreprocessorService). This
+      // is REQUIRED, not just an enhancement: a raw modern-phone photo is
+      // 2-8 MB, which both OCR backends reject (PHP upload_max_filesize;
+      // OCR.space free-tier ~1 MB) — that's the "image failed to upload"
+      // 422. The binarized output is ~200-400 KB.
+      //
+      // `compute` (not `Isolate.run`, which throws on Flutter Web and was
+      // silently skipping preprocessing there — uploading the raw 2-8 MB
+      // photo, which both OCR backends reject).
+      //
+      // Web has no compute isolates, so `compute` runs on the main thread:
+      // the full adjust/sharpen/binarize pass would freeze the UI for many
+      // seconds on a phone photo. So on web use the lightweight resize-only
+      // variant (one bounded pass, ~1-2s) — that's still enough to get the
+      // upload under the backends' size limits, which is the actual point
+      // of client-side preprocessing. Mobile keeps the full pass (real
+      // background isolate, no freeze).
       final preprocessSw = Stopwatch()..start();
-      Uint8List bytes;
+      Uint8List preprocessedBytes;
       try {
-        bytes = ImagePreprocessorService.preprocessOrFallback(rawBytes);
+        preprocessedBytes = await compute(
+          kIsWeb
+              ? ImagePreprocessorService.preprocessLiteOrFallback
+              : ImagePreprocessorService.preprocessOrFallback,
+          rawBytes,
+        ).timeout(
+          // Hard ceiling so a pathological decode can never hang the whole
+          // scan. On timeout we upload the raw bytes — the backend accepts
+          // up to 12 MB and resizes server-side, so a plain phone photo
+          // still scans, just with a larger upload.
+          const Duration(seconds: 12),
+        );
       } catch (_) {
-        // Belt-and-suspenders: even though preprocessOrFallback is
-        // documented to fall back internally, never let a preprocessing
-        // failure take down the whole capture flow — fall back to the
-        // raw bytes here too.
-        bytes = rawBytes;
+        // TimeoutException, or a failure of compute() itself.
+        // preprocessLiteOrFallback / preprocessOrFallback already handle
+        // decode/encode errors internally.
+        preprocessedBytes = rawBytes;
       }
       preprocessSw.stop();
       // Perf timing only — no image content, no OCR output.
       _debugLog('ocr_preprocess_timing_ms:${preprocessSw.elapsedMilliseconds}');
 
       if (!mounted) return;
-      setState(() => _imageBytes = bytes);
+      // Note: _imageBytes stays as rawBytes — the displayed image is the
+      // raw capture, not the preprocessed version. Only the OCR pipeline
+      // sees the preprocessed bytes.
 
-      await _processOcr(bytes);
+      await _processOcr(preprocessedBytes);
     } on TimeoutException {
       // Shouldn't normally surface here (picker itself has no timeout),
       // but keep the failure path uniform if the platform channel ever
@@ -201,7 +240,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
           if (!mounted) return;
           setState(() => _processingStage = stage);
         },
-      ).timeout(const Duration(seconds: 25));
+      ).timeout(const Duration(seconds: 35));
     } on TimeoutException {
       if (!mounted) return;
       setState(() {
@@ -213,10 +252,6 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       _debugLog('ocr_scan_timeout');
       return;
     } catch (_) {
-      // Any unexpected failure from the pipeline itself (not modeled as
-      // a `result.success == false` outcome) — fail closed with a
-      // generic message rather than let an uncaught exception crash the
-      // screen or leak exception text.
       if (!mounted) return;
       setState(() {
         _isProcessing = false;

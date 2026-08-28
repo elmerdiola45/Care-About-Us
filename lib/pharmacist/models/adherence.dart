@@ -85,12 +85,24 @@ int _safePositiveIntFromAnyKey(Map<String, dynamic>? map, [int fallback = 0]) {
   return fallback;
 }
 
+// Maps the backend `status` vocabulary to a display tier. Callers pass the
+// raw backend `status` (e.g. AdherenceStatus.status), NOT a tier/level name,
+// so the dispensing-progress values (`pending`, `partially_dispensed`, …)
+// must be handled explicitly — without them `pending`/`partially_dispensed`
+// fell through to `good`. This mirrors the proven admin reference
+// implementation (admin_patient_adherence.dart :: tierForStatus): both
+// `pending` and `no_data` map to `critical` (the pharmacist "Pending" filter
+// chip is AdherenceTier.critical and intentionally contains both — the UI
+// then distinguishes them by raw status for the per-card label).
 AdherenceTier tierFor(String? status) {
   switch ((status ?? '').toLowerCase()) {
     case 'good':
       return AdherenceTier.good;
     case 'at_risk':
+    case 'partially_dispensed':
       return AdherenceTier.atRisk;
+    case 'no_data':
+    case 'pending':
     case 'critical':
       return AdherenceTier.critical;
     case 'overdispensing':

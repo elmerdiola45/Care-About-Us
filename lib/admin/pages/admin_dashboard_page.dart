@@ -52,6 +52,20 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   // Badge remains visible as long as specific unread alerts exist.
   int _unresolvedAlertCount = AlertTracker.instance.unreadCount;
   Timer? _alertPollTimer;
+  bool _isPollingAlerts = false;
+
+  // Pending cross-pharmacy request count for the Requests bottom-nav badge.
+  // Polled on the same cadence as alerts; refreshed immediately whenever the
+  // Requests tab is opened/left so an approve/reject there is reflected fast.
+  int _pendingRequestCount = 0;
+
+  // The Requests screen is kept alive in the IndexedStack below, so its
+  // initState()/_load() only fires the first time the tab is visited. This
+  // key lets _handleNav() tell the already-mounted instance to silently
+  // refresh whenever the Requests tab is re-selected, so the list can't lag
+  // behind the pending badge.
+  final GlobalKey<RequestsScreenState> _requestsKey =
+      GlobalKey<RequestsScreenState>();
 
   @override
   void initState() {
@@ -93,13 +107,27 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   void _startAlertPolling() {
     _pollAlerts();
+    _pollPendingRequests();
     _alertPollTimer = Timer.periodic(
       const Duration(seconds: 30),
-      (_) => _pollAlerts(),
+      (_) {
+        _pollAlerts();
+        _pollPendingRequests();
+      },
     );
   }
 
+  Future<void> _pollPendingRequests() async {
+    final count = await _api.fetchPendingCrossPharmacyRequestCount();
+    if (!mounted) return;
+    if (count != _pendingRequestCount) {
+      setState(() => _pendingRequestCount = count);
+    }
+  }
+
   Future<void> _pollAlerts() async {
+    if (_isPollingAlerts) return;
+    _isPollingAlerts = true;
     try {
       final api = LaravelApiService(token: AppSession.instance.token);
       final alerts = await api.fetchAlerts(unresolvedOnly: true);
@@ -137,6 +165,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     } catch (_) {
       // Silent — a failed poll shouldn't interrupt the dashboard; it just
       // retries on the next 30s tick.
+    } finally {
+      _isPollingAlerts = false;
     }
   }
 
@@ -171,6 +201,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       _navIndex = index;
       _visitedTabs.add(index);
     });
+    // A tab switch to/from Requests is exactly when the pending count is
+    // most likely to have just changed (admin acted on a card). Cheap COUNT
+    // query, so just refresh on any nav change.
+    _pollPendingRequests();
+    // Selecting Requests: also nudge the already-mounted list to silently
+    // refresh so it reflects the current backend state immediately, not
+    // only after its own 30s timer fires. currentState is null on the very
+    // first visit (the screen isn't built yet) — that's fine, initState()
+    // runs its own _load() then.
+    if (index == 2) {
+      _requestsKey.currentState?.refreshOnTabActivated();
+    }
   }
 
   @override
@@ -201,7 +243,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ? const QrOcrRecordsScreen()
                 : const SizedBox.shrink(),
             _visitedTabs.contains(2)
-                ? const RequestsScreen()
+                ? RequestsScreen(key: _requestsKey)
                 : const SizedBox.shrink(),
             _visitedTabs.contains(3)
                 ? const AdminPatientAdherencePage()
@@ -212,6 +254,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       bottomNavigationBar: BottomNavBar(
         currentIndex: _navIndex,
         onTap: _handleNav,
+        requestBadgeCount: _pendingRequestCount,
       ),
     );
   }

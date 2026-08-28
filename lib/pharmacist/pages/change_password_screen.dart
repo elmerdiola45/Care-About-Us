@@ -146,8 +146,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           setState(() => _obscureNew = !_obscureNew),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty)
+                      if (v == null || v.isEmpty) {
                         return 'New password is required';
+                      }
                       if (v.length < 8) return 'Must be at least 8 characters';
                       return null;
                     },
@@ -163,8 +164,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
                     validator: (v) {
-                      if (v != _newController.text)
+                      if (v != _newController.text) {
                         return 'Passwords do not match';
+                      }
                       return null;
                     },
                   ),

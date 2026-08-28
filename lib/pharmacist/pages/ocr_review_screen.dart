@@ -326,11 +326,15 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           brand: m.brand,
         );
         return _MatchedMedicine(
-          medicineLabel: m.name,
+          // Canonical generic from the matched DB row wins over the raw
+          // OCR text (which may be a misread) — see
+          // PriceLookupResult.canonicalName / the brand+dosage path.
+          medicineLabel: priced.canonicalName ?? m.name,
           dosageLabel: m.dosage,
           quantity: int.tryParse(m.quantity) ?? 1,
           unitPrice: priced.unitPrice,
           unitPriceIsExact: priced.isExactMatch,
+          catalogProductId: priced.productId,
           // See _resolvedBrandLabel — prefers the catalog's own
           // spelling (from a resolved SKU, or fuzzy-matched against
           // whatever SKUs this pharmacy does stock for the name) over
@@ -377,8 +381,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     if (notFoundCount > 0) {
       _validationWarnings.add(
         notFoundCount == 1
-            ? '1 medicine is not in this pharmacy\'s medicine list — no brand or stock found.'
-            : '$notFoundCount medicines are not in this pharmacy\'s medicine list — no brand or stock found.',
+            ? '1 medicine could not be matched to the pharmacy catalog (by name or brand).'
+            : '$notFoundCount medicines could not be matched to the pharmacy catalog (by name or brand).',
       );
     }
 
@@ -386,8 +390,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     if (dosageGapCount > 0) {
       _validationWarnings.add(
         dosageGapCount == 1
-            ? '1 medicine has no stock at the prescribed dosage.'
-            : '$dosageGapCount medicines have no stock at the prescribed dosage.',
+            ? '1 medicine: the prescribed strength isn\'t listed in the pharmacy catalog.'
+            : '$dosageGapCount medicines: the prescribed strength isn\'t listed in the pharmacy catalog.',
       );
     }
 
@@ -786,6 +790,23 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       return;
     }
 
+    // A Senior Citizen prescription must carry an OSCA ID — it's the
+    // identifier the discount/eligibility record keys off downstream.
+    if (_isSenior && _oscaIdController.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Enter an OSCA ID for Senior Citizen patients before saving.',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     final cleanedPatientName = _cleanPatientName(patientName);
@@ -805,6 +826,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             name: m.medicineLabel,
             genericName: m.medicineLabel,
             brand: m.brandLabel,
+            productId: m.catalogProductId,
             dosage: m.dosageLabel,
             quantity: m.quantity,
             unitPrice: m.unitPrice,
@@ -975,6 +997,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         title: const Text('Possible duplicate prescription'),
         content: Text(e.message),
         actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
@@ -1267,7 +1293,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               Icon(Icons.report_rounded, color: Color(0xFFDC2626), size: 20),
               SizedBox(width: 8),
               Text(
-                'Medicine Not Available',
+                'Not Matched to Catalog',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 14,
@@ -1278,8 +1304,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'The prescribed medicine or dosage below is currently '
-            'unavailable in this pharmacy\'s stock:',
+            'The medicine or strength below could not be matched to this '
+            'pharmacy\'s catalog (this is not a live stock check):',
             style: const TextStyle(fontSize: 12.5, color: Color(0xFF991B1B)),
           ),
           const SizedBox(height: 6),
@@ -1299,13 +1325,12 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           const SizedBox(height: 6),
           const Text(
             'Nothing will be substituted automatically. You can still save '
-            'and dispense the other, available medicine(s) on this '
-            'prescription now — the unavailable one listed above will stay '
-            'on the record at ₱0.00 so it\'s clear it wasn\'t dispensed '
-            'here, and can be filled once restocked or at another '
-            'pharmacy. If an available alternative exists, you may instead '
-            'pick it from the catalog below, but that requires your '
-            'explicit confirmation.',
+            'and dispense the other medicine(s) on this prescription now — '
+            'the unmatched one listed above will stay on the record at '
+            '₱0.00 so it\'s clear it wasn\'t priced/dispensed here, and can '
+            'be filled elsewhere. If it is actually stocked here under a '
+            'different name, pick it from the catalog below — that requires '
+            'your explicit confirmation.',
             style: TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
           ),
           const SizedBox(height: 10),
@@ -1438,23 +1463,32 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               const SizedBox(height: 10),
               _fieldBox(label: 'Patient', controller: _patientController),
               const SizedBox(height: 10),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _fieldBox(
-                      label: 'Age',
-                      controller: _ageController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(3),
-                      ],
+              // Age's compact TextField is intrinsically shorter than Sex,
+              // whose chips sit inside a TapTarget(minSize: 44). IntrinsicHeight
+              // + stretch lets Sex set the row height and Age match it exactly,
+              // rather than guessing a padding/height value.
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _fieldBox(
+                        label: 'Age',
+                        controller: _ageController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(3),
+                        ],
+                        // Age is stretched to Sex's height — centre its
+                        // label/value in the extra space instead of top-pinning.
+                        mainAxisAlignment: MainAxisAlignment.center,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(child: _genderField()),
-                ],
+                    const SizedBox(width: 10),
+                    Expanded(child: _genderField()),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
               _fieldBox(label: 'Diagnosis', controller: _diagnosisController),
@@ -1532,6 +1566,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     required TextEditingController controller,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
+    // Vertical alignment of the label/field within the box. Defaults to
+    // top-aligned so every existing caller is unchanged; only the Age field
+    // (stretched to match Sex's height) passes center.
+    MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
   }) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -1541,6 +1579,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         color: OcrReviewColors.bg,
       ),
       child: Column(
+        mainAxisAlignment: mainAxisAlignment,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -2306,11 +2345,12 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           );
           matches.add(
             _MatchedMedicine(
-              medicineLabel: name,
+              medicineLabel: priced.canonicalName ?? name,
               dosageLabel: dosage,
               quantity: int.tryParse(qty) ?? 1,
               unitPrice: priced.unitPrice,
               unitPriceIsExact: priced.isExactMatch,
+              catalogProductId: priced.productId,
               // See _resolvedBrandLabel — same catalog-spelling
               // preference as the main pipeline path above.
               brandLabel: _resolvedBrandLabel(brand, priced),
@@ -2610,6 +2650,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
           medicineNotFound: false,
           dosageNotStocked: false,
           catalogName: v.name,
+          catalogProductId: v.id,
         ),
       );
     }
@@ -2633,6 +2674,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             dosageNotStocked: false,
             brandCandidates: variants,
             catalogName: v.name,
+            catalogProductId: v.id,
             isFallbackMatch: false,
           ),
         );
@@ -2647,6 +2689,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             dosageNotStocked: false,
             brandCandidates: variants,
             catalogName: null,
+            catalogProductId: null,
             isFallbackMatch: false,
           ),
         );
@@ -2739,12 +2782,49 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   // dosage attached to what's actually a liquid-drops
                   // SKU) reads as one obviously-wrong string instead of
                   // three individually-plausible-looking fields.
-                  Text(
-                    updated.catalogName!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: OcrReviewColors.teal,
-                      fontWeight: FontWeight.w600,
+                  //
+                  // Tappable to re-open the brand picker whenever this
+                  // medicine has more than one candidate SKU — a pick from
+                  // the "Select brand…" dropdown sets catalogName, which
+                  // used to hide the else-branch re-picker below and left a
+                  // wrong choice uncorrectable without a full rescan.
+                  InkWell(
+                    onTap: updated.brandCandidates.length > 1
+                        ? () => _showBrandPicker(
+                            context,
+                            updated.brandCandidates,
+                            selectBrand,
+                            showPrice: true,
+                          )
+                        : null,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            updated.catalogName!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: OcrReviewColors.teal,
+                              fontWeight: FontWeight.w600,
+                              decoration: updated.brandCandidates.length > 1
+                                  ? TextDecoration.underline
+                                  : null,
+                              decorationColor: OcrReviewColors.teal.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (updated.brandCandidates.length > 1) ...[
+                          const SizedBox(width: 3),
+                          Icon(
+                            Icons.unfold_more,
+                            size: 16,
+                            color: OcrReviewColors.teal.withValues(alpha: 0.7),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ] else ...[
@@ -2889,9 +2969,10 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Not in this pharmacy\'s medicine list — no '
-                          'matching brand or stock found. Verify the name '
-                          'or pick the correct medicine below.',
+                          'Couldn\'t match this medicine to the pharmacy '
+                          'catalog (by name or brand). Verify the name or '
+                          'pick the correct medicine below. This is not a '
+                          'stock check.',
                           style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF991B1B),
@@ -2960,11 +3041,11 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                       children: [
                         Text(
                           updated.brandCandidates.isEmpty
-                              ? 'No stock at this dosage'
+                              ? 'This strength isn\'t listed in the catalog'
                                     '${updated.dosageLabel.isNotEmpty ? ' (${updated.dosageLabel})' : ''}.'
-                              : 'No stock at this dosage'
+                              : 'This strength isn\'t listed in the catalog'
                                     '${updated.dosageLabel.isNotEmpty ? ' (${updated.dosageLabel})' : ''}. '
-                                    'Available: '
+                                    'Listed: '
                                     '${updated.brandCandidates.map((v) => v.dosageForm?.trim()).whereType<String>().where((d) => d.isNotEmpty).toSet().join(', ')}.',
                           style: const TextStyle(
                             fontSize: 11,
@@ -3081,10 +3162,14 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
               updated.needsBrandSelection) ...[
             const SizedBox(width: 12),
             Text(
+              // NOTE: the review screen does not run a live stock check
+              // (that happens backend-side at save/dispense). These
+              // labels are about catalog MATCHING, not stock on hand —
+              // do not word them as "no stock" / "not stocked".
               updated.medicineNotFound
-                  ? 'Not stocked'
+                  ? 'No catalog match'
                   : updated.dosageNotStocked
-                  ? 'No stock'
+                  ? 'Strength not listed'
                   : 'Select brand',
               style: TextStyle(
                 fontSize: 11.5,
@@ -3144,6 +3229,11 @@ class _MatchedMedicine {
   final bool dosageNotStocked;
   final List<MedicineVariant> brandCandidates;
   final String? catalogName;
+
+  /// The real `products.id` this row resolved to (brand+dosage or
+  /// generic+dosage match), or null when nothing specific was resolved.
+  /// Carried through to Save & Continue — see _performSave.
+  final int? catalogProductId;
   final bool isEssential;
   final String duration;
   final double matchConfidence;
@@ -3162,6 +3252,7 @@ class _MatchedMedicine {
     this.dosageNotStocked = false,
     this.brandCandidates = const [],
     this.catalogName,
+    this.catalogProductId,
     this.isEssential = true,
     this.duration = '',
     this.matchConfidence = 0.0,
@@ -3183,6 +3274,7 @@ class _MatchedMedicine {
     bool? dosageNotStocked,
     List<MedicineVariant>? brandCandidates,
     Object? catalogName = _unset,
+    Object? catalogProductId = _unset,
     bool? isEssential,
     String? duration,
     double? matchConfidence,
@@ -3202,6 +3294,9 @@ class _MatchedMedicine {
       catalogName: identical(catalogName, _unset)
           ? this.catalogName
           : catalogName as String?,
+      catalogProductId: identical(catalogProductId, _unset)
+          ? this.catalogProductId
+          : catalogProductId as int?,
       isEssential: isEssential ?? this.isEssential,
       duration: duration ?? this.duration,
       matchConfidence: matchConfidence ?? this.matchConfidence,
@@ -3231,9 +3326,10 @@ class _MedicineResolution {
         brand: brand ?? current.brandLabel,
       );
       return current.copyWith(
-        medicineLabel: name,
+        medicineLabel: priced.canonicalName ?? name,
         unitPrice: priced.unitPrice,
         unitPriceIsExact: priced.isExactMatch,
+        catalogProductId: priced.productId,
         // See _resolvedBrandLabel — prefers the catalog's own spelling
         // (resolved SKU, or fuzzy-matched against whatever this
         // pharmacy stocks for the name) over the raw override text.
@@ -3252,6 +3348,7 @@ class _MedicineResolution {
         needsBrandSelection: false,
         dosageNotStocked: false,
         catalogName: null,
+        catalogProductId: null,
       );
     }
   }

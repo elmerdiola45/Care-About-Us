@@ -569,7 +569,10 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
                     switch (record.tier) {
                       AdherenceTier.good => 'Good',
                       AdherenceTier.atRisk => 'Partially Dispensed',
-                      AdherenceTier.critical => 'Pending',
+                      // `critical` covers both `pending` and `no_data` (see
+                      // tierFor / admin reference) — distinguish by raw status.
+                      AdherenceTier.critical =>
+                        record.adherence.status == 'no_data' ? 'No Data' : 'Pending',
                       AdherenceTier.overDispensing => 'Overdispensing',
                       AdherenceTier.fullyDispensed => 'Fully Dispensed',
                     },

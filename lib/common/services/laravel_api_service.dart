@@ -186,6 +186,12 @@ class LaravelPrescriptionItem {
   final String? originalOcrName;
   final String? genericName;
   final String? brandName;
+
+  /// The catalog `products.id` this line was resolved to at scan/review
+  /// time (PrescriptionController@store persists it, @format echoes it
+  /// back). Null when nothing specific was matched. Informational only —
+  /// stock/dispensing still key off the medicine name.
+  final int? productId;
   final String? dosage;
   final int quantity;
   final int disposedQuantity;
@@ -209,6 +215,7 @@ class LaravelPrescriptionItem {
     this.originalOcrName,
     this.genericName,
     this.brandName,
+    this.productId,
     this.dosage,
     required this.quantity,
     this.disposedQuantity = 0,
@@ -233,6 +240,9 @@ class LaravelPrescriptionItem {
       // the dispensing report even though the data existed server-side.
       genericName: json['generic_name']?.toString(),
       brandName: json['brand_name']?.toString(),
+      productId: json['product_id'] == null
+          ? null
+          : _safeInt(json['product_id']),
       dosage: json['dosage']?.toString(),
       quantity: _safeInt(
         json['quantity'] ??
@@ -349,8 +359,15 @@ class LaravelVerifiedPrescription {
   final List<LaravelVerifiedMedicine> medicines;
   final double totalPrice;
   final bool valid;
+  // True when the backend rejected the scan specifically because the
+  // prescription has already been fully dispensed (HTTP 200, valid=false,
+  // fully_dispensed=true). Distinct from a generic invalid/expired token so
+  // the scanner can show the "already fully dispensed" message and stop
+  // instead of falling back to parsing the QR's stale embedded payload.
+  final bool fullyDispensed;
   final String? message;
   final String? verifyUrl;
+  final String? prescriptionId;
   // Live per-item remaining quantity + price, keyed off the same
   // secret-verified token — NOT the static QR-payload snapshot `medicines`
   // above. Cross-pharmacy dispensing must validate/price against this,
@@ -374,8 +391,10 @@ class LaravelVerifiedPrescription {
     required this.medicines,
     required this.totalPrice,
     required this.valid,
+    this.fullyDispensed = false,
     this.message,
     this.verifyUrl,
+    this.prescriptionId,
     this.remainingItems = const [],
   });
 
@@ -423,9 +442,11 @@ class LaravelVerifiedPrescription {
       medicines: medicines,
       totalPrice: _safeDouble(payload['total_price'] ?? payload['totalPrice']),
       valid: _safeBool(json['valid'], true),
+      fullyDispensed: _safeBool(json['fully_dispensed'], false),
       message: json['message']?.toString(),
       verifyUrl:
           json['verify_url']?.toString() ?? json['verifyUrl']?.toString() ?? '',
+      prescriptionId: json['prescription_id']?.toString(),
       remainingItems: remainingItems,
     );
   }

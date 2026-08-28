@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../common/services/app_config.dart';
+import '../../common/session.dart';
 
 /// Talks to OUR OWN Laravel backend's `/api/ocr/ocrspace-scan` endpoint —
 /// this client NEVER calls OCR.space directly and NEVER holds an OCR.space
@@ -66,6 +67,11 @@ class OcrService {
                 'prescription_${DateTime.now().millisecondsSinceEpoch}.jpg',
           ),
         );
+
+      final token = AppSession.instance.token;
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
 
       final streamedResponse = await request.send().timeout(
         // SPEED-FIRST (post-audit): was 15s. A request that's still

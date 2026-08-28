@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 import '../../common/services/app_config.dart';
 import '../../common/session.dart';
+import 'persistent_cache_store.dart';
 
 /// Where the medicine name comes from when the parser corrects an OCR
 /// misread — useful for QA/debugging (e.g. "why did it pick this name").
@@ -12,6 +15,13 @@ enum DictionarySource { database, fallback }
 /// "Himox" / 20.00. A single medicine name in the dictionary
 /// (e.g. "Amoxicillin") can have many of these.
 class MedicineVariant {
+  /// The real `products.id` for this SKU, as returned by
+  /// GET /pharmacies/{id}/medicines. Null for entries that predate the
+  /// field, or a name-only (no variants) dictionary source. Carried
+  /// through the match pipeline so a resolved line has a stable numeric
+  /// identifier, not just the `name` string — see PriceLookupResult.productId.
+  final int? id;
+
   /// The literal products-table `name` for this specific SKU (e.g.
   /// "Amoxicillin (Himox 250/60)") — the exact catalog label, as
   /// opposed to brandName/dosageForm which are just the pieces it was
@@ -23,6 +33,7 @@ class MedicineVariant {
   final double? unitPrice;
 
   const MedicineVariant({
+    this.id,
     this.name,
     this.brandName,
     this.dosageForm,
@@ -31,13 +42,26 @@ class MedicineVariant {
 
   factory MedicineVariant.fromJson(Map<String, dynamic> json) {
     final price = json['unit_price'];
+    final rawId = json['id'];
     return MedicineVariant(
+      id: rawId is int ? rawId : int.tryParse(rawId?.toString() ?? ''),
       name: json['name']?.toString(),
       brandName: json['brand_name']?.toString(),
       dosageForm: json['dosage_form']?.toString(),
       unitPrice: price == null ? null : double.tryParse(price.toString()),
     );
   }
+
+  /// Round-trips through [fromJson] — used to persist the variant cache
+  /// (see MedicineDictionaryService's persistent fallback). Keys match
+  /// the backend/`fromJson` shape so the same parser handles both.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'brand_name': brandName,
+    'dosage_form': dosageForm,
+    'unit_price': unitPrice,
+  };
 }
 
 /// Supplies the drug-name dictionary that [PrescriptionParserService] uses
@@ -68,10 +92,90 @@ class MedicineDictionaryService {
   static DateTime? _cachedAt;
   static const _cacheTtl = Duration(minutes: 30);
 
+  /// shared_preferences key for the last successful fetch (see
+  /// [PersistentCacheStore]). Only ever used as a NETWORK-FAILURE
+  /// fallback — the network is still tried first on every cold start.
+  static const _persistName = 'medicine_dictionary';
+
+  /// One-shot guard so a session that starts with no persisted cache
+  /// (and keeps failing to fetch) doesn't hit shared_preferences on
+  /// every single getDictionary call. Reset by [invalidateCache].
+  static bool _persistentLoadTried = false;
+
+  /// On the first call of a session, seed the in-memory caches from the
+  /// last successful fetch that was persisted to disk/localStorage, so a
+  /// cold start with no network still has a usable dictionary. Crucially
+  /// it does NOT set [_cachedAt]: the persisted copy is a fallback only,
+  /// so `cacheIsFresh` stays false and a live fetch is still attempted.
+  /// Anything corrupt / for a different pharmacy / from an older schema
+  /// is silently ignored (never throws).
+  static Future<void> _hydrateFromPersistentIfNeeded(String pharmacyId) async {
+    if (_persistentLoadTried || _cache != null) return;
+    _persistentLoadTried = true;
+
+    try {
+      final raw = await PersistentCacheStore.read(_persistName);
+      if (raw is! Map) return;
+      if (raw['pharmacy_id'] != pharmacyId) return; // stored for another pharmacy
+
+      final names = (raw['names'] as List?)
+          ?.map((e) => e.toString())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (names == null || names.isEmpty) return;
+
+      final variants = <String, List<MedicineVariant>>{};
+      (raw['variants'] as Map?)?.forEach((k, v) {
+        if (v is! List) return;
+        variants[k.toString()] = v
+            .whereType<Map>()
+            .map((m) => MedicineVariant.fromJson(Map<String, dynamic>.from(m)))
+            .toList();
+      });
+
+      final generics = <String, String>{};
+      (raw['generics'] as Map?)?.forEach((k, v) {
+        generics[k.toString()] = v.toString();
+      });
+
+      _cache = names;
+      _variantCache = variants;
+      _genericNameCache = generics;
+      // ignore: avoid_print
+      print(
+        'MedicineDictionaryService: seeded ${names.length} names from the '
+        'persistent cache (network fetch still to be attempted this session).',
+      );
+    } catch (_) {
+      // Corrupt / incompatible persisted cache — ignore it entirely.
+      // It gets overwritten on the next successful fetch.
+    }
+  }
+
+  static void _persist(
+    String pharmacyId,
+    List<String> names,
+    Map<String, List<MedicineVariant>> variantMap,
+    Map<String, String> genericNameMap,
+  ) {
+    unawaited(
+      PersistentCacheStore.write(_persistName, {
+        'pharmacy_id': pharmacyId,
+        'names': names,
+        'variants': variantMap.map(
+          (k, v) => MapEntry(k, v.map((x) => x.toJson()).toList()),
+        ),
+        'generics': genericNameMap,
+      }),
+    );
+  }
+
   static Future<List<String>> getDictionary({
     required String pharmacyId,
     bool forceRefresh = false,
   }) async {
+    await _hydrateFromPersistentIfNeeded(pharmacyId);
+
     final cacheIsFresh =
         _cache != null &&
         _cachedAt != null &&
@@ -240,6 +344,9 @@ class MedicineDictionaryService {
       _variantCache = variantMap;
       _genericNameCache = genericNameMap;
       _cachedAt = DateTime.now();
+      // Mirror this successful fetch to persistent storage so a later
+      // cold start with no network can still fall back to it.
+      _persist(pharmacyId, dedupedNames, variantMap, genericNameMap);
       return dedupedNames;
     } catch (e, st) {
       // This was ALSO silent — a timeout, a socket error, or a
@@ -264,6 +371,17 @@ class MedicineDictionaryService {
   static List<MedicineVariant> variantsFor(String name) {
     return _variantCache?[name.trim().toLowerCase()] ?? const [];
   }
+
+  /// Read-only view of the whole variant cache — every dictionary key
+  /// (generic AND brand entries, see [getDictionary]) mapped to its
+  /// SKUs. Exposed for [PriceLookupService]'s brand-first resolution,
+  /// which needs to scan the brand-keyed entries with its own fuzzy
+  /// matcher (_brandsMatch) rather than a second copy of one here.
+  /// Empty (not null) when nothing has loaded yet.
+  static Map<String, List<MedicineVariant>> get variantCacheView =>
+      _variantCache == null
+      ? const <String, List<MedicineVariant>>{}
+      : Map.unmodifiable(_variantCache!);
 
   /// The real generic name behind [name] (case-insensitive), if the
   /// dictionary knows one — differs from [name] itself only when [name]
@@ -314,10 +432,34 @@ class MedicineDictionaryService {
     return results;
   }
 
+  /// Test-only: seed the in-memory caches directly so
+  /// [PriceLookupService] / [variantsFor] / [genericNameFor] can be
+  /// exercised without a network fetch. Sets [_cachedAt] to now so
+  /// [getDictionary] treats the seed as fresh.
+  @visibleForTesting
+  static void debugSeedCache({
+    List<String>? names,
+    Map<String, List<MedicineVariant>>? variants,
+    Map<String, String>? generics,
+  }) {
+    _variantCache = variants ?? {};
+    _genericNameCache = generics ?? {};
+    _cache =
+        names ?? (_variantCache?.keys.toList() ?? const <String>[]);
+    _cachedAt = DateTime.now();
+    _persistentLoadTried = true;
+  }
+
+  /// Clears the in-memory caches so the next [getDictionary] re-fetches.
+  /// Deliberately does NOT touch the persistent cache — that copy is only
+  /// ever replaced by a *successful* fetch, so a forced refresh that then
+  /// fails still has the last-known-good data to fall back to. Re-arms
+  /// [_hydrateFromPersistentIfNeeded] so that fallback is reloaded.
   static void invalidateCache() {
     _cache = null;
     _variantCache = null;
     _genericNameCache = null;
     _cachedAt = null;
+    _persistentLoadTried = false;
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../../common/services/app_config.dart';
 import '../../common/session.dart';
@@ -75,7 +76,12 @@ class GroqOcrService {
       final request = http.MultipartRequest('POST', Uri.parse(_endpoint))
         ..headers['Accept'] = 'application/json'
         ..files.add(
-          http.MultipartFile.fromBytes('image', imageBytes, filename: filename),
+          http.MultipartFile.fromBytes(
+            'image',
+            imageBytes,
+            filename: filename,
+            contentType: MediaType('image', 'jpeg'),
+          ),
         );
       if (token != null && token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
@@ -86,7 +92,7 @@ class GroqOcrService {
         // backend's resize step + the network round trip — kept in the
         // same ballpark as OcrService's 10s so a stuck Groq call fails
         // over to the OCR.space+Tesseract fallback about as quickly.
-        const Duration(seconds: 12),
+        const Duration(seconds: 15),
         onTimeout: () => throw TimeoutException('Groq OCR request timed out.'),
       );
       final response = await http.Response.fromStream(streamedResponse);

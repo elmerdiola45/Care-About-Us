@@ -27,7 +27,17 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAlerts();
+
+    // Show whatever the dashboard's 30s alert poll (or a previous visit)
+    // last fetched, so revisiting this screen doesn't flash a full-screen
+    // spinner every time. It's at most ~30s old and is immediately
+    // refreshed in the background below — never shown as the final state.
+    final cached = AlertTracker.instance.latestAlerts;
+    if (cached.isNotEmpty) {
+      _alerts.addAll(cached);
+      _isLoading = false;
+    }
+    _loadAlerts(silent: cached.isNotEmpty);
     _startPolling();
   }
 
@@ -49,7 +59,6 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
   Future<void> _loadAlerts({bool silent = false}) async {
     if (!silent) {
       setState(() {
-        _isLoading = true;
         _errorMessage = null;
       });
     }
@@ -104,7 +113,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
             Expanded(
               child: ResponsiveCenter.dashboard(
                 padding: EdgeInsets.zero,
-                child: _isLoading
+                child: _isLoading && _alerts.isEmpty
                     ? const Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -118,7 +127,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                           ],
                         ),
                       )
-                    : _errorMessage != null
+                    : _errorMessage != null && _alerts.isEmpty
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
@@ -242,6 +251,9 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
     final icon = _alertIcon(alert.alertType);
     final bg = isHigh ? AppColors.dangerBg : AppColors.warningBg;
     final titleColor = isHigh ? AppColors.danger : AppColors.warning;
+    // Same condition the onTap below uses to decide whether to mark-as-read.
+    final unread =
+        !alert.isRead && !AlertTracker.instance.isRead(alert.alertId);
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -253,11 +265,15 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
               .catchError((_) => AlertTracker.instance.unmarkAsRead(alert.alertId));
         }
         if (mounted) {
-          Navigator.of(context).push(
+          Navigator.of(context)
+              .push(
             MaterialPageRoute(
               builder: (_) => AlertDetailScreen(alertId: alert.alertId),
             ),
-          );
+          )
+              .then((_) {
+            if (mounted) _loadAlerts(silent: true);
+          });
         }
       },
       child: Container(
@@ -325,18 +341,21 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isHigh ? AppColors.dangerBg : AppColors.warningBg,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                isHigh ? 'High' : 'Normal',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: titleColor,
+            Badge(
+              isLabelVisible: unread,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isHigh ? AppColors.dangerBg : AppColors.warningBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  isHigh ? 'High' : 'Normal',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: titleColor,
+                  ),
                 ),
               ),
             ),
