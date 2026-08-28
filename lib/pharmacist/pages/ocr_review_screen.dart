@@ -790,6 +790,23 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       return;
     }
 
+    // A Senior Citizen prescription must carry an OSCA ID — it's the
+    // identifier the discount/eligibility record keys off downstream.
+    if (_isSenior && _oscaIdController.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Enter an OSCA ID for Senior Citizen patients before saving.',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     final cleanedPatientName = _cleanPatientName(patientName);
@@ -980,6 +997,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         title: const Text('Possible duplicate prescription'),
         content: Text(e.message),
         actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
@@ -1442,23 +1463,32 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               const SizedBox(height: 10),
               _fieldBox(label: 'Patient', controller: _patientController),
               const SizedBox(height: 10),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _fieldBox(
-                      label: 'Age',
-                      controller: _ageController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(3),
-                      ],
+              // Age's compact TextField is intrinsically shorter than Sex,
+              // whose chips sit inside a TapTarget(minSize: 44). IntrinsicHeight
+              // + stretch lets Sex set the row height and Age match it exactly,
+              // rather than guessing a padding/height value.
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _fieldBox(
+                        label: 'Age',
+                        controller: _ageController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(3),
+                        ],
+                        // Age is stretched to Sex's height — centre its
+                        // label/value in the extra space instead of top-pinning.
+                        mainAxisAlignment: MainAxisAlignment.center,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(child: _genderField()),
-                ],
+                    const SizedBox(width: 10),
+                    Expanded(child: _genderField()),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
               _fieldBox(label: 'Diagnosis', controller: _diagnosisController),
@@ -1536,6 +1566,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     required TextEditingController controller,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
+    // Vertical alignment of the label/field within the box. Defaults to
+    // top-aligned so every existing caller is unchanged; only the Age field
+    // (stretched to match Sex's height) passes center.
+    MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
   }) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -1545,6 +1579,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         color: OcrReviewColors.bg,
       ),
       child: Column(
+        mainAxisAlignment: mainAxisAlignment,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
