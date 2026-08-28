@@ -1184,6 +1184,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
           if (_selectedOcrCode != null)
             IconButton(
               onPressed: () {
+                // Deep-link mode (opened with a specific initialOcrCode from
+                // Saved Rx / QR scanner / prescription detail): there is no
+                // list to fall back to — clearing the selection would just
+                // strand the screen on "No dispensing record found", since
+                // widget.initialOcrCode stays non-null. So X means "close".
+                if (widget.initialOcrCode != null) {
+                  Navigator.pop(context);
+                  return;
+                }
                 setState(() {
                   _selectedOcrCode = null;
                   _resetDispensedQuantities();
