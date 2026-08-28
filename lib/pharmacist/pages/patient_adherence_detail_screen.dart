@@ -287,13 +287,21 @@ class _PatientAdherenceDetailScreenState
         'No data yet',
       );
     }
+    // Status-aware labels, matching the List screen. The `critical` tier
+    // covers both `pending` and `no_data` (see tierFor / admin reference),
+    // so the raw backend status distinguishes them.
+    final rawStatus = _adherence?.status;
     switch (_tier) {
       case AdherenceTier.good:
         return (AppColors.success, AppColors.successBg, 'Good');
       case AdherenceTier.atRisk:
-        return (AppColors.warning, AppColors.warningBg, 'At Risk');
+        return (AppColors.warning, AppColors.warningBg, 'Partially Dispensed');
       case AdherenceTier.critical:
-        return (AppColors.danger, AppColors.dangerBg, 'Critical');
+        return (
+          AppColors.danger,
+          AppColors.dangerBg,
+          rawStatus == 'no_data' ? 'No Data' : 'Pending',
+        );
       case AdherenceTier.overDispensing:
         return (AppColors.danger, AppColors.dangerBg, 'Overdispensing');
       case AdherenceTier.fullyDispensed:
