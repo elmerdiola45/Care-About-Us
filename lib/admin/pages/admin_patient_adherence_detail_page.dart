@@ -299,10 +299,11 @@ class _AdminPatientAdherenceDetailPageState
         ? widget.initialPatient!['doctor_name']?.toString() ??
               widget.initialPatient!['doctor']?.toString()
         : null;
-    final dateTime = initialPrescription
+    final rawDateTime = initialPrescription
         ? widget.initialPatient!['date_time']?.toString() ??
               widget.initialPatient!['date']?.toString()
         : null;
+    final dateTime = _formatPrescriptionDateTime(rawDateTime);
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -355,6 +356,28 @@ class _AdminPatientAdherenceDetailPageState
         ),
       ),
     );
+  }
+
+  // Formats the prescription's raw ISO date_time into a readable date +
+  // 12-hour time. Falls back to "Date: <raw>" if it can't be parsed.
+  static String? _formatPrescriptionDateTime(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return 'Date: $raw';
+
+    final datePart =
+        '${parsed.year.toString().padLeft(4, '0')}-'
+        '${parsed.month.toString().padLeft(2, '0')}-'
+        '${parsed.day.toString().padLeft(2, '0')}';
+
+    final hour24 = parsed.hour;
+    final period = hour24 >= 12 ? 'PM' : 'AM';
+    var hour12 = hour24 % 12;
+    if (hour12 == 0) hour12 = 12;
+    final minute = parsed.minute.toString().padLeft(2, '0');
+
+    return '$datePart   Time: $hour12:$minute $period';
   }
 
   Widget _buildPrescriptionInfoCard(
@@ -440,7 +463,7 @@ class _AdminPatientAdherenceDetailPageState
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Date: $dateTime',
+                    dateTime,
                     style: const TextStyle(fontSize: 13),
                   ),
                 ),
