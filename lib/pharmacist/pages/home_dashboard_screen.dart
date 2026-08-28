@@ -79,6 +79,21 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Timer? _pollTimer;
 
+  // Transient post-login greeting: appears once the real name is known,
+  // then fades out after ~1s. Never shows a "Pharmacist" placeholder.
+  bool _welcomeStarted = false;
+  bool _welcomeVisible = true;
+  bool _welcomeMounted = true;
+
+  // True only while a non-silent summary reload (initial load, manual
+  // refresh, or a period-filter change) is in flight — drives a loading
+  // indicator so a filter change never briefly shows stale/zeroed data
+  // as if it were a real "no results" state.
+  bool _summaryRefreshing = false;
+  // A non-silent summary fetch finished but returned nothing — distinct
+  // from a genuine zero so the UI can say "couldn't load" instead of "0".
+  bool _summaryLoadFailed = false;
+
   @override
   void initState() {
     super.initState();
@@ -142,8 +157,19 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         ).then((value) {
           if (!mounted) return;
           setState(() {
-            _summary = value;
+            // Keep the previous numbers on a failed fetch instead of
+            // dropping to null (which renders as "0" everywhere and reads
+            // like a real empty period). _summaryLoadFailed lets the row
+            // show an explicit "couldn't load" only when there was never
+            // any data to keep.
+            if (value != null) {
+              _summary = value;
+              _summaryLoadFailed = false;
+            } else {
+              _summaryLoadFailed = _summary == null;
+            }
             _summaryLoading = false;
+            _summaryRefreshing = false;
           });
         });
 
@@ -195,6 +221,75 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   String _getGreeting() {
     return 'Welcome';
+  }
+
+  /// The real staff name if we know it yet — from the just-completed
+  /// login (AppSession) first, refined by the staff-profile fetch when it
+  /// lands. Never a "Pharmacist" placeholder: returns null until a real
+  /// name is available.
+  String? get _resolvedName {
+    final fromProfile = _staffProfile?.name.trim() ?? '';
+    if (fromProfile.isNotEmpty) return fromProfile;
+    final fromSession = (widget.staffName.isNotEmpty
+            ? widget.staffName
+            : (AppSession.instance.staffName ?? ''))
+        .trim();
+    return fromSession.isNotEmpty ? fromSession : null;
+  }
+
+  /// Kicks off the one-shot fade of the post-login greeting the first
+  /// time a real name is available. Safe to call from build().
+  void _maybeScheduleWelcomeFade() {
+    if (_welcomeStarted || _resolvedName == null) return;
+    _welcomeStarted = true;
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (!mounted) return;
+      setState(() => _welcomeVisible = false);
+      Future.delayed(const Duration(milliseconds: 450), () {
+        if (!mounted) return;
+        setState(() => _welcomeMounted = false);
+      });
+    });
+  }
+
+  Widget _buildWelcomeBanner() {
+    final name = _resolvedName;
+    if (!_welcomeMounted || name == null) return const SizedBox.shrink();
+    return AnimatedOpacity(
+      opacity: _welcomeVisible ? 1 : 0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.tealPale,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.waving_hand_outlined,
+                  size: 16, color: AppColors.teal),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Welcome, $name',
+                  style: const TextStyle(
+                    color: AppColors.teal,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _logout() async {
@@ -284,6 +379,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildHomeTab() {
+    _maybeScheduleWelcomeFade();
     return RefreshIndicator(
       onRefresh: _onRefresh,
       color: AppColors.teal,
@@ -302,6 +398,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                 children: [
+                  _buildWelcomeBanner(),
                   _buildHeader(),
                   const SizedBox(height: 10),
                   _buildPeriodToggle(),
@@ -399,12 +496,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildHeader() {
-    String name = _staffProfile?.name ?? '';
-    if (name.isEmpty) {
-      name = widget.staffName.isNotEmpty
-          ? widget.staffName
-          : (AppSession.instance.staffName ?? 'Pharmacist');
-    }
+    // Never a "Pharmacist" placeholder — _resolvedName is null until a
+    // real name is known, and the greeting simply omits the name until
+    // then ("Welcome" rather than "Welcome, Pharmacist").
+    final name = _resolvedName;
+    final greeting = name == null ? _getGreeting() : '${_getGreeting()}, $name';
     final branch = _staffProfile?.branchName ?? widget.branchName;
 
     return Row(
@@ -423,7 +519,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                '${_getGreeting()}, $name',
+                greeting,
                 style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 20,
@@ -468,7 +564,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    name,
+                    name ?? 'Signed in',
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
@@ -531,8 +627,40 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildStatRow() {
-    if (_summaryLoading && _summary == null) {
+    // Show the loading state for the first load AND for a period-filter
+    // change / manual refresh — never leave stale or zeroed numbers on
+    // screen while a new range is being fetched.
+    if (_summaryLoading || _summaryRefreshing) {
       return _statShimmer();
+    }
+    if (_summary == null && _summaryLoadFailed) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.cloud_off_outlined,
+              size: 18,
+              color: AppColors.textFaint,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "Couldn't load stats for this period — pull down to refresh.",
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     final rxLabel = switch (_selectedPeriod) {
@@ -629,6 +757,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   Future<void> _onPeriodChanged(String value) async {
     if (value == _selectedPeriod) return;
     setState(() {
+      _summaryRefreshing = true;
       _selectedPeriod = value;
       final now = DateTime.now();
       if (value == 'today') {

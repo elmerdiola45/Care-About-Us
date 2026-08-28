@@ -31,7 +31,6 @@ class _AdminPatientAdherenceDetailPageState
   bool _isNotFound = false;
   String? _errorMessage;
   PatientDetailResponse? _patient;
-  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -379,14 +378,20 @@ class _AdminPatientAdherenceDetailPageState
           const SizedBox(height: 10),
           if (rxNumber != null)
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.qr_code_2, size: 16, color: AppColors.teal),
+                const Padding(
+                  padding: EdgeInsets.only(top: 1),
+                  child: Icon(Icons.qr_code_2, size: 16, color: AppColors.teal),
+                ),
                 const SizedBox(width: 8),
-                Text(
-                  'Rx Number: $rxNumber',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    'Rx Number: $rxNumber',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -394,16 +399,27 @@ class _AdminPatientAdherenceDetailPageState
           if (doctorName != null) ...[
             const SizedBox(height: 6),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.person_outline,
-                  size: 16,
-                  color: AppColors.teal,
+                const Padding(
+                  padding: EdgeInsets.only(top: 1),
+                  child: Icon(
+                    Icons.person_outline,
+                    size: 16,
+                    color: AppColors.teal,
+                  ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Doctor: $doctorName',
-                  style: const TextStyle(fontSize: 13),
+                Expanded(
+                  child: Text(
+                    'Doctor: $doctorName',
+                    style: const TextStyle(fontSize: 13),
+                    // Long consultant names wrap to a second line rather
+                    // than overflowing the row; a truly pathological name
+                    // then ellipsizes instead of pushing the card taller.
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -411,14 +427,23 @@ class _AdminPatientAdherenceDetailPageState
           if (dateTime != null) ...[
             const SizedBox(height: 6),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.calendar_today_outlined,
-                  size: 16,
-                  color: AppColors.teal,
+                const Padding(
+                  padding: EdgeInsets.only(top: 1),
+                  child: Icon(
+                    Icons.calendar_today_outlined,
+                    size: 16,
+                    color: AppColors.teal,
+                  ),
                 ),
                 const SizedBox(width: 8),
-                Text('Date: $dateTime', style: const TextStyle(fontSize: 13)),
+                Expanded(
+                  child: Text(
+                    'Date: $dateTime',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
               ],
             ),
           ],
@@ -808,216 +833,47 @@ class _AdminPatientAdherenceDetailPageState
       return const SizedBox.shrink();
     }
 
-    if (p.isLocked) {
-      return SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: _isUpdating ? null : _confirmUnlock,
-          icon: const Icon(Icons.lock_open, size: 18),
-          label: const Text('Unlock Prescription'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.teal,
-            side: const BorderSide(color: AppColors.teal),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-      );
-    }
-
+    // The former "Mark as Fully Dispensed" button (which actually POSTed to
+    // /admin/prescriptions/{id}/lock \u2014 a cross-branch dispensing freeze,
+    // NOT a status change) was removed here: that endpoint does not exist
+    // in the backend, so the button 404'd on every click while appearing
+    // to succeed at a safety-critical lock. Re-adding it needs the backend
+    // lock/unlock endpoint built first (see the phase report). The
+    // read-only overdue-refill notice below is unaffected.
     final hasFlagged = p.refillHistory.any((e) => e.isFlagged);
+    if (!hasFlagged) {
+      return const SizedBox.shrink();
+    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (hasFlagged)
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.warningBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.warning_amber_rounded,
-                  color: AppColors.warning,
-                  size: 18,
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'This patient has an overdue refill \u2014 review before dispensing further.',
-                    style: TextStyle(
-                      color: AppColors.warning,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.warningBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.warning,
+            size: 18,
           ),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _isUpdating ? null : _confirmLock,
-            icon: _isUpdating
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.block, size: 18),
-            label: const Text('Mark as Fully Dispensed'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'This patient has an overdue refill \u2014 review before dispensing further.',
+              style: TextStyle(
+                color: AppColors.warning,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
               ),
-              elevation: 0,
             ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Admin-only action. Use when over-dispensing has been confirmed.',
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _confirmLock() async {
-    final patient = _patient;
-    if (patient == null || patient.prescriptionId == null) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Mark as Fully Dispensed?'),
-        content: Text(
-          "This will lock ${patient.name}'s prescription from any further dispensing \u2014 at this pharmacy or any other branch. "
-          'This action should only be used when over-dispensing has been confirmed. Continue?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Confirm Lock'),
           ),
         ],
       ),
     );
-
-    if (confirmed != true) return;
-
-    setState(() => _isUpdating = true);
-    try {
-      await AdminApiService().lockPrescription(patient.prescriptionId!);
-      if (mounted) {
-        setState(() => _isUpdating = false);
-        await _loadPatient();
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Prescription locked \u2014 cannot be dispensed anywhere.',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isUpdating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to lock: $e',
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: AppColors.danger,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
   }
 
-  Future<void> _confirmUnlock() async {
-    final patient = _patient;
-    if (patient == null || patient.prescriptionId == null) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Unlock this prescription?'),
-        content: const Text(
-          'This will allow dispensing to resume for this prescription.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.teal,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Unlock'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _isUpdating = true);
-    try {
-      await AdminApiService().unlockPrescription(patient.prescriptionId!);
-      if (mounted) {
-        setState(() => _isUpdating = false);
-        await _loadPatient();
-        if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Prescription unlocked.')));
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isUpdating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to unlock: $e',
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: AppColors.danger,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
 
   Widget _card({required Widget child}) {
     return Container(

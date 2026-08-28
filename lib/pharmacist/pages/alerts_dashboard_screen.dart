@@ -27,7 +27,17 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAlerts();
+
+    // Show whatever the dashboard's 30s alert poll (or a previous visit)
+    // last fetched, so revisiting this screen doesn't flash a full-screen
+    // spinner every time. It's at most ~30s old and is immediately
+    // refreshed in the background below — never shown as the final state.
+    final cached = AlertTracker.instance.latestAlerts;
+    if (cached.isNotEmpty) {
+      _alerts.addAll(cached);
+      _isLoading = false;
+    }
+    _loadAlerts(silent: cached.isNotEmpty);
     _startPolling();
   }
 
