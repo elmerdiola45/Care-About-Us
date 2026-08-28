@@ -501,9 +501,14 @@ class SavedPrescriptionsStore {
         debugPrint(
           'STORE: patient=$pid medNames=${adherence.medicationNames} refillCount=${adherence.refillHistory.length} score=${adherence.score} hasData=${adherence.hasData}',
         );
-        final idx = _items.indexWhere((e) => e.patientId == pid);
-        if (idx != -1) {
-          _items[idx] = _items[idx].copyWith(adherence: adherence);
+        // Write the single fetched result back to EVERY Saved Rx entry for
+        // this patient, not just the first — indexWhere() only matched one,
+        // so a patient's 2nd/3rd prescription kept adherence == null and the
+        // list screen hid its adherence badge.
+        for (var i = 0; i < _items.length; i++) {
+          if (_items[i].patientId == pid) {
+            _items[i] = _items[i].copyWith(adherence: adherence);
+          }
         }
       } catch (e) {
         debugPrint('STORE: patient=$pid adherence fetch failed: $e');
