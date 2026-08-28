@@ -125,6 +125,19 @@ class PrescriptionApiService {
       request.fields['medicines[$i][unit_price]'] = '${m.unitPrice}';
       request.fields['medicines[$i][days_supply]'] =
           '${m.daysSupply > 0 ? m.daysSupply : 1}';
+      // The canonical generic name from the matched catalog row (the
+      // review screen sets MedicineItem.genericName to it). Sent so the
+      // saved PrescriptionItem records the DB-truth generic, not just
+      // whatever OCR read. Backend already accepts medicines.*.generic_name.
+      if (m.genericName.isNotEmpty) {
+        request.fields['medicines[$i][generic_name]'] = m.genericName;
+      }
+      // The resolved products.id, when the review screen matched this
+      // line to a specific catalog SKU. Backend validates it points at a
+      // real row before persisting; null/absent is always safe.
+      if (m.productId != null) {
+        request.fields['medicines[$i][product_id]'] = '${m.productId}';
+      }
       if (m.brand.isNotEmpty) {
         request.fields['medicines[$i][brand_name]'] = m.brand;
       }

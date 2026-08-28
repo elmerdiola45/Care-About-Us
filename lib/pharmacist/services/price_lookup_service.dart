@@ -54,6 +54,20 @@ import 'medicine_dictionary_service.dart';
 class PriceLookupResult {
   final double unitPrice;
 
+  /// The real `products.id` of the resolved SKU, when one specific SKU
+  /// was resolved (same condition as [variant] being non-null). Null
+  /// otherwise. Carried through so a saved prescription line references
+  /// a stable catalog id, not just the `name` string.
+  final int? productId;
+
+  /// The canonical generic/medicine name from the matched DB row — set
+  /// only by the brand-first resolution path (Priority 1/2), where the
+  /// caller's OCR-read medicine name may be wrong and the DB is the
+  /// source of truth. Null on the generic-name path (the caller already
+  /// holds the name it matched on). When present, the review screen
+  /// shows THIS instead of the OCR text.
+  final String? canonicalName;
+
   /// True if this came from an exact dosage-string match (or the name
   /// only had one SKU at all). False if this came from the
   /// nearest-strength fallback and should be visibly flagged for the
@@ -94,6 +108,8 @@ class PriceLookupResult {
     required this.unitPrice,
     required this.isExactMatch,
     this.variant,
+    this.productId,
+    this.canonicalName,
     this.needsBrandSelection = false,
     this.medicineNotFound = false,
     this.dosageNotStocked = false,
@@ -105,6 +121,17 @@ class PriceLookupResult {
     isExactMatch: true,
     medicineNotFound: true,
   );
+}
+
+/// One catalog SKU whose brand_name matched the OCR-read brand, plus
+/// the canonical generic name it should resolve to and whether the
+/// brand matched at the strong tier. Internal to
+/// [PriceLookupService._resolveByBrandAndDosage].
+class _BrandCandidate {
+  final MedicineVariant variant;
+  final String canonicalGeneric;
+  final bool exactBrand;
+  const _BrandCandidate(this.variant, this.canonicalGeneric, this.exactBrand);
 }
 
 class PriceLookupService {
@@ -213,6 +240,21 @@ class PriceLookupService {
     String dosage = '',
     String brand = '',
   }) {
+    // PRIORITY 1/2 — BRAND + DOSAGE. When the prescription named a brand
+    // that this pharmacy's catalog knows, resolve against it directly:
+    // the DB row is the source of truth for the canonical generic name,
+    // so a jumbled/misread OCR `medicineName` (e.g. "Amoxicilin") must
+    // NOT get to decide the result when brand ("Thmiox") + dosage
+    // ("500mg") already identify exactly one row. This only takes over
+    // when it produces a confident, unambiguous answer (or a definite
+    // "brand known, that strength not stocked"); anything less returns
+    // null here and falls through to the generic-name path (Priority
+    // 3/4/5) unchanged.
+    if (brand.trim().isNotEmpty) {
+      final byBrand = _resolveByBrandAndDosage(brand, dosage);
+      if (byBrand != null) return byBrand;
+    }
+
     final variants = MedicineDictionaryService.variantsFor(medicineName);
     if (variants.isEmpty) return PriceLookupResult.notFound;
 
@@ -271,6 +313,7 @@ class PriceLookupService {
           unitPrice: variants.first.unitPrice ?? 0.0,
           isExactMatch: true,
           variant: variants.first,
+          productId: variants.first.id,
           candidates: variants,
         );
       }
@@ -294,6 +337,7 @@ class PriceLookupService {
             unitPrice: brandHits.first.unitPrice ?? 0.0,
             isExactMatch: false,
             variant: brandHits.first,
+            productId: brandHits.first.id,
             candidates: variants,
           );
         }
@@ -319,6 +363,7 @@ class PriceLookupService {
         unitPrice: only.unitPrice ?? 0.0,
         isExactMatch: dosageIsExact,
         variant: only,
+        productId: only.id,
         candidates: candidates,
       );
     }
@@ -350,6 +395,7 @@ class PriceLookupService {
           unitPrice: brandHits.first.unitPrice ?? 0.0,
           isExactMatch: dosageIsExact,
           variant: brandHits.first,
+          productId: brandHits.first.id,
           candidates: candidates,
         );
       }
@@ -364,6 +410,147 @@ class PriceLookupService {
       variant: null,
       needsBrandSelection: true,
       candidates: candidates,
+    );
+  }
+
+  /// PRIORITY 1/2 resolution: identify the DB row from BRAND + DOSAGE
+  /// alone, treating the catalog as the source of truth for the
+  /// canonical generic name.
+  ///
+  /// Reuses the existing matching primitives — [_brandsMatch] for the
+  /// brand (exact/substring first, then a narrow one-edit / single-
+  /// adjacent-transposition near-miss), [_variantsAtDosage] +
+  /// [_plainStrength] for the dosage — rather than a second fuzzy
+  /// engine. The canonical name comes from
+  /// [MedicineDictionaryService.genericNameFor] on whichever dictionary
+  /// entry the SKU was found under (a SKU is registered under both its
+  /// generic key and its brand key, and both map to the same generic).
+  ///
+  /// Returns null — deferring to the generic-name path in [lookup] —
+  /// whenever the brand isn't in the catalog, the result would be
+  /// ambiguous off a merely-fuzzy brand, or the requested strength
+  /// isn't stocked for this brand (the generic path can see the same
+  /// generic under OTHER brands and has its own not-stocked handling).
+  /// Only ever returns a positive result for a single unambiguous SKU,
+  /// or [needsBrandSelection] when an EXACT brand still leaves several
+  /// SKUs tied at that dosage (never auto-picks — see test 6).
+  static PriceLookupResult? _resolveByBrandAndDosage(
+    String brand,
+    String dosage,
+  ) {
+    final normBrand = _normalize(brand);
+    if (normBrand.isEmpty) return null;
+
+    final cache = MedicineDictionaryService.variantCacheView;
+    if (cache.isEmpty) return null;
+
+    // Every SKU in the catalog whose brand_name matches the OCR brand,
+    // deduped (the same SKU appears under its generic key and its brand
+    // key). `canonicalGeneric` is taken from the entry key it was seen
+    // under; `exactBrand` is true when the brand matched at the strong
+    // tier (normalized-equal or substring either way) rather than the
+    // one-edit near-miss tier.
+    final byDedupeKey = <String, _BrandCandidate>{};
+    cache.forEach((entryKey, variants) {
+      final generic =
+          MedicineDictionaryService.genericNameFor(entryKey) ?? entryKey;
+      for (final v in variants) {
+        final vb = v.brandName;
+        if (vb == null || vb.trim().isEmpty) continue;
+        if (!_brandsMatch(vb, brand)) continue;
+        final nvb = _normalize(vb);
+        final exact = nvb == normBrand ||
+            nvb.contains(normBrand) ||
+            normBrand.contains(nvb);
+        final dk =
+            v.id?.toString() ?? '${v.name}|${v.brandName}|${v.dosageForm}';
+        final existing = byDedupeKey[dk];
+        if (existing == null) {
+          byDedupeKey[dk] = _BrandCandidate(v, generic, exact);
+        } else if (exact && !existing.exactBrand) {
+          byDedupeKey[dk] =
+              _BrandCandidate(v, existing.canonicalGeneric, true);
+        }
+      }
+    });
+
+    if (byDedupeKey.isEmpty) return null;
+
+    final all = byDedupeKey.values.toList();
+    final anyExactBrand = all.any((c) => c.exactBrand);
+
+    String? canonicalOf(Iterable<_BrandCandidate> cs) {
+      final names = cs
+          .map((c) => c.canonicalGeneric.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      final distinct = names.map((s) => s.toLowerCase()).toSet();
+      return distinct.length == 1 ? names.first : null;
+    }
+
+    // No dosage to compare — only safe when exactly one exact-brand SKU
+    // exists (nothing else it could be); otherwise let the pharmacist
+    // pick / let the generic path try.
+    if (_normalize(dosage).isEmpty) {
+      if (all.length == 1 && anyExactBrand) {
+        final v = all.first.variant;
+        return PriceLookupResult(
+          unitPrice: v.unitPrice ?? 0.0,
+          isExactMatch: false,
+          variant: v,
+          productId: v.id,
+          canonicalName: all.first.canonicalGeneric.trim().isEmpty
+              ? null
+              : all.first.canonicalGeneric.trim(),
+          candidates: [v],
+        );
+      }
+      return null;
+    }
+
+    final atDosage = _variantsAtDosage(
+      all.map((c) => c.variant).toList(),
+      dosage,
+    );
+    final matched = atDosage.matches;
+
+    // Brand known, but not at this strength (or the form isn't a plain
+    // comparable strength) — defer: the generic path sees this generic
+    // under other brands and reports dosageNotStocked itself.
+    if (matched.isEmpty) return null;
+
+    if (matched.length == 1) {
+      final v = matched.first;
+      final c = all.firstWhere((x) => identical(x.variant, v));
+      // Priority-2 guard: a fuzzy (near-miss) brand with no exact-string
+      // dosage match to corroborate it is too weak to override the OCR
+      // medicine name — defer.
+      if (!c.exactBrand && !atDosage.isExact) return null;
+      return PriceLookupResult(
+        unitPrice: v.unitPrice ?? 0.0,
+        isExactMatch: atDosage.isExact && c.exactBrand,
+        variant: v,
+        productId: v.id,
+        canonicalName: c.canonicalGeneric.trim().isEmpty
+            ? null
+            : c.canonicalGeneric.trim(),
+        candidates: [v],
+      );
+    }
+
+    // Several SKUs tied at this brand + dosage (test 6). Never auto-pick.
+    // Only surface a picker for an EXACT brand; a fuzzy brand that's
+    // also ambiguous shouldn't hijack the flow at all.
+    if (!anyExactBrand) return null;
+    final matchedCandidates =
+        all.where((x) => matched.any((m) => identical(m, x.variant)));
+    return PriceLookupResult(
+      unitPrice: 0.0,
+      isExactMatch: false,
+      variant: null,
+      needsBrandSelection: true,
+      canonicalName: canonicalOf(matchedCandidates),
+      candidates: matched,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 import '../../common/services/app_config.dart';
 import '../../common/session.dart';
@@ -14,6 +15,13 @@ enum DictionarySource { database, fallback }
 /// "Himox" / 20.00. A single medicine name in the dictionary
 /// (e.g. "Amoxicillin") can have many of these.
 class MedicineVariant {
+  /// The real `products.id` for this SKU, as returned by
+  /// GET /pharmacies/{id}/medicines. Null for entries that predate the
+  /// field, or a name-only (no variants) dictionary source. Carried
+  /// through the match pipeline so a resolved line has a stable numeric
+  /// identifier, not just the `name` string — see PriceLookupResult.productId.
+  final int? id;
+
   /// The literal products-table `name` for this specific SKU (e.g.
   /// "Amoxicillin (Himox 250/60)") — the exact catalog label, as
   /// opposed to brandName/dosageForm which are just the pieces it was
@@ -25,6 +33,7 @@ class MedicineVariant {
   final double? unitPrice;
 
   const MedicineVariant({
+    this.id,
     this.name,
     this.brandName,
     this.dosageForm,
@@ -33,7 +42,9 @@ class MedicineVariant {
 
   factory MedicineVariant.fromJson(Map<String, dynamic> json) {
     final price = json['unit_price'];
+    final rawId = json['id'];
     return MedicineVariant(
+      id: rawId is int ? rawId : int.tryParse(rawId?.toString() ?? ''),
       name: json['name']?.toString(),
       brandName: json['brand_name']?.toString(),
       dosageForm: json['dosage_form']?.toString(),
@@ -45,6 +56,7 @@ class MedicineVariant {
   /// (see MedicineDictionaryService's persistent fallback). Keys match
   /// the backend/`fromJson` shape so the same parser handles both.
   Map<String, dynamic> toJson() => {
+    'id': id,
     'name': name,
     'brand_name': brandName,
     'dosage_form': dosageForm,
@@ -360,6 +372,17 @@ class MedicineDictionaryService {
     return _variantCache?[name.trim().toLowerCase()] ?? const [];
   }
 
+  /// Read-only view of the whole variant cache — every dictionary key
+  /// (generic AND brand entries, see [getDictionary]) mapped to its
+  /// SKUs. Exposed for [PriceLookupService]'s brand-first resolution,
+  /// which needs to scan the brand-keyed entries with its own fuzzy
+  /// matcher (_brandsMatch) rather than a second copy of one here.
+  /// Empty (not null) when nothing has loaded yet.
+  static Map<String, List<MedicineVariant>> get variantCacheView =>
+      _variantCache == null
+      ? const <String, List<MedicineVariant>>{}
+      : Map.unmodifiable(_variantCache!);
+
   /// The real generic name behind [name] (case-insensitive), if the
   /// dictionary knows one — differs from [name] itself only when [name]
   /// matched a brand-type entry (e.g. "biogesic" -> "Paracetamol").
@@ -407,6 +430,24 @@ class MedicineDictionaryService {
       if (seen.add(dedupeKey)) results.add(v);
     }
     return results;
+  }
+
+  /// Test-only: seed the in-memory caches directly so
+  /// [PriceLookupService] / [variantsFor] / [genericNameFor] can be
+  /// exercised without a network fetch. Sets [_cachedAt] to now so
+  /// [getDictionary] treats the seed as fresh.
+  @visibleForTesting
+  static void debugSeedCache({
+    List<String>? names,
+    Map<String, List<MedicineVariant>>? variants,
+    Map<String, String>? generics,
+  }) {
+    _variantCache = variants ?? {};
+    _genericNameCache = generics ?? {};
+    _cache =
+        names ?? (_variantCache?.keys.toList() ?? const <String>[]);
+    _cachedAt = DateTime.now();
+    _persistentLoadTried = true;
   }
 
   /// Clears the in-memory caches so the next [getDictionary] re-fetches.

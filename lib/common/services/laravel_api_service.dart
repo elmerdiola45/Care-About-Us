@@ -186,6 +186,12 @@ class LaravelPrescriptionItem {
   final String? originalOcrName;
   final String? genericName;
   final String? brandName;
+
+  /// The catalog `products.id` this line was resolved to at scan/review
+  /// time (PrescriptionController@store persists it, @format echoes it
+  /// back). Null when nothing specific was matched. Informational only —
+  /// stock/dispensing still key off the medicine name.
+  final int? productId;
   final String? dosage;
   final int quantity;
   final int disposedQuantity;
@@ -209,6 +215,7 @@ class LaravelPrescriptionItem {
     this.originalOcrName,
     this.genericName,
     this.brandName,
+    this.productId,
     this.dosage,
     required this.quantity,
     this.disposedQuantity = 0,
@@ -233,6 +240,9 @@ class LaravelPrescriptionItem {
       // the dispensing report even though the data existed server-side.
       genericName: json['generic_name']?.toString(),
       brandName: json['brand_name']?.toString(),
+      productId: json['product_id'] == null
+          ? null
+          : _safeInt(json['product_id']),
       dosage: json['dosage']?.toString(),
       quantity: _safeInt(
         json['quantity'] ??
