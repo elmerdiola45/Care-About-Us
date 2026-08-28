@@ -523,7 +523,26 @@ class _DispenseScreenState extends State<DispenseScreen> {
     final backendId = entry.backendId;
 
     if (backendId == null || backendId.isEmpty) {
-      return true;
+      // No verified server-side record for this prescription — this
+      // happens when a QR could not be verified with the backend
+      // (offline / server down) and the scanner fell back to local or
+      // demo data. Dispensing offline would skip the token check, the
+      // over-dispense lock, and cross-pharmacy approval, and would
+      // never be recorded server-side — so it is refused outright
+      // rather than shown as a successful fill.
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This prescription has not been verified with the server. '
+            'Connect to the internet and scan the QR again — dispensing '
+            "can't be recorded offline.",
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return false;
     }
 
     try {
@@ -798,6 +817,17 @@ class _DispenseScreenState extends State<DispenseScreen> {
   Future<void> _onDispense() async {
     final entry = _selectedEntry;
     if (entry == null) return;
+
+    // A dispense must be backed by a verified server-side prescription.
+    // _validateDispense() already blocks this case with a message; this
+    // is the belt-and-suspenders guard so no present or future entry
+    // path into this screen can reach the backend-skipping fill code
+    // and the success receipt below with no backendId.
+    if (entry.backendId == null || entry.backendId!.isEmpty) {
+      await _validateDispense();
+      return;
+    }
+
     final prescription = entry.prescription;
 
     // Set this immediately, before any awaited step, so the Dispense

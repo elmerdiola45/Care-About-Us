@@ -133,7 +133,11 @@ class ScannedPrescription {
                   ),
                 )
                 .toList(),
-            isVerifiedQrData: true,
+            // NOT backend-verified — this is a local-JSON QR payload
+            // (the offline fallback format), parsed on-device with no
+            // token check. Dispensing must not treat it as verified;
+            // the dispense screen requires a real backendId.
+            isVerifiedQrData: false,
             rawValue: rawValue,
           );
         }
@@ -231,6 +235,11 @@ class ScannedPrescription {
                 .toList(),
             isVerifiedQrData: true,
             rawValue: rawValue,
+            // Carry the backend id through, exactly like the JSON-token
+            // branch above. Without it the dispense screen has no server
+            // identity to sync against and _validateDispense() blocks a
+            // genuinely verified scan.
+            backendId: verified.prescriptionId,
           );
         }
       } on LaravelApiException {
@@ -293,7 +302,11 @@ class ScannedPrescription {
         unitPrice: 3.75,
       ),
     ],
-    isVerifiedQrData: true,
+    // Placeholder data shown when a QR could not be verified with the
+    // backend (unrecognized format, or the verify call failed). It is
+    // NOT verified and has no backendId, so the dispense screen must
+    // refuse to record a dispense against it.
+    isVerifiedQrData: false,
     rawValue: rawValue,
   );
 }
