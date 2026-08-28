@@ -47,7 +47,11 @@ Future<LaravelVerifiedPrescription> verifyCrossPharmacyQr(String rawValue) async
 
   final api = LaravelApiService(token: AppSession.instance.token);
   final verified = await api.verifyQrToken(token);
-  if (!verified.valid) {
+  // A fully-dispensed prescription comes back HTTP 200 with valid=false +
+  // fullyDispensed=true. That is a legitimate, completed state — the token
+  // is still valid for VIEWING — so it is returned to the caller (which
+  // shows a view-only sheet) rather than thrown as a generic error.
+  if (!verified.valid && !verified.fullyDispensed) {
     throw LaravelApiException(verified.message ?? 'This QR code is invalid or already used.');
   }
   return verified;
@@ -106,7 +110,16 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
       return;
     }
 
-    final confirmed = await _showVerificationSheet(prescription!);
+    // Fully dispensed: valid token, view-only. Show the details with a
+    // "Fully Dispensed — View Only" notice and stop — no dispense path.
+    if (prescription!.fullyDispensed) {
+      setState(() => _processing = false);
+      _textController.clear();
+      await _showVerificationSheet(prescription, fullyDispensed: true);
+      return;
+    }
+
+    final confirmed = await _showVerificationSheet(prescription);
 
     if (!mounted) return;
 
@@ -123,12 +136,18 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
     }
   }
 
-  Future<bool?> _showVerificationSheet(LaravelVerifiedPrescription prescription) {
+  Future<bool?> _showVerificationSheet(
+    LaravelVerifiedPrescription prescription, {
+    bool fullyDispensed = false,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _VerificationSheet(prescription: prescription),
+      builder: (_) => _VerificationSheet(
+        prescription: prescription,
+        fullyDispensed: fullyDispensed,
+      ),
     );
   }
 
@@ -317,7 +336,13 @@ Widget _immediateRecordBanner() => Container(
 
 class _VerificationSheet extends StatelessWidget {
   final LaravelVerifiedPrescription prescription;
-  const _VerificationSheet({required this.prescription});
+  // View-only mode: the prescription is already fully dispensed. Show the
+  // record with a clear notice and a single Close action — no dispense path.
+  final bool fullyDispensed;
+  const _VerificationSheet({
+    required this.prescription,
+    this.fullyDispensed = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -345,14 +370,33 @@ class _VerificationSheet extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.verified_outlined, color: CrossPharmacyScanColors.primaryLight, size: 20),
+                    Icon(
+                      fullyDispensed ? Icons.check_circle_outline : Icons.verified_outlined,
+                      color: fullyDispensed ? const Color(0xFF34D399) : CrossPharmacyScanColors.primaryLight,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Cross-Pharmacy Dispense',
-                      style: TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w800, fontSize: 16),
+                    Text(
+                      fullyDispensed ? 'Fully Dispensed — View Only' : 'Cross-Pharmacy Dispense',
+                      style: const TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w800, fontSize: 16),
                     ),
                   ],
                 ),
+                if (fullyDispensed) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF34D399).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.4)),
+                    ),
+                    child: const Text(
+                      'This prescription has already been fully dispensed. No additional quantity can be dispensed.',
+                      style: TextStyle(color: CrossPharmacyScanColors.textSecondary, fontSize: 12.5, height: 1.4),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 Text('RX: ${prescription.ocrCode}', style: const TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13)),
                 const SizedBox(height: 4),
@@ -362,9 +406,21 @@ class _VerificationSheet extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Divider(color: CrossPharmacyScanColors.border),
                 const SizedBox(height: 12),
-                const Text('Medicines to dispense (remaining)', style: TextStyle(color: CrossPharmacyScanColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
+                Text(
+                  fullyDispensed ? 'Medicines on this prescription' : 'Medicines to dispense (remaining)',
+                  style: const TextStyle(color: CrossPharmacyScanColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w900, letterSpacing: 0.6),
+                ),
                 const SizedBox(height: 8),
-                if (items.isEmpty)
+                if (fullyDispensed)
+                  ...prescription.remainingItems.map((i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(children: [
+                          Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF34D399), shape: BoxShape.circle)),
+                          const SizedBox(width: 10),
+                          Expanded(child: Text('${i.medicineName} — ${i.dispensedQuantity} of ${i.prescribedQuantity} dispensed', style: const TextStyle(color: CrossPharmacyScanColors.text, fontSize: 14))),
+                        ]),
+                      ))
+                else if (items.isEmpty)
                   const Text('No remaining quantity on this prescription.', style: TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13))
                 else
                   ...items.map((i) => Padding(
@@ -376,6 +432,22 @@ class _VerificationSheet extends StatelessWidget {
                         ]),
                       )),
                 const SizedBox(height: 20),
+                if (fullyDispensed)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: CrossPharmacyScanColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  )
+                else
                 Row(
                   children: [
                     Expanded(
