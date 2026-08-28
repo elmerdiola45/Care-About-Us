@@ -48,6 +48,54 @@ class ImagePreprocessorService {
     }
   }
 
+  /// Lightweight, resize-only variant: decode, cap the longest edge to
+  /// [_liteMaxEdge], re-encode as JPEG. NO per-pixel adjust/sharpen/
+  /// binarize pass.
+  ///
+  /// This exists for **Flutter Web**, where there are no compute isolates —
+  /// the O(width*height) fused loop in [preprocess] runs on the main
+  /// thread there and freezes the UI for many seconds on a phone photo
+  /// ("the scan is hanging"). `copyResize` + `encodeJpg` are a single
+  /// bounded pass and finish in ~1-2s. The point of preprocessing on the
+  /// client is really just to get the upload under the OCR backends' size
+  /// limits (Groq/PHP upload cap; OCR.space free-tier ~1 MB) — the Groq
+  /// backend re-resizes to 1024px and OCR.space reads fine at this size,
+  /// so skipping the binarize costs little on the primary path.
+  static Uint8List preprocessLite(Uint8List originalBytes) {
+    final decoded = img.decodeImage(originalBytes);
+    if (decoded == null) {
+      throw const FormatException('Could not decode image for preprocessing.');
+    }
+
+    final longestEdge =
+        decoded.width > decoded.height ? decoded.width : decoded.height;
+
+    final img.Image resized;
+    if (longestEdge > _liteMaxEdge) {
+      resized = decoded.width >= decoded.height
+          ? img.copyResize(decoded, width: _liteMaxEdge)
+          : img.copyResize(decoded, height: _liteMaxEdge);
+    } else {
+      resized = decoded;
+    }
+
+    return Uint8List.fromList(img.encodeJpg(resized, quality: 80));
+  }
+
+  // Handwriting stays legible to both OCR engines well below this; the
+  // Groq backend re-resizes to 1024px anyway. Smaller = faster decode/
+  // encode on the web main thread and a smaller upload.
+  static const int _liteMaxEdge = 1200;
+
+  /// [preprocessLite] that never throws — raw bytes back on any failure.
+  static Uint8List preprocessLiteOrFallback(Uint8List originalBytes) {
+    try {
+      return preprocessLite(originalBytes);
+    } catch (_) {
+      return originalBytes;
+    }
+  }
+
   /// Pure function version of the old multi-pass adjustment step —
   /// exposure, contrast, highlight/shadow/white/black correction. Takes
   /// raw r/g/b in, returns adjusted r/g/b out, with NO buffer allocation.

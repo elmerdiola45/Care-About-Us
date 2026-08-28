@@ -23,7 +23,7 @@
 
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show compute, kDebugMode;
+import 'package:flutter/foundation.dart' show compute, kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -154,24 +154,36 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       // OCR.space free-tier ~1 MB) — that's the "image failed to upload"
       // 422. The binarized output is ~200-400 KB.
       //
-      // Uses `compute` (not `Isolate.run`): on mobile it runs on a
-      // background isolate so the O(width*height) pixel loop doesn't block
-      // the UI; on Flutter Web there are no isolates so it runs on the
-      // main thread — which is fine (spinner already shown, work is
-      // bounded by the 2000px cap) and, crucially, does NOT throw the way
-      // `Isolate.run` does on web, which was silently skipping
-      // preprocessing entirely and uploading the raw photo.
+      // `compute` (not `Isolate.run`, which throws on Flutter Web and was
+      // silently skipping preprocessing there — uploading the raw 2-8 MB
+      // photo, which both OCR backends reject).
+      //
+      // Web has no compute isolates, so `compute` runs on the main thread:
+      // the full adjust/sharpen/binarize pass would freeze the UI for many
+      // seconds on a phone photo. So on web use the lightweight resize-only
+      // variant (one bounded pass, ~1-2s) — that's still enough to get the
+      // upload under the backends' size limits, which is the actual point
+      // of client-side preprocessing. Mobile keeps the full pass (real
+      // background isolate, no freeze).
       final preprocessSw = Stopwatch()..start();
       Uint8List preprocessedBytes;
       try {
         preprocessedBytes = await compute(
-          ImagePreprocessorService.preprocessOrFallback,
+          kIsWeb
+              ? ImagePreprocessorService.preprocessLiteOrFallback
+              : ImagePreprocessorService.preprocessOrFallback,
           rawBytes,
+        ).timeout(
+          // Hard ceiling so a pathological decode can never hang the whole
+          // scan. On timeout we upload the raw bytes — the backend accepts
+          // up to 12 MB and resizes server-side, so a plain phone photo
+          // still scans, just with a larger upload.
+          const Duration(seconds: 12),
         );
       } catch (_) {
-        // Belt-and-suspenders: preprocessOrFallback already falls back to
-        // the raw bytes internally on any decode/encode failure; this only
-        // catches a failure of compute() itself.
+        // TimeoutException, or a failure of compute() itself.
+        // preprocessLiteOrFallback / preprocessOrFallback already handle
+        // decode/encode errors internally.
         preprocessedBytes = rawBytes;
       }
       preprocessSw.stop();
