@@ -412,6 +412,9 @@ class CrossPharmacyRequestResponse {
   final String requestId;
   final String requestingPharmacyName;
   final String requestingPharmacyLocation;
+  // FDA / LTO licence number the requesting pharmacy self-declared. Empty
+  // when the backend row predates this field or none was captured.
+  final String requestingPharmacyLicense;
   final String rxNumber;
   final String patientName;
   final List<MedicineItem> medicines;
@@ -429,6 +432,7 @@ class CrossPharmacyRequestResponse {
     required this.requestId,
     required this.requestingPharmacyName,
     required this.requestingPharmacyLocation,
+    this.requestingPharmacyLicense = '',
     required this.rxNumber,
     required this.patientName,
     required this.medicines,

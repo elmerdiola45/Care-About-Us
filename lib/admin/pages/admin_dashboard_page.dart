@@ -54,6 +54,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Timer? _alertPollTimer;
   bool _isPollingAlerts = false;
 
+  // Pending cross-pharmacy request count for the Requests bottom-nav badge.
+  // Polled on the same cadence as alerts; refreshed immediately whenever the
+  // Requests tab is opened/left so an approve/reject there is reflected fast.
+  int _pendingRequestCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -94,10 +99,22 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   void _startAlertPolling() {
     _pollAlerts();
+    _pollPendingRequests();
     _alertPollTimer = Timer.periodic(
       const Duration(seconds: 30),
-      (_) => _pollAlerts(),
+      (_) {
+        _pollAlerts();
+        _pollPendingRequests();
+      },
     );
+  }
+
+  Future<void> _pollPendingRequests() async {
+    final count = await _api.fetchPendingCrossPharmacyRequestCount();
+    if (!mounted) return;
+    if (count != _pendingRequestCount) {
+      setState(() => _pendingRequestCount = count);
+    }
   }
 
   Future<void> _pollAlerts() async {
@@ -176,6 +193,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       _navIndex = index;
       _visitedTabs.add(index);
     });
+    // A tab switch to/from Requests is exactly when the pending count is
+    // most likely to have just changed (admin acted on a card). Cheap COUNT
+    // query, so just refresh on any nav change.
+    _pollPendingRequests();
   }
 
   @override
@@ -217,6 +238,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       bottomNavigationBar: BottomNavBar(
         currentIndex: _navIndex,
         onTap: _handleNav,
+        requestBadgeCount: _pendingRequestCount,
       ),
     );
   }

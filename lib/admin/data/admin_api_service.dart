@@ -148,6 +148,8 @@ class AdminApiService {
           m['requesting_pharmacy_name']?.toString() ?? '',
       requestingPharmacyLocation:
           m['requesting_pharmacy_location']?.toString() ?? '',
+      requestingPharmacyLicense:
+          m['requesting_pharmacy_license']?.toString() ?? '',
       rxNumber: m['rx_number']?.toString() ?? m['rx_no']?.toString() ?? '',
       patientName: m['patient_name']?.toString() ?? '',
       medicines: safeList(m['medicines']).map((e) {
@@ -209,6 +211,29 @@ class AdminApiService {
       'CrossPharmacy: fetch failed with status ${response.statusCode}',
     );
     throw Exception('Failed to fetch cross-pharmacy requests');
+  }
+
+  /// Lightweight count of still-pending cross-pharmacy requests for this
+  /// admin's home pharmacy — drives the Requests bottom-nav badge. Returns
+  /// 0 on any failure so a transient error never shows a stale/negative
+  /// badge.
+  Future<int> fetchPendingCrossPharmacyRequestCount() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/admin/cross-pharmacy-requests/pending-count'),
+            headers: _headers,
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final data = safeMap(jsonDecode(response.body)) ?? {};
+        return safeInt(data['count']);
+      }
+    } catch (_) {
+      // Swallow — badge just stays at its last value / 0.
+    }
+    return 0;
   }
 
   Future<List<CrossPharmacyRequestResponse>>

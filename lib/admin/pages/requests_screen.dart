@@ -412,6 +412,17 @@ class _RequestCardState extends State<_RequestCard> {
             request.requestingPharmacyLocation,
             style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
           ),
+          if (request.requestingPharmacyLicense.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              'FDA License No. ${request.requestingPharmacyLicense}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(10),
