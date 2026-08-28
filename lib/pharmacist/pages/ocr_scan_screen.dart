@@ -22,9 +22,8 @@
 //    itself (no `$e` interpolation into UI or logs).
 
 import 'dart:async';
-import 'dart:isolate';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show compute, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -148,24 +147,31 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       await Future.delayed(Duration.zero);
       if (!mounted) return;
 
-      // Clean up the photo on-device before it reaches OCR.space —
-      // exposure/contrast correction, sharpen, then binarize. Falls back
-      // to the raw photo if preprocessing can't run for any reason.
+      // Clean up the photo on-device before it's uploaded — resize to
+      // <=2000px, sharpen, then binarize (ImagePreprocessorService). This
+      // is REQUIRED, not just an enhancement: a raw modern-phone photo is
+      // 2-8 MB, which both OCR backends reject (PHP upload_max_filesize;
+      // OCR.space free-tier ~1 MB) — that's the "image failed to upload"
+      // 422. The binarized output is ~200-400 KB.
       //
-      // This runs on a background isolate (Isolate.run) so the O(width*height)
-      // pixel loop in ImagePreprocessorService never blocks the main UI
-      // thread — the spinner and stage text stay responsive.
+      // Uses `compute` (not `Isolate.run`): on mobile it runs on a
+      // background isolate so the O(width*height) pixel loop doesn't block
+      // the UI; on Flutter Web there are no isolates so it runs on the
+      // main thread — which is fine (spinner already shown, work is
+      // bounded by the 2000px cap) and, crucially, does NOT throw the way
+      // `Isolate.run` does on web, which was silently skipping
+      // preprocessing entirely and uploading the raw photo.
       final preprocessSw = Stopwatch()..start();
       Uint8List preprocessedBytes;
       try {
-        preprocessedBytes = await Isolate.run(
-          () => ImagePreprocessorService.preprocessOrFallback(rawBytes),
+        preprocessedBytes = await compute(
+          ImagePreprocessorService.preprocessOrFallback,
+          rawBytes,
         );
       } catch (_) {
-        // Belt-and-suspenders: even though preprocessOrFallback is
-        // documented to fall back internally, never let a preprocessing
-        // failure (or an isolate crash) take down the whole capture flow —
-        // fall back to the raw bytes here too.
+        // Belt-and-suspenders: preprocessOrFallback already falls back to
+        // the raw bytes internally on any decode/encode failure; this only
+        // catches a failure of compute() itself.
         preprocessedBytes = rawBytes;
       }
       preprocessSw.stop();
