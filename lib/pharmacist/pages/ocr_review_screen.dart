@@ -2782,12 +2782,49 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   // dosage attached to what's actually a liquid-drops
                   // SKU) reads as one obviously-wrong string instead of
                   // three individually-plausible-looking fields.
-                  Text(
-                    updated.catalogName!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: OcrReviewColors.teal,
-                      fontWeight: FontWeight.w600,
+                  //
+                  // Tappable to re-open the brand picker whenever this
+                  // medicine has more than one candidate SKU — a pick from
+                  // the "Select brand…" dropdown sets catalogName, which
+                  // used to hide the else-branch re-picker below and left a
+                  // wrong choice uncorrectable without a full rescan.
+                  InkWell(
+                    onTap: updated.brandCandidates.length > 1
+                        ? () => _showBrandPicker(
+                            context,
+                            updated.brandCandidates,
+                            selectBrand,
+                            showPrice: true,
+                          )
+                        : null,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            updated.catalogName!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: OcrReviewColors.teal,
+                              fontWeight: FontWeight.w600,
+                              decoration: updated.brandCandidates.length > 1
+                                  ? TextDecoration.underline
+                                  : null,
+                              decorationColor: OcrReviewColors.teal.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (updated.brandCandidates.length > 1) ...[
+                          const SizedBox(width: 3),
+                          Icon(
+                            Icons.unfold_more,
+                            size: 16,
+                            color: OcrReviewColors.teal.withValues(alpha: 0.7),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ] else ...[
