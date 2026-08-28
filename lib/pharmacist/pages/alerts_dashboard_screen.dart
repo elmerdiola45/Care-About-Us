@@ -251,6 +251,9 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
     final icon = _alertIcon(alert.alertType);
     final bg = isHigh ? AppColors.dangerBg : AppColors.warningBg;
     final titleColor = isHigh ? AppColors.danger : AppColors.warning;
+    // Same condition the onTap below uses to decide whether to mark-as-read.
+    final unread =
+        !alert.isRead && !AlertTracker.instance.isRead(alert.alertId);
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -338,18 +341,21 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isHigh ? AppColors.dangerBg : AppColors.warningBg,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                isHigh ? 'High' : 'Normal',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: titleColor,
+            Badge(
+              isLabelVisible: unread,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isHigh ? AppColors.dangerBg : AppColors.warningBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  isHigh ? 'High' : 'Normal',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: titleColor,
+                  ),
                 ),
               ),
             ),
