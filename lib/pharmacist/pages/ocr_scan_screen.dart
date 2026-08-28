@@ -206,7 +206,6 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
   }
 
   Future<void> _processOcr(Uint8List bytes) async {
-    final totalSw = Stopwatch()..start();
     PrescriptionScanResult result;
     try {
       // Safety net: every network call inside scanPrescription already
@@ -225,10 +224,6 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
         },
       ).timeout(const Duration(seconds: 35));
     } on TimeoutException {
-      totalSw.stop();
-      // TEMP INSTRUMENTATION
-      // ignore: avoid_print
-      print('[TIMING] _processOcr total (TIMEOUT after): ${totalSw.elapsedMilliseconds}ms');
       if (!mounted) return;
       setState(() {
         _isProcessing = false;
@@ -239,10 +234,6 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       _debugLog('ocr_scan_timeout');
       return;
     } catch (_) {
-      totalSw.stop();
-      // TEMP INSTRUMENTATION
-      // ignore: avoid_print
-      print('[TIMING] _processOcr total (ERROR after): ${totalSw.elapsedMilliseconds}ms');
       if (!mounted) return;
       setState(() {
         _isProcessing = false;
@@ -256,10 +247,6 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
 
     if (!mounted) return;
     setState(() => _isProcessing = false);
-    totalSw.stop();
-    // TEMP INSTRUMENTATION
-    // ignore: avoid_print
-    print('[TIMING] _processOcr total: ${totalSw.elapsedMilliseconds}ms (success=${result.success})');
 
     if (result.success) {
       _debugLog('ocr_scan_succeeded');

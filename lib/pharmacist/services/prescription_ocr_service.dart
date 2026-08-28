@@ -189,7 +189,7 @@ class PrescriptionOcrService {
       if (!ocrSpace2.success) {
         totalSw.stop();
         // ignore: avoid_print
-        print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq failed+weak + Engine 2 failed]');
+        print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq failed/weak + Engine 2 failed]');
         return PrescriptionScanResult(
         success: false,
         error: groqResult.success ? ocrSpace2.error : groqResult.error,
@@ -210,7 +210,7 @@ class PrescriptionOcrService {
       if (!PrescriptionResultScorer.isWeak(engine2Parsed)) {
         totalSw.stop();
         // ignore: avoid_print
-        print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq weak + Engine 2 success]');
+        print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq failed/weak + Engine 2 accepted]');
         return engine2Parsed;
       }
 
@@ -228,9 +228,11 @@ class PrescriptionOcrService {
     );
 
       if (!ocrSpace3.success) {
+        // Engine 3 failed too — Engine 2's weak result is still better
+        // than nothing.
         totalSw.stop();
         // ignore: avoid_print
-        print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq weak + Engine 2 weak + Engine 3 failed]');
+        print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq failed/weak + Engine 2 weak + Engine 3 failed]');
         return engine2Parsed;
       }
 
@@ -248,7 +250,7 @@ class PrescriptionOcrService {
 
       totalSw.stop();
       // ignore: avoid_print
-      print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq weak + Engine 2 weak + Engine 3 success (merged)]');
+      print('[TIMING] TOTAL scan time: ${totalSw.elapsedMilliseconds}ms [PATH: Groq failed/weak + Engine 2 weak + Engine 3 merged]');
       return finalParsed;
   }
 }
