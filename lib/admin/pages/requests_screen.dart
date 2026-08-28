@@ -9,16 +9,23 @@ class RequestsScreen extends StatefulWidget {
   const RequestsScreen({super.key});
 
   @override
-  State<RequestsScreen> createState() => _RequestsScreenState();
+  RequestsScreenState createState() => RequestsScreenState();
 }
 
-class _RequestsScreenState extends State<RequestsScreen> {
+// State is public so the parent AdminDashboardPage can hold a
+// GlobalKey<RequestsScreenState> and trigger a silent refresh when the
+// Requests tab becomes active again (the screen is kept alive in an
+// IndexedStack, so initState() only ever runs once).
+class RequestsScreenState extends State<RequestsScreen> {
   final AdminApiService _api = AdminApiService();
   List<CrossPharmacyRequestResponse> _requests = [];
 
   bool _loading = true;
   String? _error;
   Timer? _pollTimer;
+  // Guards _silentRefresh() so a tab-activation refresh and a 30s poll tick
+  // firing close together don't issue two overlapping list requests.
+  bool _refreshInFlight = false;
 
   @override
   void initState() {
@@ -66,13 +73,27 @@ class _RequestsScreenState extends State<RequestsScreen> {
   // transient network hiccup during a periodic tick doesn't interrupt
   // whatever the admin is doing on screen.
   Future<void> _silentRefresh() async {
+    // Skip if the initial full load or another silent refresh is already
+    // running — the in-flight request will deliver the latest data.
+    if (_loading || _refreshInFlight) return;
+    _refreshInFlight = true;
     try {
       final requests = await _api.fetchCrossPharmacyRequests();
       if (!mounted) return;
       setState(() => _requests = requests);
     } catch (_) {
       // Ignore — the next periodic tick or manual refresh will retry.
+    } finally {
+      _refreshInFlight = false;
     }
+  }
+
+  /// Called by the parent dashboard (via GlobalKey) when the Requests tab
+  /// becomes active again. Uses the same silent-refresh semantics as the
+  /// 30s poll: the current list stays visible, no full-screen spinner, and
+  /// the data is swapped in when the request completes.
+  void refreshOnTabActivated() {
+    _silentRefresh();
   }
 
   void _retry() => _load();
