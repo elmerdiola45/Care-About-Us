@@ -1916,10 +1916,50 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     );
   }
 
-  /// Removes one medicine from the review. Local only — no backend call,
+  /// Removes one medicine from the review, after an explicit confirm —
+  /// a mis-tap on the trash icon would otherwise silently drop a
+  /// prescribed medicine from the record. Local only — no backend call,
   /// no save. _performSave() reads whatever is in _matchedMeds at save
   /// time, so this simply takes effect on the next save.
-  void _deleteMedicine(int id) {
+  Future<void> _deleteMedicine(int id) async {
+    final med = _matchedMeds.firstWhere(
+      (m) => m.id == id,
+      orElse: () => _MatchedMedicine(
+        medicineLabel: '',
+        dosageLabel: '',
+        quantity: 0,
+        unitPrice: 0,
+      ),
+    );
+    final label = med.medicineLabel.trim().isEmpty
+        ? 'this medicine'
+        : '"${med.medicineLabel.trim()}"';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove medicine?'),
+        content: Text(
+          'Remove $label from this prescription? It will not be saved '
+          'or dispensed. You can add it back manually if needed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFDC2626),
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
     setState(() {
       _matchedMeds.removeWhere((m) => m.id == id);
       _expandedMedIds.remove(id);
