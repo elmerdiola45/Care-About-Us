@@ -19,9 +19,25 @@ extension _RequestFilterLabel on _RequestFilter {
       case _RequestFilter.rejected:
         return 'Rejected';
       case _RequestFilter.flagged:
-        return 'Flag as Risk';
+        // Filter chip label only — the request-card action stays "Flag as risk".
+        return 'Flagged';
       case _RequestFilter.approved:
         return 'Approved';
+    }
+  }
+
+  // Background colour for this chip when it is the selected filter. Inactive
+  // chips are always neutral (see _buildFilterBar).
+  Color get selectedColor {
+    switch (this) {
+      case _RequestFilter.all:
+        return AppColors.textPrimary;
+      case _RequestFilter.rejected:
+        return AppColors.danger;
+      case _RequestFilter.flagged:
+        return AppColors.warning;
+      case _RequestFilter.approved:
+        return AppColors.success;
     }
   }
 
@@ -197,17 +213,30 @@ class RequestsScreenState extends State<RequestsScreen> {
         child: Row(
           children: [
             for (final f in _RequestFilter.values) ...[
-              ChoiceChip(
-                label: Text(f.label),
-                selected: _filter == f,
-                onSelected: (_) => setState(() => _filter = f),
-                selectedColor: AppColors.tealPale,
-                labelStyle: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: _filter == f ? AppColors.teal : AppColors.textSecondary,
-                ),
-              ),
+              () {
+                final selected = _filter == f;
+                // Client-side counts from the already-loaded list — no
+                // extra API calls, recomputed on every build so they track
+                // _requests automatically.
+                final count = _requests.where(f.matches).length;
+                return ChoiceChip(
+                  label: Text('${f.label} $count'),
+                  selected: selected,
+                  onSelected: (_) => setState(() => _filter = f),
+                  backgroundColor: AppColors.bg,
+                  selectedColor: f.selectedColor,
+                  side: selected
+                      ? BorderSide.none
+                      : BorderSide(
+                          color: AppColors.textSecondary.withValues(alpha: 0.4),
+                        ),
+                  labelStyle: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? Colors.white : AppColors.textSecondary,
+                  ),
+                );
+              }(),
               const SizedBox(width: 8),
             ],
           ],
