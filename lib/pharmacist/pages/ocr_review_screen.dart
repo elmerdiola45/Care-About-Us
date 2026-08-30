@@ -781,6 +781,24 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     // unavailable line stays on the record (see
     // _buildMedicineNotAvailableCard) for the patient to get filled
     // elsewhere or once restocked.
+    // A manually-added row left without a name can't be saved as a real
+    // medicine line — prompt to fill it in or remove it.
+    if (_matchedMeds.any((m) => m.medicineLabel.trim().isEmpty)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'One added medicine has no name — enter it or remove the row '
+              'before saving.',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
     final unresolvedCount = _matchedMeds
         .where((m) => m.needsBrandSelection)
         .length;
@@ -1967,18 +1985,20 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     });
   }
 
-  /// Adds a blank medicine the pharmacist can then fill in — for a drug
-  /// OCR failed to detect. It starts in the "no catalog match" state
-  /// (same as an unresolved OCR row), so the row's existing "Pick from
-  /// catalog" search resolves it through the normal price-lookup path.
-  /// Opened expanded so the pharmacist lands straight in the editor.
+  /// Adds a blank medicine the pharmacist fills in by hand — for a drug
+  /// OCR missed, or one that simply isn't in the registered catalog.
+  /// It is a free-text entry: the pharmacist types the name and price
+  /// directly, with no requirement to match a catalog medicine. The
+  /// row still offers an optional "pick from catalog" link. Opened
+  /// expanded so the pharmacist lands straight in the editor.
   void _addMedicine() {
     final blank = _MatchedMedicine(
       medicineLabel: '',
       dosageLabel: '',
       quantity: 1,
       unitPrice: 0.0,
-      medicineNotFound: true,
+      unitPriceIsExact: false,
+      isManualEntry: true,
       isEssential: true,
     );
     setState(() {
@@ -2609,6 +2629,9 @@ class _EditableMedicineRow extends StatefulWidget {
 class _EditableMedicineRowState extends State<_EditableMedicineRow> {
   late TextEditingController _nameController;
   late TextEditingController _qtyController;
+  // Only used by manually-added (free-text) medicines, whose price the
+  // pharmacist sets directly rather than resolving from the catalog.
+  late TextEditingController _priceController;
   String? _qtyError;
 
   @override
@@ -2618,12 +2641,18 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       text: widget.medicine.medicineLabel,
     );
     _qtyController = TextEditingController(text: '${widget.medicine.quantity}');
+    _priceController = TextEditingController(
+      text: widget.medicine.unitPrice > 0
+          ? widget.medicine.unitPrice.toStringAsFixed(2)
+          : '',
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _qtyController.dispose();
+    _priceController.dispose();
     super.dispose();
   }
 
@@ -2857,6 +2886,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       // itself and never register a correction.
       originalOcrLabel: widget.medicine.originalOcrLabel,
       isFallbackMatch: widget.medicine.isFallbackMatch,
+      isManualEntry: widget.medicine.isManualEntry,
     );
 
     // Pharmacist picked a brand from the picker (or the prescription
@@ -2897,6 +2927,8 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             catalogName: v.name,
             catalogProductId: v.id,
             isFallbackMatch: false,
+            // Now linked to a real catalog SKU — no longer a free entry.
+            isManualEntry: false,
           ),
         );
       } else {
@@ -2955,10 +2987,13 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                     border: InputBorder.none,
+                    hintText: updated.isManualEntry
+                        ? 'Medicine name (e.g. Paracetamol 500mg)'
+                        : null,
                   ),
                   onChanged: (v) {
                     final sanitized = v.trim().length > 60
@@ -2969,6 +3004,85 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     );
                   },
                 ),
+                if (updated.isManualEntry) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Text(
+                        'Unit price  ₱',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: OcrReviewColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 78,
+                        child: TextField(
+                          controller: _priceController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
+                            ),
+                          ],
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            hintText: '0.00',
+                            contentPadding: EdgeInsets.symmetric(vertical: 4),
+                          ),
+                          onChanged: (v) {
+                            final parsed = double.tryParse(v.trim());
+                            widget.onChanged(
+                              updated.copyWith(
+                                unitPrice: (parsed != null && parsed >= 0)
+                                    ? parsed
+                                    : 0.0,
+                                unitPriceIsExact: parsed != null && parsed > 0,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
+                    children: [
+                      Text(
+                        'Added manually — not from the catalog.',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => _showMedicinePicker(
+                          context,
+                          pickMedicine,
+                          dosage: updated.dosageLabel,
+                        ),
+                        child: const Text(
+                          'Pick from catalog instead',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: OcrReviewColors.teal,
+                            fontWeight: FontWeight.w700,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 if (updated.isFallbackMatch) ...[
                   const SizedBox(height: 2),
                   Container(
@@ -3470,6 +3584,14 @@ class _MatchedMedicine {
   final String originalOcrLabel;
   final bool isFallbackMatch;
 
+  /// True for a medicine the pharmacist added by hand (Add Medicine)
+  /// rather than one OCR detected. A manual entry is NOT a catalog-match
+  /// failure — the pharmacist enters the name and price directly and
+  /// that is valid on its own, with no reference to the registered
+  /// medicine catalog required. Cleared if the row is later linked to a
+  /// catalog SKU via the picker.
+  final bool isManualEntry;
+
   _MatchedMedicine({
     int? id,
     required this.medicineLabel,
@@ -3489,6 +3611,7 @@ class _MatchedMedicine {
     this.matchConfidence = 0.0,
     String? originalOcrLabel,
     this.isFallbackMatch = false,
+    this.isManualEntry = false,
   }) : id = id ?? ++_idSeq,
        originalOcrLabel = originalOcrLabel ?? medicineLabel;
 
@@ -3511,6 +3634,7 @@ class _MatchedMedicine {
     String? duration,
     double? matchConfidence,
     bool? isFallbackMatch,
+    bool? isManualEntry,
   }) {
     return _MatchedMedicine(
       // Identity is stable across edits — always carried forward.
@@ -3536,6 +3660,7 @@ class _MatchedMedicine {
       matchConfidence: matchConfidence ?? this.matchConfidence,
       originalOcrLabel: originalOcrLabel,
       isFallbackMatch: isFallbackMatch ?? this.isFallbackMatch,
+      isManualEntry: isManualEntry ?? this.isManualEntry,
     );
   }
 
