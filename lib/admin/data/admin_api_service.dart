@@ -140,12 +140,10 @@ class AdminApiService {
   CrossPharmacyRequestResponse _parseCrossPharmacyRequest(
     Map<String, dynamic> m,
   ) {
-    final requestId =
-        m['request_id']?.toString() ?? m['id']?.toString() ?? '';
+    final requestId = m['request_id']?.toString() ?? m['id']?.toString() ?? '';
     return CrossPharmacyRequestResponse(
       requestId: requestId,
-      requestingPharmacyName:
-          m['requesting_pharmacy_name']?.toString() ?? '',
+      requestingPharmacyName: m['requesting_pharmacy_name']?.toString() ?? '',
       requestingPharmacyLocation:
           m['requesting_pharmacy_location']?.toString() ?? '',
       requestingPharmacyLicense:
@@ -180,6 +178,7 @@ class AdminApiService {
         );
       }).toList(),
       fullyDispensed: safeBool(m['fully_dispensed']),
+      createdAt: DateTime.tryParse(m['created_at']?.toString() ?? ''),
     );
   }
 
@@ -267,7 +266,9 @@ class AdminApiService {
   ) async {
     final response = await http
         .post(
-          Uri.parse('$_baseUrl/admin/cross-pharmacy-requests/$requestId/approve'),
+          Uri.parse(
+            '$_baseUrl/admin/cross-pharmacy-requests/$requestId/approve',
+          ),
           headers: _headers,
         )
         .timeout(_timeout);
@@ -309,9 +310,7 @@ class AdminApiService {
     }
 
     final data = safeMap(jsonDecode(response.body)) ?? {};
-    throw Exception(
-      data['message']?.toString() ?? 'Failed to flag request',
-    );
+    throw Exception(data['message']?.toString() ?? 'Failed to flag request');
   }
 
   /// Admin-only — denies a pending request outright. No prescription change,
@@ -323,7 +322,9 @@ class AdminApiService {
   ) async {
     final response = await http
         .post(
-          Uri.parse('$_baseUrl/admin/cross-pharmacy-requests/$requestId/reject'),
+          Uri.parse(
+            '$_baseUrl/admin/cross-pharmacy-requests/$requestId/reject',
+          ),
           headers: {..._headers, 'Content-Type': 'application/json'},
           body: jsonEncode({'reason': reason}),
         )
@@ -336,9 +337,7 @@ class AdminApiService {
     }
 
     final data = safeMap(jsonDecode(response.body)) ?? {};
-    throw Exception(
-      data['message']?.toString() ?? 'Failed to reject request',
-    );
+    throw Exception(data['message']?.toString() ?? 'Failed to reject request');
   }
 
   Future<ScanRecordsResponse> fetchScanRecords({
@@ -694,9 +693,7 @@ class AdminApiService {
     final uri = Uri.parse('$_baseUrl/admin/patients/$patientId');
 
     try {
-      final response = await http
-          .get(uri, headers: _headers)
-          .timeout(_timeout);
+      final response = await http.get(uri, headers: _headers).timeout(_timeout);
 
       developer.log(
         'AdminApiService.fetchPatientDetail: URL=$uri, statusCode=${response.statusCode}',
