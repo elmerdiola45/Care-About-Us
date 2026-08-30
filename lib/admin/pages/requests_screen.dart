@@ -5,6 +5,42 @@ import '../../../admin/models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
 import '../../../common/widgets/responsive_center.dart';
 
+// Display-only filter for the Requests list. Each option maps to an existing
+// RequestStatus — "Approved" is only a UI label; internally it filters on the
+// existing `dispensed` status (there is no separate approved state applied to
+// cross-pharmacy requests). `all` shows every existing card unchanged.
+enum _RequestFilter { all, rejected, flagged, approved }
+
+extension _RequestFilterLabel on _RequestFilter {
+  String get label {
+    switch (this) {
+      case _RequestFilter.all:
+        return 'All';
+      case _RequestFilter.rejected:
+        return 'Rejected';
+      case _RequestFilter.flagged:
+        return 'Flag as Risk';
+      case _RequestFilter.approved:
+        return 'Approved';
+    }
+  }
+
+  // Returns true if the given request should be shown under this filter.
+  // Does not touch the request — pure predicate over the existing status.
+  bool matches(CrossPharmacyRequestResponse r) {
+    switch (this) {
+      case _RequestFilter.all:
+        return true;
+      case _RequestFilter.rejected:
+        return r.status == RequestStatus.rejected;
+      case _RequestFilter.flagged:
+        return r.status == RequestStatus.flagged;
+      case _RequestFilter.approved:
+        return r.status == RequestStatus.dispensed;
+    }
+  }
+}
+
 class RequestsScreen extends StatefulWidget {
   const RequestsScreen({super.key});
 
@@ -19,6 +55,10 @@ class RequestsScreen extends StatefulWidget {
 class RequestsScreenState extends State<RequestsScreen> {
   final AdminApiService _api = AdminApiService();
   List<CrossPharmacyRequestResponse> _requests = [];
+
+  // Display-only: which existing cards are rendered. Lives here (alongside
+  // _requests/_loading/_error) so it persists across body state changes.
+  _RequestFilter _filter = _RequestFilter.all;
 
   bool _loading = true;
   String? _error;
@@ -137,7 +177,42 @@ class RequestsScreenState extends State<RequestsScreen> {
           ),
         ],
       ),
-      body: _buildBody(),
+      body: Column(
+        children: [
+          _buildFilterBar(),
+          Expanded(child: _buildBody()),
+        ],
+      ),
+    );
+  }
+
+  // Display-only filter chips. Always visible — sits above the body so it
+  // stays on screen during loading / error / empty / filtered states.
+  Widget _buildFilterBar() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+        child: Row(
+          children: [
+            for (final f in _RequestFilter.values) ...[
+              ChoiceChip(
+                label: Text(f.label),
+                selected: _filter == f,
+                onSelected: (_) => setState(() => _filter = f),
+                selectedColor: AppColors.tealPale,
+                labelStyle: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: _filter == f ? AppColors.teal : AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -234,6 +309,26 @@ class RequestsScreenState extends State<RequestsScreen> {
       );
     }
 
+    // Display-only: pick which existing cards to render. The request objects
+    // in _requests are not touched.
+    final visible = _requests.where(_filter.matches).toList();
+
+    if (visible.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 40),
+          child: Text(
+            'No requests found',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: _load,
       color: AppColors.teal,
@@ -242,7 +337,7 @@ class RequestsScreenState extends State<RequestsScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
-            ..._requests.map(
+            ...visible.map(
               (r) => _RequestCard(
                 key: ValueKey(r.requestId),
                 request: r,
