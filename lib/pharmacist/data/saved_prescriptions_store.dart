@@ -317,9 +317,42 @@ class SavedPrescriptionsStore {
     return future;
   }
 
+  /// One-off fresh prescription fetch used purely to open a known
+  /// prescription by id (the OCR "View Existing" / reopened-duplicate
+  /// path). Deliberately isolated from the normal [fetchFromBackend]
+  /// machinery:
+  ///
+  ///  * it does NOT read or assign [_inFlightFetch] — so it can't inherit
+  ///    (or hand off) a normal fetch's still-pending store-wide adherence
+  ///    fan-out, and vice versa;
+  ///  * it does NOT touch [_lastFetchedAt] — so it can't make a later
+  ///    dashboard/Saved Rx load skip its own required adherence refresh
+  ///    inside the TTL window;
+  ///  * it does NOT call [_fetchAdherenceForAll] — PrescriptionDetailScreen
+  ///    (the only destination here) never reads entry.adherence, so the
+  ///    N-patient adherence fan-out is pure dead weight on this path.
+  ///
+  /// It still performs a real, un-cached `fetchPrescriptions()` so a
+  /// just-created duplicate record is guaranteed present before the caller
+  /// looks it up. Prescription merge into [_items] is the exact same logic
+  /// the normal fetch uses.
+  Future<void> fetchPrescriptionsForNavigation() async {
+    final prescriptions = await _api.fetchPrescriptions();
+    _mergePrescriptions(prescriptions);
+  }
+
   Future<void> _fetchFromBackendInternal() async {
     final prescriptions = await _api.fetchPrescriptions();
+    _mergePrescriptions(prescriptions);
+    await _fetchAdherenceForAll();
+  }
 
+  /// Merges a freshly fetched backend prescription list into [_items]:
+  /// existing entries are updated in place, new ones appended, then the
+  /// list is re-sorted newest-first. Pure local state work — no network,
+  /// no adherence. Shared by [_fetchFromBackendInternal] and
+  /// [fetchPrescriptionsForNavigation].
+  void _mergePrescriptions(List<LaravelPrescription> prescriptions) {
     for (final p in prescriptions) {
       if (_hiddenOcrCodes.contains(p.ocrCode)) {
         continue;
@@ -356,10 +389,11 @@ class SavedPrescriptionsStore {
             : QrStatus.pendingQr;
         final dispensingStatus = _parseDispensingStatus(p.dispensingStatus);
         final localDispensingStatus = localEntry.prescription.dispensingStatus;
-        final effectiveDispensingStatus = _isForwardDispensingProgression(
-          localDispensingStatus,
-          dispensingStatus,
-        )
+        final effectiveDispensingStatus =
+            _isForwardDispensingProgression(
+              localDispensingStatus,
+              dispensingStatus,
+            )
             ? dispensingStatus
             : localDispensingStatus;
 
@@ -468,8 +502,6 @@ class SavedPrescriptionsStore {
     _items.sort(
       (a, b) => b.prescription.dateTime.compareTo(a.prescription.dateTime),
     );
-
-    await _fetchAdherenceForAll();
   }
 
   Future<void> _fetchAdherenceForAll() async {
@@ -488,32 +520,34 @@ class SavedPrescriptionsStore {
     // interleave and corrupt shared state (Dart's single-threaded event
     // loop). Per-patient failures are still isolated exactly as before —
     // one patient's failed fetch doesn't affect any other's.
-    await Future.wait(uniquePatientIds.map((pid) async {
-      try {
-        final statusJson = await _api.fetchPatientAdherence(pid);
-        debugPrint(
-          'STORE: patient=$pid adherence keys=${statusJson.keys.toList()}',
-        );
-        debugPrint(
-          'STORE: patient=$pid has medications=${statusJson['medications'] != null || statusJson['items'] != null} has refill_history=${statusJson['refill_history'] != null || statusJson['refillHistory'] != null || statusJson['dispensing_history'] != null || statusJson['dispensing_history'] != null}',
-        );
-        final adherence = AdherenceStatus.fromJson(statusJson);
-        debugPrint(
-          'STORE: patient=$pid medNames=${adherence.medicationNames} refillCount=${adherence.refillHistory.length} score=${adherence.score} hasData=${adherence.hasData}',
-        );
-        // Write the single fetched result back to EVERY Saved Rx entry for
-        // this patient, not just the first — indexWhere() only matched one,
-        // so a patient's 2nd/3rd prescription kept adherence == null and the
-        // list screen hid its adherence badge.
-        for (var i = 0; i < _items.length; i++) {
-          if (_items[i].patientId == pid) {
-            _items[i] = _items[i].copyWith(adherence: adherence);
+    await Future.wait(
+      uniquePatientIds.map((pid) async {
+        try {
+          final statusJson = await _api.fetchPatientAdherence(pid);
+          debugPrint(
+            'STORE: patient=$pid adherence keys=${statusJson.keys.toList()}',
+          );
+          debugPrint(
+            'STORE: patient=$pid has medications=${statusJson['medications'] != null || statusJson['items'] != null} has refill_history=${statusJson['refill_history'] != null || statusJson['refillHistory'] != null || statusJson['dispensing_history'] != null || statusJson['dispensing_history'] != null}',
+          );
+          final adherence = AdherenceStatus.fromJson(statusJson);
+          debugPrint(
+            'STORE: patient=$pid medNames=${adherence.medicationNames} refillCount=${adherence.refillHistory.length} score=${adherence.score} hasData=${adherence.hasData}',
+          );
+          // Write the single fetched result back to EVERY Saved Rx entry for
+          // this patient, not just the first — indexWhere() only matched one,
+          // so a patient's 2nd/3rd prescription kept adherence == null and the
+          // list screen hid its adherence badge.
+          for (var i = 0; i < _items.length; i++) {
+            if (_items[i].patientId == pid) {
+              _items[i] = _items[i].copyWith(adherence: adherence);
+            }
           }
+        } catch (e) {
+          debugPrint('STORE: patient=$pid adherence fetch failed: $e');
         }
-      } catch (e) {
-        debugPrint('STORE: patient=$pid adherence fetch failed: $e');
-      }
-    }));
+      }),
+    );
   }
 
   static DispensingStatus _parseDispensingStatus(String? value) {
@@ -545,9 +579,7 @@ class SavedPrescriptionsStore {
     return false;
   }
 
-  static DispensingStatus effectiveDispensingStatus(
-    Prescription prescription,
-  ) {
+  static DispensingStatus effectiveDispensingStatus(Prescription prescription) {
     if (prescription.dispensingStatus != DispensingStatus.pending) {
       return prescription.dispensingStatus;
     }

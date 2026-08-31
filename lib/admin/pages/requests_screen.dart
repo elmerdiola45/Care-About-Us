@@ -3,7 +3,111 @@ import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../admin/models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
+import '../../../common/utils/ph_time.dart';
 import '../../../common/widgets/responsive_center.dart';
+
+// Display-only filter for the Requests list. Each option maps to an existing
+// RequestStatus — "Approved" is only a UI label; internally it filters on the
+// existing `dispensed` status (there is no separate approved state applied to
+// cross-pharmacy requests). `all` shows every existing card unchanged.
+enum _RequestFilter { all, rejected, flagged, approved }
+
+extension _RequestFilterLabel on _RequestFilter {
+  String get label {
+    switch (this) {
+      case _RequestFilter.all:
+        return 'All';
+      case _RequestFilter.rejected:
+        return 'Rejected';
+      case _RequestFilter.flagged:
+        // Filter chip label only — the request-card action stays "Flag as risk".
+        return 'Flagged';
+      case _RequestFilter.approved:
+        return 'Approved';
+    }
+  }
+
+  // Background colour for this chip when it is the selected filter. Inactive
+  // chips are always neutral (see _buildFilterBar).
+  Color get selectedColor {
+    switch (this) {
+      case _RequestFilter.all:
+        return AppColors.textPrimary;
+      case _RequestFilter.rejected:
+        return AppColors.danger;
+      case _RequestFilter.flagged:
+        return AppColors.warning;
+      case _RequestFilter.approved:
+        return AppColors.success;
+    }
+  }
+
+  // Returns true if the given request should be shown under this filter.
+  // Does not touch the request — pure predicate over the existing status.
+  bool matches(CrossPharmacyRequestResponse r) {
+    switch (this) {
+      case _RequestFilter.all:
+        return true;
+      case _RequestFilter.rejected:
+        return r.status == RequestStatus.rejected;
+      case _RequestFilter.flagged:
+        return r.status == RequestStatus.flagged;
+      case _RequestFilter.approved:
+        return r.status == RequestStatus.dispensed;
+    }
+  }
+}
+
+// Client-side date filter, applied on top of the status filter. Compares
+// the request's creation date in Philippine time (see toPhilippineTime) —
+// never the device's local timezone — so a request lands in the right
+// Today/Week/Month bucket regardless of how the tablet's clock is set.
+// There is deliberately no "All dates" option.
+enum _RequestDateFilter { today, week, month }
+
+extension _RequestDateFilterLabel on _RequestDateFilter {
+  String get label {
+    switch (this) {
+      case _RequestDateFilter.today:
+        return 'Today';
+      case _RequestDateFilter.week:
+        return 'This Week';
+      case _RequestDateFilter.month:
+        return 'This Month';
+    }
+  }
+
+  bool matches(CrossPharmacyRequestResponse r) {
+    final createdAt = r.createdAt;
+    if (createdAt == null) return false;
+
+    final nowPh = toPhilippineTime(DateTime.now());
+    final createdPh = toPhilippineTime(createdAt);
+
+    switch (this) {
+      case _RequestDateFilter.today:
+        return createdPh.year == nowPh.year &&
+            createdPh.month == nowPh.month &&
+            createdPh.day == nowPh.day;
+      case _RequestDateFilter.week:
+        // Sunday-start week, matching the home dashboard: Dart weekday is
+        // Mon=1..Sun=7, so weekday % 7 is Sun=0..Sat=6 — the number of days
+        // to step back to reach this week's Sunday.
+        final todayPh = DateTime(nowPh.year, nowPh.month, nowPh.day);
+        final weekStart = todayPh.subtract(Duration(days: nowPh.weekday % 7));
+        final weekEnd = weekStart.add(const Duration(days: 7)); // exclusive
+        final createdDate = DateTime(
+          createdPh.year,
+          createdPh.month,
+          createdPh.day,
+        );
+        return !createdDate.isBefore(weekStart) &&
+            createdDate.isBefore(weekEnd);
+      case _RequestDateFilter.month:
+        return createdPh.year == nowPh.year && createdPh.month == nowPh.month;
+    }
+  }
+}
 
 class RequestsScreen extends StatefulWidget {
   const RequestsScreen({super.key});
@@ -19,6 +123,14 @@ class RequestsScreen extends StatefulWidget {
 class RequestsScreenState extends State<RequestsScreen> {
   final AdminApiService _api = AdminApiService();
   List<CrossPharmacyRequestResponse> _requests = [];
+
+  // Display-only: which existing cards are rendered. Lives here (alongside
+  // _requests/_loading/_error) so it persists across body state changes.
+  _RequestFilter _filter = _RequestFilter.all;
+  // Date filter — defaults to Today. Lives here alongside _filter/_requests
+  // so it persists across body state changes. Client-side only; changing it
+  // never triggers an API request.
+  _RequestDateFilter _dateFilter = _RequestDateFilter.today;
 
   bool _loading = true;
   String? _error;
@@ -130,14 +242,105 @@ class RequestsScreenState extends State<RequestsScreen> {
           ),
         ),
         actions: [
+          _buildDateDropdown(),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
             tooltip: 'Refresh',
             onPressed: _loading ? null : _load,
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: _buildBody(),
+      body: Column(
+        children: [
+          _buildFilterBar(),
+          Expanded(child: _buildBody()),
+        ],
+      ),
+    );
+  }
+
+  // Display-only filter chips. Always visible — sits above the body so it
+  // stays on screen during loading / error / empty / filtered states.
+  Widget _buildFilterBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final f in _RequestFilter.values) ...[
+              () {
+                final selected = _filter == f;
+                // Client-side counts from the already-loaded list — no
+                // extra API calls, recomputed on every build so they
+                // track _requests automatically. Deliberately NOT
+                // affected by the selected date filter.
+                final count = _requests.where(f.matches).length;
+                return ChoiceChip(
+                  label: Text('${f.label} $count'),
+                  selected: selected,
+                  onSelected: (_) => setState(() => _filter = f),
+                  backgroundColor: AppColors.bg,
+                  selectedColor: f.selectedColor,
+                  side: selected
+                      ? BorderSide.none
+                      : BorderSide(
+                          color: AppColors.textSecondary.withValues(alpha: 0.4),
+                        ),
+                  labelStyle: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? Colors.white : AppColors.textSecondary,
+                  ),
+                );
+              }(),
+              const SizedBox(width: 8),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Today / This Week / This Month selector — lives in the AppBar, to the
+  // left of the refresh icon. Purely a display filter over the
+  // already-loaded _requests; changing it issues no API request.
+  Widget _buildDateDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.textSecondary.withValues(alpha: 0.3),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<_RequestDateFilter>(
+          value: _dateFilter,
+          isDense: true,
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            size: 18,
+            color: AppColors.teal,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.teal,
+          ),
+          items: [
+            for (final d in _RequestDateFilter.values)
+              DropdownMenuItem(value: d, child: Text(d.label)),
+          ],
+          onChanged: (d) {
+            if (d != null) setState(() => _dateFilter = d);
+          },
+        ),
+      ),
     );
   }
 
@@ -234,6 +437,30 @@ class RequestsScreenState extends State<RequestsScreen> {
       );
     }
 
+    // Display-only: pick which existing cards to render. Both the status
+    // filter and the date filter are applied; the request objects in
+    // _requests are not touched.
+    final visible = _requests
+        .where(_filter.matches)
+        .where(_dateFilter.matches)
+        .toList();
+
+    if (visible.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 40),
+          child: Text(
+            'No requests found',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: _load,
       color: AppColors.teal,
@@ -242,7 +469,7 @@ class RequestsScreenState extends State<RequestsScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
-            ..._requests.map(
+            ...visible.map(
               (r) => _RequestCard(
                 key: ValueKey(r.requestId),
                 request: r,
@@ -318,7 +545,8 @@ class _RequestCardState extends State<_RequestCard> {
       context: context,
       builder: (_) => const _FlagReasonDialog(
         title: 'Flag as risk',
-        description: 'The medication was actually dispensed, but this claim '
+        description:
+            'The medication was actually dispensed, but this claim '
             'creates an over-dispense condition. The prescription will be '
             'reconciled and this will be logged as an audit alert. Describe '
             'the concern:',
@@ -336,7 +564,9 @@ class _RequestCardState extends State<_RequestCard> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request flagged as an over-dispense risk.')),
+        const SnackBar(
+          content: Text('Request flagged as an over-dispense risk.'),
+        ),
       );
       if (updated != null) {
         widget.onUpdated(updated);
@@ -357,7 +587,8 @@ class _RequestCardState extends State<_RequestCard> {
       context: context,
       builder: (_) => const _FlagReasonDialog(
         title: 'Reject request',
-        description: 'This request will be denied outright — the '
+        description:
+            'This request will be denied outright — the '
             'prescription is not touched. Describe why:',
         hintText: 'e.g. unrecognized pharmacy, suspicious claim',
         confirmLabel: 'Reject',
@@ -372,9 +603,9 @@ class _RequestCardState extends State<_RequestCard> {
         reason.trim(),
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request rejected.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Request rejected.')));
       if (updated != null) {
         widget.onUpdated(updated);
       } else {
@@ -500,7 +731,8 @@ class _RequestCardState extends State<_RequestCard> {
               ),
             ),
           ],
-          if (request.wouldExceedRemaining && request.exceedDetails.isNotEmpty) ...[
+          if (request.wouldExceedRemaining &&
+              request.exceedDetails.isNotEmpty) ...[
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -508,7 +740,9 @@ class _RequestCardState extends State<_RequestCard> {
               decoration: BoxDecoration(
                 color: AppColors.redLight,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
+                border: Border.all(
+                  color: AppColors.danger.withValues(alpha: 0.2),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -582,7 +816,10 @@ class _RequestCardState extends State<_RequestCard> {
                           )
                         : const Text(
                             'Reject',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
+                            ),
                           ),
                   ),
                 ),
@@ -609,7 +846,10 @@ class _RequestCardState extends State<_RequestCard> {
                           )
                         : const Text(
                             'Flag as risk',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
+                            ),
                           ),
                   ),
                 ),
@@ -636,7 +876,10 @@ class _RequestCardState extends State<_RequestCard> {
                           )
                         : const Text(
                             'Approve',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
+                            ),
                           ),
                   ),
                 ),
@@ -690,7 +933,10 @@ class _FlagReasonDialogState extends State<_FlagReasonDialog> {
         children: [
           Text(
             widget.description,
-            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 12),
           TextField(

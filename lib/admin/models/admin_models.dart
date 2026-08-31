@@ -427,6 +427,10 @@ class CrossPharmacyRequestResponse {
   final bool wouldExceedRemaining;
   final List<ExceedDetailItem> exceedDetails;
   final bool fullyDispensed;
+  // Request creation timestamp (UTC/ISO-8601 from the backend). Local use
+  // only — drives the Requests screen's Today/This Week/This Month date
+  // filter. Null when the backend row has no usable timestamp.
+  final DateTime? createdAt;
 
   CrossPharmacyRequestResponse({
     required this.requestId,
@@ -445,6 +449,7 @@ class CrossPharmacyRequestResponse {
     this.wouldExceedRemaining = false,
     this.exceedDetails = const [],
     this.fullyDispensed = false,
+    this.createdAt,
   });
 }
 

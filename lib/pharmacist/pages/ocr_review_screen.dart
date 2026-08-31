@@ -209,10 +209,21 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   late List<_MatchedMedicine> _matchedMeds;
   final List<String> _validationWarnings = [];
 
+  /// Medicine rows collapse to a one-line summary; the pharmacist taps
+  /// Edit to expand the full inline editor. Tracked by
+  /// _MatchedMedicine.id (not list index) so the expanded/edited row
+  /// follows the medicine across add, delete and reorder.
+  final Set<int> _expandedMedIds = {};
+
   String? _ocrCode;
   bool _isSaved = false;
   bool _isSaving = false;
   bool _isSenior = false;
+
+  /// Guards _navigateToExisting() so a double-tap on "View Existing"
+  /// (or a reopened-duplicate flow racing the user) can't fire two
+  /// concurrent fresh fetches / two navigations.
+  bool _isOpeningExisting = false;
 
   /// Bumped whenever a fresh load supersedes any in-flight async
   /// enrichment pass (catalog refresh, re-scan) — see
@@ -770,6 +781,24 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     // unavailable line stays on the record (see
     // _buildMedicineNotAvailableCard) for the patient to get filled
     // elsewhere or once restocked.
+    // A manually-added row left without a name can't be saved as a real
+    // medicine line — prompt to fill it in or remove it.
+    if (_matchedMeds.any((m) => m.medicineLabel.trim().isEmpty)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'One added medicine has no name — enter it or remove the row '
+              'before saving.',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
     final unresolvedCount = _matchedMeds
         .where((m) => m.needsBrandSelection)
         .length;
@@ -1062,16 +1091,23 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   /// under [prescriptionId]) even though this screen couldn't open it.
   Future<void> _navigateToExisting(String prescriptionId) async {
     if (prescriptionId.isEmpty) return;
+    if (_isOpeningExisting) return;
+    setState(() => _isOpeningExisting = true);
     bool refreshFailed = false;
     try {
-      // force: true — this needs the just-saved/duplicate record to
-      // actually be present, so a stale cached result isn't acceptable
-      // here even within the TTL window.
-      await SavedPrescriptionsStore.instance.fetchFromBackend(force: true);
+      // A fresh, un-cached prescription fetch — the just-saved/duplicate
+      // record must actually be present, so a stale cached result isn't
+      // acceptable here even within the TTL window. This deliberately uses
+      // the navigation-only fetch (not fetchFromBackend): it skips the
+      // store-wide adherence fan-out that PrescriptionDetailScreen doesn't
+      // use, and stays isolated from the normal fetch's _inFlightFetch /
+      // _lastFetchedAt so it can't alter dashboard/Saved Rx refresh timing.
+      await SavedPrescriptionsStore.instance.fetchPrescriptionsForNavigation();
     } catch (_) {
       refreshFailed = true;
     }
     if (!mounted) return;
+    setState(() => _isOpeningExisting = false);
     final matches = SavedPrescriptionsStore.instance.items.where(
       (entry) => entry.backendId == prescriptionId,
     );
@@ -1129,31 +1165,42 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           ),
         ],
       ),
-      body: ResponsiveCenter.dashboard(
-        padding: EdgeInsets.zero,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            _buildScannedNotePreview(),
-            if (_hasUnavailableMedicine) ...[
-              const SizedBox(height: 12),
-              _buildMedicineNotAvailableCard(),
-            ],
-            if (_validationWarnings.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _buildValidationWarnings(),
-            ],
-            if (_isSaved && _ocrCode != null) ...[
-              const SizedBox(height: 16),
-              _buildSavedBanner(),
-            ],
-            _buildEditableFieldsSection(),
-            const SizedBox(height: 16),
-            _buildMedicineListSection(),
-            const SizedBox(height: 18),
-            _buildBottomButtons(),
-          ],
-        ),
+      body: Stack(
+        children: [
+          ResponsiveCenter.dashboard(
+            padding: EdgeInsets.zero,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                _buildScannedNotePreview(),
+                if (_hasUnavailableMedicine) ...[
+                  const SizedBox(height: 12),
+                  _buildMedicineNotAvailableCard(),
+                ],
+                if (_validationWarnings.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _buildValidationWarnings(),
+                ],
+                if (_isSaved && _ocrCode != null) ...[
+                  const SizedBox(height: 16),
+                  _buildSavedBanner(),
+                ],
+                _buildEditableFieldsSection(),
+                const SizedBox(height: 16),
+                _buildMedicineListSection(),
+                const SizedBox(height: 18),
+                _buildBottomButtons(),
+              ],
+            ),
+          ),
+          if (_isOpeningExisting)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Color(0x66000000),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -1737,6 +1784,23 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           else ...[
             _buildEditableMedicineList(),
           ],
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _addMedicine,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Add Medicine'),
+              style: TextButton.styleFrom(
+                foregroundColor: OcrReviewColors.teal,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1746,27 +1810,202 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     return Column(
       children: [
         for (int i = 0; i < _matchedMeds.length; i++) ...[
-          _EditableMedicineRow(
-            key: ValueKey('med_row_$i'),
-            medicine: _matchedMeds[i],
-            pharmacyId: widget.pharmacyId,
-            onChanged: (updated) {
-              // Replace the whole row's data (not just quantity) — this
-              // is what actually applies a brand picked from the
-              // dropdown, a manually-typed medicine name, etc. setState
-              // is required too — without it nothing tells this row to
-              // rebuild, so even a correct data update wouldn't make the
-              // dropdown disappear.
-              setState(() {
-                _matchedMeds[i] = updated;
-                _totalPriceNotifier.value = _computeTotalPrice();
-              });
-            },
-          ),
+          _buildMedicineRow(_matchedMeds[i]),
           if (i != _matchedMeds.length - 1) const Divider(height: 1),
         ],
       ],
     );
+  }
+
+  /// One medicine row: a collapsed one-line summary with Edit / Delete,
+  /// or — once the pharmacist taps Edit — the existing inline editor
+  /// with Done / Delete beneath it. Keyed by the medicine's stable id
+  /// so editor state (name/quantity controllers) follows the medicine
+  /// across add/delete/reorder rather than the list position.
+  Widget _buildMedicineRow(_MatchedMedicine m) {
+    final expanded = _expandedMedIds.contains(m.id);
+
+    void applyChange(_MatchedMedicine updated) {
+      setState(() {
+        final idx = _matchedMeds.indexWhere((e) => e.id == m.id);
+        if (idx != -1) _matchedMeds[idx] = updated;
+        _totalPriceNotifier.value = _computeTotalPrice();
+      });
+    }
+
+    if (expanded) {
+      return Column(
+        key: ValueKey('med_row_${m.id}'),
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _EditableMedicineRow(
+            key: ValueKey('med_editor_${m.id}'),
+            medicine: m,
+            pharmacyId: widget.pharmacyId,
+            // Replace the whole row's data (not just quantity) — this is
+            // what applies a brand picked from the dropdown, a manually
+            // typed name, etc. Mapped back to _matchedMeds by id.
+            onChanged: applyChange,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 4, bottom: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: () => setState(() => _expandedMedIds.remove(m.id)),
+                  child: const Text('Done'),
+                ),
+                TextButton(
+                  onPressed: () => _deleteMedicine(m.id),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                  ),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    final needsAttention =
+        m.medicineNotFound || m.dosageNotStocked || m.needsBrandSelection;
+    final summaryParts = <String>[
+      if (m.dosageLabel.trim().isNotEmpty) m.dosageLabel.trim(),
+      '×${m.quantity}',
+      '₱${m.totalLine.toStringAsFixed(2)}',
+    ];
+
+    return Padding(
+      key: ValueKey('med_row_${m.id}'),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  m.medicineLabel.trim().isEmpty
+                      ? 'New medicine'
+                      : m.medicineLabel.trim(),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  summaryParts.join('  ·  '),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                if (needsAttention) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    m.medicineNotFound
+                        ? 'No catalog match — tap Edit'
+                        : m.dosageNotStocked
+                        ? 'Strength not listed — tap Edit'
+                        : 'Select brand — tap Edit',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFD97706),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => setState(() => _expandedMedIds.add(m.id)),
+            child: const Text('Edit'),
+          ),
+          IconButton(
+            onPressed: () => _deleteMedicine(m.id),
+            icon: const Icon(Icons.delete_outline, size: 20),
+            color: const Color(0xFFDC2626),
+            tooltip: 'Delete medicine',
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Removes one medicine from the review, after an explicit confirm —
+  /// a mis-tap on the trash icon would otherwise silently drop a
+  /// prescribed medicine from the record. Local only — no backend call,
+  /// no save. _performSave() reads whatever is in _matchedMeds at save
+  /// time, so this simply takes effect on the next save.
+  Future<void> _deleteMedicine(int id) async {
+    final med = _matchedMeds.firstWhere(
+      (m) => m.id == id,
+      orElse: () => _MatchedMedicine(
+        medicineLabel: '',
+        dosageLabel: '',
+        quantity: 0,
+        unitPrice: 0,
+      ),
+    );
+    final label = med.medicineLabel.trim().isEmpty
+        ? 'this medicine'
+        : '"${med.medicineLabel.trim()}"';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove medicine?'),
+        content: Text(
+          'Remove $label from this prescription? It will not be saved '
+          'or dispensed. You can add it back manually if needed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFDC2626),
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _matchedMeds.removeWhere((m) => m.id == id);
+      _expandedMedIds.remove(id);
+      _totalPriceNotifier.value = _computeTotalPrice();
+    });
+  }
+
+  /// Adds a blank medicine the pharmacist fills in by hand — for a drug
+  /// OCR missed, or one that simply isn't in the registered catalog.
+  /// It is a free-text entry: the pharmacist types the name and price
+  /// directly, with no requirement to match a catalog medicine. The
+  /// row still offers an optional "pick from catalog" link. Opened
+  /// expanded so the pharmacist lands straight in the editor.
+  void _addMedicine() {
+    final blank = _MatchedMedicine(
+      medicineLabel: '',
+      dosageLabel: '',
+      quantity: 1,
+      unitPrice: 0.0,
+      unitPriceIsExact: false,
+      isManualEntry: true,
+      isEssential: true,
+    );
+    setState(() {
+      _matchedMeds.add(blank);
+      _expandedMedIds.add(blank.id);
+      _totalPriceNotifier.value = _computeTotalPrice();
+    });
   }
 
   Widget _buildBottomButtons() {
@@ -2179,7 +2418,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     );
   }
 
-
   // ===========================================================================
   // FIXED MEDICINE MATCHER — takes the set of line indices already
   // consumed by _parseOcr (patient, doctor, age, gender, license, ptr,
@@ -2391,6 +2629,9 @@ class _EditableMedicineRow extends StatefulWidget {
 class _EditableMedicineRowState extends State<_EditableMedicineRow> {
   late TextEditingController _nameController;
   late TextEditingController _qtyController;
+  // Only used by manually-added (free-text) medicines, whose price the
+  // pharmacist sets directly rather than resolving from the catalog.
+  late TextEditingController _priceController;
   String? _qtyError;
 
   @override
@@ -2400,12 +2641,18 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       text: widget.medicine.medicineLabel,
     );
     _qtyController = TextEditingController(text: '${widget.medicine.quantity}');
+    _priceController = TextEditingController(
+      text: widget.medicine.unitPrice > 0
+          ? widget.medicine.unitPrice.toStringAsFixed(2)
+          : '',
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _qtyController.dispose();
+    _priceController.dispose();
     super.dispose();
   }
 
@@ -2607,6 +2854,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
         _nameController.text.trim().toLowerCase() !=
         widget.medicine.medicineLabel.trim().toLowerCase();
     final updated = _MatchedMedicine(
+      // Keep this row's stable identity so edits map back to the same
+      // _matchedMeds entry regardless of its current list position.
+      id: widget.medicine.id,
       medicineLabel: _nameController.text,
       dosageLabel: widget.medicine.dosageLabel,
       // Prescribed quantity starts out as OCR's estimate (frequency ×
@@ -2636,6 +2886,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       // itself and never register a correction.
       originalOcrLabel: widget.medicine.originalOcrLabel,
       isFallbackMatch: widget.medicine.isFallbackMatch,
+      isManualEntry: widget.medicine.isManualEntry,
     );
 
     // Pharmacist picked a brand from the picker (or the prescription
@@ -2676,6 +2927,8 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             catalogName: v.name,
             catalogProductId: v.id,
             isFallbackMatch: false,
+            // Now linked to a real catalog SKU — no longer a free entry.
+            isManualEntry: false,
           ),
         );
       } else {
@@ -2734,10 +2987,13 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                     border: InputBorder.none,
+                    hintText: updated.isManualEntry
+                        ? 'Medicine name (e.g. Paracetamol 500mg)'
+                        : null,
                   ),
                   onChanged: (v) {
                     final sanitized = v.trim().length > 60
@@ -2748,6 +3004,85 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     );
                   },
                 ),
+                if (updated.isManualEntry) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Text(
+                        'Unit price  ₱',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: OcrReviewColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 78,
+                        child: TextField(
+                          controller: _priceController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
+                            ),
+                          ],
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            hintText: '0.00',
+                            contentPadding: EdgeInsets.symmetric(vertical: 4),
+                          ),
+                          onChanged: (v) {
+                            final parsed = double.tryParse(v.trim());
+                            widget.onChanged(
+                              updated.copyWith(
+                                unitPrice: (parsed != null && parsed >= 0)
+                                    ? parsed
+                                    : 0.0,
+                                unitPriceIsExact: parsed != null && parsed > 0,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
+                    children: [
+                      Text(
+                        'Added manually — not from the catalog.',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => _showMedicinePicker(
+                          context,
+                          pickMedicine,
+                          dosage: updated.dosageLabel,
+                        ),
+                        child: const Text(
+                          'Pick from catalog instead',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: OcrReviewColors.teal,
+                            fontWeight: FontWeight.w700,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 if (updated.isFallbackMatch) ...[
                   const SizedBox(height: 2),
                   Container(
@@ -3218,6 +3553,15 @@ class _ParsedFields {
 }
 
 class _MatchedMedicine {
+  // Session-local, stable identity. Assigned once when the medicine is
+  // created (OCR-detected or manually added) and preserved across every
+  // copyWith for the life of the review session. Used only as the
+  // Flutter widget key for the medicine row so per-row editing state
+  // follows the medicine, not its list position — never sent to the
+  // backend.
+  static int _idSeq = 0;
+  final int id;
+
   final String medicineLabel;
   final String dosageLabel;
   final int quantity;
@@ -3240,7 +3584,16 @@ class _MatchedMedicine {
   final String originalOcrLabel;
   final bool isFallbackMatch;
 
+  /// True for a medicine the pharmacist added by hand (Add Medicine)
+  /// rather than one OCR detected. A manual entry is NOT a catalog-match
+  /// failure — the pharmacist enters the name and price directly and
+  /// that is valid on its own, with no reference to the registered
+  /// medicine catalog required. Cleared if the row is later linked to a
+  /// catalog SKU via the picker.
+  final bool isManualEntry;
+
   _MatchedMedicine({
+    int? id,
     required this.medicineLabel,
     required this.dosageLabel,
     required this.quantity,
@@ -3258,7 +3611,9 @@ class _MatchedMedicine {
     this.matchConfidence = 0.0,
     String? originalOcrLabel,
     this.isFallbackMatch = false,
-  }) : originalOcrLabel = originalOcrLabel ?? medicineLabel;
+    this.isManualEntry = false,
+  }) : id = id ?? ++_idSeq,
+       originalOcrLabel = originalOcrLabel ?? medicineLabel;
 
   static const _unset = Object();
 
@@ -3279,8 +3634,11 @@ class _MatchedMedicine {
     String? duration,
     double? matchConfidence,
     bool? isFallbackMatch,
+    bool? isManualEntry,
   }) {
     return _MatchedMedicine(
+      // Identity is stable across edits — always carried forward.
+      id: id,
       medicineLabel: medicineLabel ?? this.medicineLabel,
       dosageLabel: dosageLabel ?? this.dosageLabel,
       quantity: quantity ?? this.quantity,
@@ -3302,6 +3660,7 @@ class _MatchedMedicine {
       matchConfidence: matchConfidence ?? this.matchConfidence,
       originalOcrLabel: originalOcrLabel,
       isFallbackMatch: isFallbackMatch ?? this.isFallbackMatch,
+      isManualEntry: isManualEntry ?? this.isManualEntry,
     );
   }
 
