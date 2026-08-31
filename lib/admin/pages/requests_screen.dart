@@ -242,11 +242,14 @@ class RequestsScreenState extends State<RequestsScreen> {
           ),
         ),
         actions: [
+          _buildDateDropdown(),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
             tooltip: 'Refresh',
             onPressed: _loading ? null : _load,
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -262,69 +265,56 @@ class RequestsScreenState extends State<RequestsScreen> {
   // stays on screen during loading / error / empty / filtered states.
   Widget _buildFilterBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 12, 8),
-      child: Row(
-        children: [
-          // Status chips scroll horizontally if they overflow; the date
-          // dropdown stays pinned on the right, outside that scroll area.
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final f in _RequestFilter.values) ...[
-                    () {
-                      final selected = _filter == f;
-                      // Client-side counts from the already-loaded list — no
-                      // extra API calls, recomputed on every build so they
-                      // track _requests automatically. Deliberately NOT
-                      // affected by the selected date filter.
-                      final count = _requests.where(f.matches).length;
-                      return ChoiceChip(
-                        label: Text('${f.label} $count'),
-                        selected: selected,
-                        onSelected: (_) => setState(() => _filter = f),
-                        backgroundColor: AppColors.bg,
-                        selectedColor: f.selectedColor,
-                        side: selected
-                            ? BorderSide.none
-                            : BorderSide(
-                                color: AppColors.textSecondary.withValues(
-                                  alpha: 0.4,
-                                ),
-                              ),
-                        labelStyle: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: selected
-                              ? Colors.white
-                              : AppColors.textSecondary,
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final f in _RequestFilter.values) ...[
+              () {
+                final selected = _filter == f;
+                // Client-side counts from the already-loaded list — no
+                // extra API calls, recomputed on every build so they
+                // track _requests automatically. Deliberately NOT
+                // affected by the selected date filter.
+                final count = _requests.where(f.matches).length;
+                return ChoiceChip(
+                  label: Text('${f.label} $count'),
+                  selected: selected,
+                  onSelected: (_) => setState(() => _filter = f),
+                  backgroundColor: AppColors.bg,
+                  selectedColor: f.selectedColor,
+                  side: selected
+                      ? BorderSide.none
+                      : BorderSide(
+                          color: AppColors.textSecondary.withValues(alpha: 0.4),
                         ),
-                      );
-                    }(),
-                    const SizedBox(width: 8),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          _buildDateDropdown(),
-        ],
+                  labelStyle: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? Colors.white : AppColors.textSecondary,
+                  ),
+                );
+              }(),
+              const SizedBox(width: 8),
+            ],
+          ],
+        ),
       ),
     );
   }
 
-  // Today / This Week / This Month selector — sits to the right of the
-  // status chips. Purely a display filter over the already-loaded
-  // _requests; changing it issues no API request.
+  // Today / This Week / This Month selector — lives in the AppBar, to the
+  // left of the refresh icon. Purely a display filter over the
+  // already-loaded _requests; changing it issues no API request.
   Widget _buildDateDropdown() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.textSecondary.withValues(alpha: 0.4),
+          color: AppColors.textSecondary.withValues(alpha: 0.3),
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -332,15 +322,15 @@ class RequestsScreenState extends State<RequestsScreen> {
           value: _dateFilter,
           isDense: true,
           icon: const Icon(
-            Icons.arrow_drop_down,
-            size: 20,
-            color: AppColors.textSecondary,
+            Icons.keyboard_arrow_down,
+            size: 18,
+            color: AppColors.teal,
           ),
           borderRadius: BorderRadius.circular(12),
           style: const TextStyle(
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: AppColors.teal,
           ),
           items: [
             for (final d in _RequestDateFilter.values)
