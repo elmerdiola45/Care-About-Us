@@ -2672,39 +2672,74 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (sheetContext) => SafeArea(
-        child: ListView(
+        child: ListView.separated(
           shrinkWrap: true,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Text(
-                'Choose brand',
-                style: TextStyle(
-                  fontSize: 15,
+          padding: const EdgeInsets.only(bottom: 12),
+          itemCount: candidates.length + 1,
+          separatorBuilder: (context, i) => i == 0
+              ? const SizedBox.shrink()
+              : const Divider(height: 1, indent: 16, endIndent: 16),
+          itemBuilder: (context, i) {
+            if (i == 0) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Text(
+                  'Choose brand',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.grey.shade900,
+                  ),
+                ),
+              );
+            }
+            final v = candidates[i - 1];
+            return ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              leading: CircleAvatar(
+                backgroundColor: OcrReviewColors.teal.withValues(alpha: 0.12),
+                foregroundColor: OcrReviewColors.teal,
+                child: const Icon(Icons.medication_outlined, size: 18),
+              ),
+              title: Text(
+                v.brandName ?? v.name ?? 'Generic (no brand)',
+                style: const TextStyle(
                   fontWeight: FontWeight.w700,
-                  color: Colors.grey.shade800,
+                  fontSize: 14.5,
                 ),
               ),
-            ),
-            for (final v in candidates)
-              ListTile(
-                title: Text(v.brandName ?? v.name ?? 'Generic (no brand)'),
-                subtitle: v.dosageForm != null && v.dosageForm!.isNotEmpty
-                    ? Text(v.dosageForm!)
-                    : null,
-                trailing: showPrice
-                    ? Text(
-                        '\u20B1${(v.unitPrice ?? 0).toStringAsFixed(2)}',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      )
-                    : null,
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  onSelect(v);
-                },
-              ),
-          ],
+              subtitle: v.dosageForm != null && v.dosageForm!.isNotEmpty
+                  ? Text(
+                      v.dosageForm!,
+                      style: TextStyle(color: Colors.grey.shade600),
+                    )
+                  : null,
+              trailing: showPrice
+                  ? Text(
+                      '₱${(v.unitPrice ?? 0).toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: OcrReviewColors.teal,
+                        fontSize: 14,
+                      ),
+                    )
+                  : null,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                onSelect(v);
+              },
+            );
+          },
         ),
       ),
     );
@@ -2731,14 +2766,12 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       names = const [];
     }
     if (!context.mounted) return;
-
     if (dosage.trim().isNotEmpty) {
       final atDosage = names
           .where((n) => PriceLookupService.hasVariantAtDosage(n, dosage))
           .toList();
       if (atDosage.isNotEmpty) names = atDosage;
     }
-
     if (names.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -2747,12 +2780,14 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       );
       return;
     }
-
     final query = ValueNotifier<String>('');
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (sheetContext) => DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.4,
@@ -2762,29 +2797,63 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Pick correct medicine',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.grey.shade800,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: OcrReviewColors.teal.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.medication_outlined,
+                            size: 18,
+                            color: OcrReviewColors.teal,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Pick correct medicine',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.grey.shade900,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     TextField(
                       autofocus: true,
-                      decoration: const InputDecoration(
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
                         isDense: true,
-                        prefixIcon: Icon(Icons.search, size: 18),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          size: 20,
+                          color: Colors.grey.shade500,
+                        ),
                         hintText: 'Search medicine name…',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                        filled: true,
+                        fillColor: const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: OcrReviewColors.teal,
+                            width: 1.5,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
                         ),
                       ),
                       onChanged: (v) => query.value = v.trim().toLowerCase(),
@@ -2792,6 +2861,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   ],
                 ),
               ),
+              const Divider(height: 1),
               Expanded(
                 child: ValueListenableBuilder<String>(
                   valueListenable: query,
@@ -2800,31 +2870,43 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                         ? names
                         : names.where((n) => n.contains(q)).toList();
                     if (filtered.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Text('No matching medicine in this catalog.'),
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            'No matching medicine in this catalog.',
+                            style: TextStyle(color: Colors.grey.shade600),
+                          ),
                         ),
                       );
                     }
-                    return ListView.builder(
+                    return ListView.separated(
                       controller: scrollController,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
                       itemCount: filtered.length,
+                      separatorBuilder: (context, i) =>
+                          const Divider(height: 1, indent: 16, endIndent: 16),
                       itemBuilder: (context, i) {
                         final n = filtered[i];
                         return ListTile(
-                          title: Text(_titleCase(n)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 2,
+                          ),
+                          leading: Icon(
+                            Icons.medication_outlined,
+                            size: 20,
+                            color: Colors.grey.shade400,
+                          ),
+                          title: Text(
+                            _titleCase(n),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
                           onTap: () {
                             Navigator.of(sheetContext).pop();
-                            // Scope the returned variants to the same
-                            // dosage the name list itself was filtered
-                            // by above — otherwise a name match at the
-                            // right dosage still hands back every
-                            // strength/SKU of that medicine (e.g. every
-                            // Ceelin size) instead of just the one the
-                            // prescription actually asked for. Falls
-                            // back to the full variant list internally
-                            // if nothing matches at that dosage.
                             onSelect(
                               n,
                               PriceLookupService.variantsAtDosage(n, dosage),
@@ -3231,50 +3313,65 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                 // instead of guessing (and instead of a bare ₱0.00).
                 if (updated.needsBrandSelection) ...[
                   const SizedBox(height: 4),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF7E6),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: const Color(0xFFD97706).withValues(alpha: 0.4),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () => _showBrandPicker(
+                        context,
+                        updated.brandCandidates,
+                        selectBrand,
+                        showPrice: true,
                       ),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<MedicineVariant>(
-                        isDense: true,
-                        isExpanded: true,
-                        hint: const Text(
-                          'Select brand…',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: Color(0xFF92400E),
-                            fontWeight: FontWeight.w700,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7E6),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFFD97706).withValues(alpha: 0.45),
                           ),
                         ),
-                        items: updated.brandCandidates
-                            .map(
-                              (v) => DropdownMenuItem<MedicineVariant>(
-                                value: v,
-                                child: Text(
-                                  '${v.brandName ?? v.name ?? 'Generic (no brand)'}'
-                                  '${v.dosageForm != null && v.dosageForm!.isNotEmpty ? ' (${v.dosageForm})' : ''}'
-                                  ' — \u20B1${(v.unitPrice ?? 0).toStringAsFixed(2)}',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  style: const TextStyle(fontSize: 12.5),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.medication_liquid_outlined,
+                              size: 16,
+                              color: Color(0xFF92400E),
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                'Select brand…',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: Color(0xFF92400E),
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                            )
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) selectBrand(v);
-                        },
+                            ),
+                            Text(
+                              '${updated.brandCandidates.length} option'
+                              '${updated.brandCandidates.length == 1 ? '' : 's'}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF92400E),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 18,
+                              color: Color(0xFF92400E),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
