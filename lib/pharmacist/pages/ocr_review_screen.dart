@@ -3056,6 +3056,37 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             ),
           );
 
+    // Brand + dosage, appended right after the editable name so the
+    // whole line reads as ONE complete medicine identity — "Amoxicillin
+    // (Himox) 500 MG." — instead of the name field followed by a second,
+    // separately-rendered line repeating it (previously: this exact
+    // string via `catalogName`, or a standalone "Brand: X" line). Built
+    // from brandLabel/dosageLabel rather than `catalogName` itself so the
+    // generic name typed in the field above is never duplicated —
+    // catalogName is exactly "$medicineLabel ($brandLabel) $dosageLabel"
+    // when resolved (see MedicineVariant.name), so these two fields alone
+    // reconstruct the same brand/dosage suffix without the name prefix.
+    // Brand is gated on !needsBrandSelection, matching the prior "Brand:
+    // X" line's condition; dosage is shown independently of that, same
+    // as before.
+    final identityParts = <String>[
+      if (updated.brandLabel.trim().isNotEmpty && !updated.needsBrandSelection)
+        '(${updated.brandLabel.trim()})',
+      if (updated.dosageLabel.trim().isNotEmpty) updated.dosageLabel.trim(),
+    ];
+    final identitySuffix = identityParts.join(' ');
+    // Same tap target/condition the removed catalogName/Brand lines used
+    // — reopens the existing brand picker only when there's actually
+    // something to switch between.
+    final reopenBrandPicker = updated.brandCandidates.length > 1
+        ? () => _showBrandPicker(
+            context,
+            updated.brandCandidates,
+            selectBrand,
+            showPrice: true,
+          )
+        : null;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: Row(
@@ -3064,28 +3095,80 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  controller: _nameController,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    border: InputBorder.none,
-                    hintText: updated.isManualEntry
-                        ? 'Medicine name (e.g. Paracetamol 500mg)'
-                        : null,
-                  ),
-                  onChanged: (v) {
-                    final sanitized = v.trim().length > 60
-                        ? v.trim().substring(0, 60)
-                        : v;
-                    widget.onChanged(
-                      updated.copyWith(medicineLabel: sanitized),
-                    );
-                  },
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Sized to its own text (not stretched full-width) so
+                    // the brand/dosage suffix below can sit immediately
+                    // after it on the same line, rather than pinned to
+                    // the far edge of the row.
+                    IntrinsicWidth(
+                      child: TextField(
+                        controller: _nameController,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                          border: InputBorder.none,
+                          hintText: updated.isManualEntry
+                              ? 'Medicine name (e.g. Paracetamol 500mg)'
+                              : null,
+                        ),
+                        onChanged: (v) {
+                          final sanitized = v.trim().length > 60
+                              ? v.trim().substring(0, 60)
+                              : v;
+                          widget.onChanged(
+                            updated.copyWith(medicineLabel: sanitized),
+                          );
+                        },
+                      ),
+                    ),
+                    if (identitySuffix.isNotEmpty)
+                      Flexible(
+                        child: InkWell(
+                          onTap: reopenBrandPicker,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    identitySuffix,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: OcrReviewColors.teal,
+                                      decoration:
+                                          updated.brandCandidates.length > 1
+                                          ? TextDecoration.underline
+                                          : null,
+                                      decorationColor: OcrReviewColors.teal
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                ),
+                                if (updated.brandCandidates.length > 1) ...[
+                                  const SizedBox(width: 3),
+                                  Icon(
+                                    Icons.unfold_more,
+                                    size: 16,
+                                    color: OcrReviewColors.teal.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 if (updated.isManualEntry) ...[
                   const SizedBox(height: 6),
@@ -3190,124 +3273,6 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     ),
                   ),
                 ],
-                if (updated.catalogName != null &&
-                    updated.catalogName!.trim().isNotEmpty) ...[
-                  // The exact catalog SKU this price came from — shown
-                  // as ONE literal string (generic + brand + dosage,
-                  // exactly as stored in products.name) rather than as
-                  // separate dosage/brand lines, specifically so a
-                  // resolved-but-mismatched combination (e.g. a "500mg"
-                  // dosage attached to what's actually a liquid-drops
-                  // SKU) reads as one obviously-wrong string instead of
-                  // three individually-plausible-looking fields.
-                  //
-                  // Tappable to re-open the brand picker whenever this
-                  // medicine has more than one candidate SKU — a pick from
-                  // the "Select brand…" dropdown sets catalogName, which
-                  // used to hide the else-branch re-picker below and left a
-                  // wrong choice uncorrectable without a full rescan.
-                  InkWell(
-                    onTap: updated.brandCandidates.length > 1
-                        ? () => _showBrandPicker(
-                            context,
-                            updated.brandCandidates,
-                            selectBrand,
-                            showPrice: true,
-                          )
-                        : null,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            updated.catalogName!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: OcrReviewColors.teal,
-                              fontWeight: FontWeight.w600,
-                              decoration: updated.brandCandidates.length > 1
-                                  ? TextDecoration.underline
-                                  : null,
-                              decorationColor: OcrReviewColors.teal.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (updated.brandCandidates.length > 1) ...[
-                          const SizedBox(width: 3),
-                          Icon(
-                            Icons.unfold_more,
-                            size: 16,
-                            color: OcrReviewColors.teal.withValues(alpha: 0.7),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ] else ...[
-                  if (updated.dosageLabel.isNotEmpty)
-                    Text(
-                      updated.dosageLabel,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  // Brand named in the prescription itself (or already
-                  // resolved from a picker choice) — shown automatically.
-                  // OCR/handwriting can resolve this to the WRONG brand
-                  // with full confidence (no needsBrandSelection flag to
-                  // catch it, since only one SKU looked ambiguous at the
-                  // time), and until now the only way to correct that was
-                  // to rescan the whole prescription from scratch. Tap
-                  // it open the same brand picker used for the ambiguous
-                  // case instead, scoped to this medicine's own
-                  // [brandCandidates] — no rescan needed. Only made
-                  // tappable when there's actually more than one option
-                  // to switch to.
-                  if (updated.brandLabel.isNotEmpty &&
-                      !updated.needsBrandSelection)
-                    InkWell(
-                      onTap: updated.brandCandidates.length > 1
-                          ? () => _showBrandPicker(
-                              context,
-                              updated.brandCandidates,
-                              selectBrand,
-                              showPrice: true,
-                            )
-                          : null,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Brand: ${updated.brandLabel}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: OcrReviewColors.teal,
-                              fontWeight: FontWeight.w600,
-                              decoration: updated.brandCandidates.length > 1
-                                  ? TextDecoration.underline
-                                  : null,
-                              decorationColor: OcrReviewColors.teal.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                          ),
-                          if (updated.brandCandidates.length > 1) ...[
-                            const SizedBox(width: 3),
-                            Icon(
-                              Icons.unfold_more,
-                              size: 16,
-                              color: OcrReviewColors.teal.withValues(
-                                alpha: 0.7,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                ],
                 // Several SKUs share this dosage and differ only by
                 // brand, and the prescription didn't name one — ask
                 // the pharmacist to pick the actual box on the shelf
@@ -3334,7 +3299,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                           color: const Color(0xFFFFF7E6),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: const Color(0xFFD97706).withValues(alpha: 0.45),
+                            color: const Color(
+                              0xFFD97706,
+                            ).withValues(alpha: 0.45),
                           ),
                         ),
                         child: Row(
