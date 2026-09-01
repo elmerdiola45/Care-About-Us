@@ -42,13 +42,7 @@ class SavedListColors {
   static const warning = Color(0xFFD97706);
 }
 
-enum _Filter {
-  all,
-  pendingQr,
-  qrGenerated,
-  fullyDispensed,
-  partiallyDispensed,
-}
+enum _Filter { all, pendingQr, qrGenerated, fullyDispensed, partiallyDispensed }
 
 class SavedPrescriptionsListScreen extends StatefulWidget {
   const SavedPrescriptionsListScreen({super.key});
@@ -151,14 +145,16 @@ class _SavedPrescriptionsListScreenState
     } else if (_filter == _Filter.fullyDispensed) {
       list = list.where((e) {
         return SavedPrescriptionsStore.effectiveDispensingStatus(
-          e.prescription,
-        ) == DispensingStatus.fullyDispensed;
+              e.prescription,
+            ) ==
+            DispensingStatus.fullyDispensed;
       }).toList();
     } else if (_filter == _Filter.partiallyDispensed) {
       list = list.where((e) {
         return SavedPrescriptionsStore.effectiveDispensingStatus(
-          e.prescription,
-        ) == DispensingStatus.partiallyDispensed;
+              e.prescription,
+            ) ==
+            DispensingStatus.partiallyDispensed;
       }).toList();
     }
     if (_searchQuery.isNotEmpty) {
@@ -572,54 +568,54 @@ class _SavedPrescriptionsListScreenState
                             children: [
                               _statusPill(isPending: isPending),
                               const SizedBox(width: 8),
-                               _dispensingStatusPill(
-                                 SavedPrescriptionsStore.effectiveDispensingStatus(
-                                   p,
-                                 ),
-                               ),
+                              _dispensingStatusPill(
+                                SavedPrescriptionsStore.effectiveDispensingStatus(
+                                  p,
+                                ),
+                              ),
                               const SizedBox(width: 8),
-                               Builder(
-                                 builder: (_) {
-                                   final adherence = entry.adherence;
-                                   if (adherence == null || !adherence.hasData) {
-                                     return const SizedBox.shrink();
-                                   }
-                                   final tier = adherence.tier;
-                                   // Status-aware label, matching the
-                                   // pharmacist List/Detail screens. The
-                                   // shared AdherenceBadge defaults (e.g.
-                                   // "At Risk" / "Critical") are the wrong
-                                   // vocabulary here, so pass an explicit
-                                   // label derived from the raw backend
-                                   // status via the badge's `label:` override.
-                                   final badgeLabel = _adherenceLabel(
-                                     tier,
-                                     adherence.status,
-                                   );
-                                   return Row(
-                                     mainAxisSize: MainAxisSize.min,
-                                     children: [
-                                       AdherenceBadge(
-                                         tier: tier,
-                                         label: badgeLabel,
-                                         compact: false,
-                                       ),
-                                       if (tier ==
-                                           AdherenceTier.fullyDispensed) ...[
-                                         const SizedBox(width: 6),
-                                         Text(
-                                           '100%',
-                                           style: TextStyle(
-                                             color: const Color(0xFF6B7280),
-                                             fontWeight: FontWeight.w700,
-                                             fontSize: 12.5,
-                                           ),
-                                         ),
-                                       ],
-                                     ],
-                                   );
-                                 },
-                               ),
+                              Builder(
+                                builder: (_) {
+                                  final adherence = entry.adherence;
+                                  if (adherence == null || !adherence.hasData) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  final tier = adherence.tier;
+                                  // Status-aware label, matching the
+                                  // pharmacist List/Detail screens. The
+                                  // shared AdherenceBadge defaults (e.g.
+                                  // "At Risk" / "Critical") are the wrong
+                                  // vocabulary here, so pass an explicit
+                                  // label derived from the raw backend
+                                  // status via the badge's `label:` override.
+                                  final badgeLabel = _adherenceLabel(
+                                    tier,
+                                    adherence.status,
+                                  );
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      AdherenceBadge(
+                                        tier: tier,
+                                        label: badgeLabel,
+                                        compact: false,
+                                      ),
+                                      if (tier ==
+                                          AdherenceTier.fullyDispensed) ...[
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '100%',
+                                          style: TextStyle(
+                                            color: const Color(0xFF6B7280),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         ),
@@ -656,7 +652,9 @@ class _SavedPrescriptionsListScreenState
                 const SizedBox(height: 8),
                 for (final m in p.medicines) ...[
                   _medicineLine(
-                    '${m.name} ${m.dosage}',
+                    '${m.name}'
+                        '${m.brand.isNotEmpty ? ' (${m.brand})' : ''}'
+                        '${m.dosage.isNotEmpty ? ' ${m.dosage}' : ''}',
                     '× ${m.quantity}${m.disposedQuantity > 0 ? " (dispensed: ${m.disposedQuantity})" : ""}',
                     isEssential: m.isEssential,
                     duration: m.duration,
@@ -686,14 +684,10 @@ class _SavedPrescriptionsListScreenState
                       ),
                     ),
                     const SizedBox(width: 8),
-                    if (SavedPrescriptionsStore.effectiveDispensingStatus(
-                            p,
-                          ) !=
-                          DispensingStatus.fullyDispensed &&
-                        SavedPrescriptionsStore.effectiveDispensingStatus(
-                          p,
-                        ) !=
-                          DispensingStatus.overDispensing)
+                    if (SavedPrescriptionsStore.effectiveDispensingStatus(p) !=
+                            DispensingStatus.fullyDispensed &&
+                        SavedPrescriptionsStore.effectiveDispensingStatus(p) !=
+                            DispensingStatus.overDispensing)
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () => _onDispensePressed(entry),
@@ -763,10 +757,7 @@ class _SavedPrescriptionsListScreenState
         children: [
           Text(
             name,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 2),
           Wrap(
@@ -775,10 +766,7 @@ class _SavedPrescriptionsListScreenState
             runSpacing: 2,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: typeColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
@@ -1162,6 +1150,7 @@ class _SavedPrescriptionsListScreenState
             (m) => {
               'name': m.name,
               'dosage': m.dosage,
+              'brand_name': m.brand,
               'quantity': m.quantity,
               'is_essential': m.isEssential,
               'duration': m.duration,

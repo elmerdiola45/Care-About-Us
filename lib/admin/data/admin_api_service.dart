@@ -155,6 +155,8 @@ class AdminApiService {
         return MedicineItem(
           name: me['name']?.toString() ?? '',
           quantity: safeInt(me['quantity']),
+          brand: me['brand_name']?.toString() ?? '',
+          dosage: me['dosage']?.toString() ?? '',
         );
       }).toList(),
       requestingStaffName: m['requesting_staff_name']?.toString() ?? '',

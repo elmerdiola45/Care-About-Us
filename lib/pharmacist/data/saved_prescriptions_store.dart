@@ -192,6 +192,7 @@ class SavedPrescriptionsStore {
             'name': m.name,
             'original_ocr_name': m.originalOcrName,
             'dosage': m.dosage,
+            'brand_name': m.brand,
             'quantity': m.quantity,
             'unit_price': m.unitPrice,
             'is_essential': m.isEssential,
