@@ -273,13 +273,8 @@ class RequestsScreenState extends State<RequestsScreen> {
             for (final f in _RequestFilter.values) ...[
               () {
                 final selected = _filter == f;
-                // Client-side counts from the already-loaded list — no
-                // extra API calls, recomputed on every build so they
-                // track _requests automatically. Deliberately NOT
-                // affected by the selected date filter.
-                final count = _requests.where(f.matches).length;
                 return ChoiceChip(
-                  label: Text('${f.label} $count'),
+                  label: Text(f.label),
                   selected: selected,
                   onSelected: (_) => setState(() => _filter = f),
                   backgroundColor: AppColors.bg,
