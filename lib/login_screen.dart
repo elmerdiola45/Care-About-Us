@@ -92,8 +92,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     try {
-      final endpoint =
-          _role == LoginRole.assistant ? '/dispenser/login' : '/admin/login';
+      final endpoint = _role == LoginRole.assistant
+          ? '/dispenser/login'
+          : '/admin/login';
 
       final Map<String, String> body = {'email': email, 'password': password};
 
@@ -112,7 +113,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        final data = decoded is Map ? Map<String, dynamic>.from(decoded) : <String, dynamic>{};
+        final data = decoded is Map
+            ? Map<String, dynamic>.from(decoded)
+            : <String, dynamic>{};
         final token = data['token']?.toString() ?? '';
         final userType = data['user_type']?.toString() ?? '';
 
@@ -140,7 +143,8 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => HomeDashboardScreen(token: token, userType: userType),
+              builder: (_) =>
+                  HomeDashboardScreen(token: token, userType: userType),
             ),
           );
         } else {
@@ -148,7 +152,8 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => AdminDashboardPage(token: token, userType: userType),
+              builder: (_) =>
+                  AdminDashboardPage(token: token, userType: userType),
             ),
           );
         }
@@ -169,8 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        _errorMessage =
-            'Server is starting up. Please try again in a moment.';
+        _errorMessage = 'Server is starting up. Please try again in a moment.';
       });
     } catch (e) {
       if (!mounted) return;
@@ -192,72 +196,103 @@ class _LoginScreenState extends State<LoginScreen> {
             return SingleChildScrollView(
               child: Center(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: isWide ? 480 : double.infinity),
+                  constraints: BoxConstraints(
+                    maxWidth: isWide ? 480 : double.infinity,
+                  ),
                   child: Column(
                     children: [
                       _buildHeader(isWide),
                       Padding(
-                        padding: EdgeInsets.fromLTRB(isWide ? 32 : 24, 28, isWide ? 32 : 24, 20),
+                        padding: EdgeInsets.fromLTRB(
+                          isWide ? 32 : 24,
+                          28,
+                          isWide ? 32 : 24,
+                          20,
+                        ),
                         child: Form(
                           key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _buildRoleToggle(),
-                      const SizedBox(height: 24),
-                      _buildFieldLabel('EMAIL ADDRESS'),
-                      const SizedBox(height: 8),
-                      _buildEmailField(),
-                      const SizedBox(height: 18),
-                      _buildFieldLabel('PASSWORD'),
-                      const SizedBox(height: 8),
-                      _buildPasswordField(),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: _showForgotPasswordDialog,
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'Forgot Password?',
-                            style: TextStyle(color: AppColors.teal, fontSize: 13.5, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      _buildSignInButton(isWide),
-                      if (_errorMessage != null) ...[
-                        const SizedBox(height: 14),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                          decoration: BoxDecoration(
-                            color: Colors.redAccent.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _errorMessage!,
-                                  style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                              const SizedBox(height: 24),
+                              _buildFieldLabel('EMAIL ADDRESS'),
+                              const SizedBox(height: 8),
+                              _buildEmailField(),
+                              const SizedBox(height: 18),
+                              _buildFieldLabel('PASSWORD'),
+                              const SizedBox(height: 8),
+                              _buildPasswordField(),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: _showForgotPasswordDialog,
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size(0, 0),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: const Text(
+                                    'Forgot Password?',
+                                    style: TextStyle(
+                                      color: AppColors.teal,
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-                      const Divider(height: 1, color: Color(0xFFE5E7EB)),
-                      const SizedBox(height: 16),
-                              _buildFooter(),
+                              const SizedBox(height: 22),
+                              _buildSignInButton(isWide),
+                              if (_errorMessage != null) ...[
+                                const SizedBox(height: 14),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.redAccent.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: Colors.redAccent,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _errorMessage!,
+                                          style: const TextStyle(
+                                            color: Colors.redAccent,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 20),
+                              const Divider(
+                                height: 1,
+                                color: Color(0xFFE5E7EB),
+                              ),
+                              const SizedBox(height: 16),
+                              // _buildFooter(),
                             ],
                           ),
                         ),
@@ -277,7 +312,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final iconSize = isWide ? 80.0 : 64.0;
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: isWide ? 56 : 44, horizontal: isWide ? 32 : 24),
+      padding: EdgeInsets.symmetric(
+        vertical: isWide ? 56 : 44,
+        horizontal: isWide ? 32 : 24,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -294,13 +332,21 @@ class _LoginScreenState extends State<LoginScreen> {
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Icon(Icons.shield_outlined, color: Colors.white, size: 30),
+            child: const Icon(
+              Icons.shield_outlined,
+              color: Colors.white,
+              size: 30,
+            ),
           ),
           const SizedBox(height: 18),
           const Text(
             'Care About Us Pharmacy',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 12),
           Container(
@@ -314,13 +360,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   width: 7,
                   height: 7,
-                  decoration: const BoxDecoration(color: AppColors.accentGreen, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                    color: AppColors.accentGreen,
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: const Text(
                     'RA 10918 Pharmacy Act Compliant',
-                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -361,7 +414,13 @@ class _LoginScreenState extends State<LoginScreen> {
           color: selected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           boxShadow: selected
-              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6, offset: const Offset(0, 1))]
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 6,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
               : null,
         ),
         child: Text(
@@ -438,7 +497,9 @@ class _LoginScreenState extends State<LoginScreen> {
         icon: Icons.lock_outline,
         suffix: IconButton(
           icon: Icon(
-            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            _obscurePassword
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
             color: AppColors.textFaint,
             size: 20,
           ),
@@ -461,19 +522,27 @@ class _LoginScreenState extends State<LoginScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.loginGradientDark,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           elevation: 0,
         ),
         child: _isSubmitting
             ? const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: Colors.white,
+                ),
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Text('Sign In Securely', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  Text(
+                    'Sign In Securely',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  ),
                   SizedBox(width: 8),
                   Icon(Icons.arrow_forward, size: 18),
                 ],
@@ -482,7 +551,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildFooter() {
+  /* Widget _buildFooter() {
     return Column(
       children: const [
         Text(
@@ -498,5 +567,5 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ],
     );
-  }
+  } */
 }
