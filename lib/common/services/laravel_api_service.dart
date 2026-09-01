@@ -485,6 +485,10 @@ class LaravelVerifiedMedicine {
   final String name;
   final String? strength;
   final String? dosage;
+  // From the QR's own embedded payload (see generateQrToken()/'medicines')
+  // — whatever brand was resolved on the OCR review screen at QR-generation
+  // time. Null when the QR predates this field, or none was resolved.
+  final String? brandName;
   final int quantity;
   final double unitPrice;
   final int stock;
@@ -493,6 +497,7 @@ class LaravelVerifiedMedicine {
     required this.name,
     this.strength,
     this.dosage,
+    this.brandName,
     required this.quantity,
     required this.unitPrice,
     required this.stock,
@@ -503,6 +508,7 @@ class LaravelVerifiedMedicine {
       name: json['name']?.toString() ?? 'Unknown',
       strength: json['strength']?.toString(),
       dosage: json['dosage']?.toString(),
+      brandName: json['brand_name']?.toString(),
       quantity: _safeInt(json['quantity'], 1),
       unitPrice: _safeDouble(json['unit_price']),
       stock: _safeInt(json['stock']),
@@ -887,19 +893,20 @@ class LaravelApiService {
       // synced to the backend later, such as via "Generate QR", rather than
       // through the main OCR-save happy path that already goes through
       // PrescriptionApiService.save()).
-      final request = http.MultipartRequest('POST', _buildUri(['prescriptions']))
-        ..headers.addAll(_headers)
-        ..fields['ocr_code'] = ocrCode
-        ..fields['patient_name'] = patientName
-        ..fields['patient_age'] = '$patientAge'
-        ..fields['patient_gender'] = patientGender
-        ..fields['doctor_name'] = doctorName
-        ..fields['is_senior'] = isSenior ? '1' : '0'
-        ..fields['license_no'] = licenseNo
-        ..fields['pt_no'] = ptNo
-        ..fields['s2'] = s2
-        ..fields['date_time'] = dateTimeUtc
-        ..fields['total_price'] = '$totalPrice';
+      final request =
+          http.MultipartRequest('POST', _buildUri(['prescriptions']))
+            ..headers.addAll(_headers)
+            ..fields['ocr_code'] = ocrCode
+            ..fields['patient_name'] = patientName
+            ..fields['patient_age'] = '$patientAge'
+            ..fields['patient_gender'] = patientGender
+            ..fields['doctor_name'] = doctorName
+            ..fields['is_senior'] = isSenior ? '1' : '0'
+            ..fields['license_no'] = licenseNo
+            ..fields['pt_no'] = ptNo
+            ..fields['s2'] = s2
+            ..fields['date_time'] = dateTimeUtc
+            ..fields['total_price'] = '$totalPrice';
       if (oscaId != null && oscaId.isNotEmpty) {
         request.fields['osca_id'] = oscaId;
       }

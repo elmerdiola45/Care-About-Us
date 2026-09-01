@@ -19,7 +19,11 @@ class DispenseScreen extends StatefulWidget {
   final String? initialOcrCode;
   final ScannedPrescription? scannedPrescription;
 
-  const DispenseScreen({super.key, this.initialOcrCode, this.scannedPrescription});
+  const DispenseScreen({
+    super.key,
+    this.initialOcrCode,
+    this.scannedPrescription,
+  });
 
   @override
   State<DispenseScreen> createState() => _DispenseScreenState();
@@ -252,15 +256,19 @@ class _DispenseScreenState extends State<DispenseScreen> {
               widget.scannedPrescription!.rxNo.isNotEmpty) {
             final sp = widget.scannedPrescription!;
             final medicines = sp.medicines
-                .map((m) => MedicineItem(
-                      name: m.name,
-                      dosage: m.strength,
-                      quantity: m.prescribedQuantity,
-                      unitPrice: m.unitPrice,
-                      availableStock: m.stock,
-                    ))
+                .map(
+                  (m) => MedicineItem(
+                    name: m.name,
+                    dosage: m.strength,
+                    brand: m.brand,
+                    quantity: m.prescribedQuantity,
+                    unitPrice: m.unitPrice,
+                    availableStock: m.stock,
+                  ),
+                )
                 .toList();
-            final rxDateTime = DateTime.tryParse(sp.issuedDate) ?? DateTime.now();
+            final rxDateTime =
+                DateTime.tryParse(sp.issuedDate) ?? DateTime.now();
             final virtualPrescription = Prescription(
               patientName: sp.patientName,
               patientAge: sp.patientAge ?? 0,
@@ -270,7 +278,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
               dateTime: rxDateTime,
               medicines: medicines,
               totalPrice: medicines.fold<double>(
-                  0, (sum, m) => sum + m.unitPrice * m.quantity),
+                0,
+                (sum, m) => sum + m.unitPrice * m.quantity,
+              ),
               status: QrStatus.qrGenerated,
               dispensingStatus: DispensingStatus.pending,
             );
@@ -392,7 +402,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
   /// The actual trigger for the blocking card: something is still owed,
   /// but stock says none of it can be handed over right now.
-  bool get _isBlockedByStock => _hasRemainingOwed && !_hasAnyDispensableMedicine;
+  bool get _isBlockedByStock =>
+      _hasRemainingOwed && !_hasAnyDispensableMedicine;
 
   void _incrementMedicine(String name) {
     MedicineItem? m;
@@ -566,7 +577,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
           context: context,
           barrierDismissible: false,
           builder: (_) => AlertDialog(
-            backgroundColor: isHighPriority ? AppColors.dangerBg : AppColors.surface,
+            backgroundColor: isHighPriority
+                ? AppColors.dangerBg
+                : AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -731,7 +744,10 @@ class _DispenseScreenState extends State<DispenseScreen> {
             Expanded(
               child: Text(
                 isPartial ? 'Partially saved to server' : 'Not saved to server',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                ),
               ),
             ),
           ],
@@ -1042,17 +1058,13 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 ? (_dispensedQuantities[m.name] ?? 0)
                 : 0;
             partialMedicines.add(
-              m.copyWith(
-                disposedQuantity: m.disposedQuantity + servedThisFill,
-              ),
+              m.copyWith(disposedQuantity: m.disposedQuantity + servedThisFill),
             );
           }
           final partialStatus =
               partialMedicines.any((m) => m.disposedQuantity > m.quantity)
               ? DispensingStatus.overDispensing
-              : partialMedicines.every(
-                  (m) => m.disposedQuantity >= m.quantity,
-                )
+              : partialMedicines.every((m) => m.disposedQuantity >= m.quantity)
               ? DispensingStatus.fullyDispensed
               : DispensingStatus.partiallyDispensed;
           final partialEntry = entry.copyWith(
@@ -1590,7 +1602,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFFEE2E2),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDC2626).withValues(alpha: 0.5)),
+        border: Border.all(
+          color: const Color(0xFFDC2626).withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1620,7 +1634,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
             (m) => Padding(
               padding: const EdgeInsets.only(bottom: 2),
               child: Text(
-                '• ${m.dosage.isNotEmpty ? '${m.name} (${m.dosage})' : m.name}',
+                '• ${m.name}'
+                '${m.brand.isNotEmpty ? ' (${m.brand})' : ''}'
+                '${m.dosage.isNotEmpty ? ' ${m.dosage}' : ''}',
                 style: const TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
@@ -1930,7 +1946,11 @@ class _DispenseScreenState extends State<DispenseScreen> {
     // worth telling the dispenser why the stepper caps out before
     // `remaining`, instead of it just looking like a bug.
     final isPartiallyStocked =
-        !isOverDispensed && !isFullyDispensed && m.availableStock != null && cap < remaining && cap > 0;
+        !isOverDispensed &&
+        !isFullyDispensed &&
+        m.availableStock != null &&
+        cap < remaining &&
+        cap > 0;
     final isOutOfStock =
         !isOverDispensed && !isFullyDispensed && _isOutOfStock(m);
 
@@ -1944,7 +1964,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                m.name,
+                m.brand.isNotEmpty ? '${m.name} (${m.brand})' : m.name,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -2080,7 +2100,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                     color: _quantityErrors[m.name] != null || isPartiallyStocked
                         ? const Color(0xFFDC2626)
                         : const Color(0xFFA4A9B4),
-                    fontWeight: _quantityErrors[m.name] != null || isPartiallyStocked
+                    fontWeight:
+                        _quantityErrors[m.name] != null || isPartiallyStocked
                         ? FontWeight.w700
                         : FontWeight.normal,
                   ),

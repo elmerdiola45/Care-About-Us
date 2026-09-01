@@ -21,6 +21,11 @@ class ScanColors {
 class PrescriptionMedicine {
   final String name;
   final String strength;
+  // From the QR's embedded medicines[].brand_name (see
+  // LaravelVerifiedMedicine.brandName / generateQrToken()), or the
+  // equivalent key in a locally-decoded offline QR payload. Empty when
+  // absent — always safe to treat as "no brand resolved".
+  final String brand;
   final int prescribedQuantity;
   final int stock;
   final double unitPrice;
@@ -28,6 +33,7 @@ class PrescriptionMedicine {
   const PrescriptionMedicine({
     required this.name,
     required this.strength,
+    this.brand = '',
     required this.prescribedQuantity,
     required this.stock,
     required this.unitPrice,
@@ -44,6 +50,7 @@ class PrescriptionMedicine {
         'Unspecified medicine',
       ),
       strength: _stringValue(json['strength'] ?? json['dose'], ''),
+      brand: _stringValue(json['brand'] ?? json['brand_name'], ''),
       prescribedQuantity: quantity,
       stock: _intValue(json['stock'], quantity * 3),
       unitPrice: _doubleValue(json['unitPrice'] ?? json['price'], 12.50),
@@ -172,20 +179,17 @@ class ScannedPrescription {
               patientSex: verified.patientGender,
               prescriber: verified.doctorName,
               issuedDate: _formatDateTime(verified.dateTime),
-              medicines: verified.medicines
-                  .map(
-                    (m) {
-                      final r = remainingByName[m.name.toLowerCase()];
-                      return PrescriptionMedicine(
-                        name: m.name,
-                        strength: m.dosage ?? '',
-                        prescribedQuantity: m.quantity,
-                        stock: r?.remainingQuantity ?? m.quantity,
-                        unitPrice: r?.unitPrice ?? m.unitPrice,
-                      );
-                    },
-                  )
-                  .toList(),
+              medicines: verified.medicines.map((m) {
+                final r = remainingByName[m.name.toLowerCase()];
+                return PrescriptionMedicine(
+                  name: m.name,
+                  strength: m.dosage ?? '',
+                  brand: m.brandName ?? '',
+                  prescribedQuantity: m.quantity,
+                  stock: r?.remainingQuantity ?? m.quantity,
+                  unitPrice: r?.unitPrice ?? m.unitPrice,
+                );
+              }).toList(),
               isVerifiedQrData: true,
               rawValue: rawValue,
               backendId: verified.prescriptionId,
@@ -219,20 +223,17 @@ class ScannedPrescription {
             patientSex: verified.patientGender,
             prescriber: verified.doctorName,
             issuedDate: _formatDateTime(verified.dateTime),
-            medicines: verified.medicines
-                .map(
-                  (m) {
-                    final r = remainingByName[m.name.toLowerCase()];
-                    return PrescriptionMedicine(
-                      name: m.name,
-                      strength: m.dosage ?? '',
-                      prescribedQuantity: m.quantity,
-                      stock: r?.remainingQuantity ?? m.quantity,
-                      unitPrice: r?.unitPrice ?? m.unitPrice,
-                    );
-                  },
-                )
-                .toList(),
+            medicines: verified.medicines.map((m) {
+              final r = remainingByName[m.name.toLowerCase()];
+              return PrescriptionMedicine(
+                name: m.name,
+                strength: m.dosage ?? '',
+                brand: m.brandName ?? '',
+                prescribedQuantity: m.quantity,
+                stock: r?.remainingQuantity ?? m.quantity,
+                unitPrice: r?.unitPrice ?? m.unitPrice,
+              );
+            }).toList(),
             isVerifiedQrData: true,
             rawValue: rawValue,
             // Carry the backend id through, exactly like the JSON-token
@@ -439,11 +440,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: ScanColors.surface,
-        icon: const Icon(
-          Icons.check_circle,
-          color: ScanColors.teal,
-          size: 48,
-        ),
+        icon: const Icon(Icons.check_circle, color: ScanColors.teal, size: 48),
         title: const Text(
           'Already Fully Dispensed',
           textAlign: TextAlign.center,
@@ -554,8 +551,10 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                       alignment: const Alignment(0, -0.18),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          final frameSize = (constraints.maxWidth * 0.7)
-                              .clamp(180.0, 280.0);
+                          final frameSize = (constraints.maxWidth * 0.7).clamp(
+                            180.0,
+                            280.0,
+                          );
                           return _scanFrame(frameSize);
                         },
                       ),

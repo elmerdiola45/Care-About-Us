@@ -399,8 +399,18 @@ class ExceedDetailItem {
 class MedicineItem {
   final String name;
   final int quantity;
+  // Empty when the request predates brand_name/dosage on the backend
+  // response, or when the underlying prescription item never had one
+  // (e.g. a generic-only match) — always safe to treat as "not shown".
+  final String brand;
+  final String dosage;
 
-  MedicineItem({required this.name, required this.quantity});
+  MedicineItem({
+    required this.name,
+    required this.quantity,
+    this.brand = '',
+    this.dosage = '',
+  });
 }
 
 // 'rejected' is legacy/unused by the current flow — there is no

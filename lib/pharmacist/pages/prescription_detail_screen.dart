@@ -219,7 +219,9 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
       // Check the store's live value first so we don't fire a second
       // createPrescription for an ocr_code that already exists.
       final liveBackendId =
-          SavedPrescriptionsStore.instance.backendIdFor(_currentEntry.ocrCode) ??
+          SavedPrescriptionsStore.instance.backendIdFor(
+            _currentEntry.ocrCode,
+          ) ??
           _currentEntry.backendId;
 
       if (liveBackendId == null || liveBackendId.isEmpty) {
@@ -548,7 +550,10 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               _detailRow('PT No.', _currentEntry.prescription.ptNo),
             if (_currentEntry.prescription.s2.isNotEmpty)
               _detailRow('S2', _currentEntry.prescription.s2),
-            _detailRow('Date', _formatDate(_currentEntry.prescription.dateTime)),
+            _detailRow(
+              'Date',
+              _formatDate(_currentEntry.prescription.dateTime),
+            ),
           ],
         ],
       ),
@@ -602,7 +607,9 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${m.name} ${m.dosage}',
+                          '${m.name}'
+                          '${m.brand.isNotEmpty ? ' (${m.brand})' : ''}'
+                          '${m.dosage.isNotEmpty ? ' ${m.dosage}' : ''}',
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,

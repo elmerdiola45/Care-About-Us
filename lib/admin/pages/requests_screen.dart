@@ -692,7 +692,10 @@ class _RequestCardState extends State<_RequestCard> {
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      '${m.name} × ${m.quantity} claimed',
+                      '${m.name}'
+                      '${m.brand.trim().isNotEmpty ? ' (${m.brand.trim()})' : ''}'
+                      '${m.dosage.trim().isNotEmpty ? ' ${m.dosage.trim()}' : ''}'
+                      ' × ${m.quantity} claimed',
                       style: const TextStyle(
                         fontSize: 12.5,
                         color: AppColors.teal,
