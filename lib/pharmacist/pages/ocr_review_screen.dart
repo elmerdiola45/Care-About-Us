@@ -1873,6 +1873,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     final needsAttention =
         m.medicineNotFound || m.dosageNotStocked || m.needsBrandSelection;
     final summaryParts = <String>[
+      if (m.brandLabel.trim().isNotEmpty) m.brandLabel.trim(),
       if (m.dosageLabel.trim().isNotEmpty) m.dosageLabel.trim(),
       '×${m.quantity}',
       '₱${m.totalLine.toStringAsFixed(2)}',
