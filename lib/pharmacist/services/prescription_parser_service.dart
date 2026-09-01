@@ -246,12 +246,47 @@ class PrescriptionParserService {
       for (final label in labels) {
         final idx = lower.indexOf('$label:');
         if (idx != -1) {
-          final value = line.substring(idx + label.length + 1).trim();
+          final value = _truncateAtNextLabel(
+            line.substring(idx + label.length + 1).trim(),
+          );
           if (value.isNotEmpty) return value;
         }
       }
     }
     return null;
+  }
+
+  /// Other field labels that commonly sit on the SAME OCR line as a
+  /// "Patient:"/"Doctor:" value on a PH Rx pad header — e.g.
+  /// "Patient: Juda Baylan   Sex: Age: 26" (the Sex checkbox read as
+  /// empty, leaving "Sex:" and "Age:" adjacent). Without this,
+  /// [_extractLabeled] previously took everything to the end of the
+  /// line, so the name field ended up polluted with the trailing
+  /// label text. Kept short and specific to labels that actually
+  /// appear on Rx headers, not a general word list, to avoid
+  /// truncating a real name/value that happens to contain one of
+  /// these as an ordinary word.
+  static const List<String> _inlineLabelBreakpoints = [
+    'sex',
+    'age',
+    'address',
+    'date',
+    'doctor',
+    'license',
+    'ptr',
+    'diagnosis',
+  ];
+
+  static String _truncateAtNextLabel(String value) {
+    final lower = value.toLowerCase();
+    var cutAt = value.length;
+    for (final label in _inlineLabelBreakpoints) {
+      final match = RegExp('\\b${RegExp.escape(label)}\\s*:').firstMatch(lower);
+      if (match != null && match.start < cutAt) {
+        cutAt = match.start;
+      }
+    }
+    return value.substring(0, cutAt).trim();
   }
 
   // Sane bounds for a human patient age. Anything outside this range is
@@ -564,7 +599,11 @@ class PrescriptionParserService {
       }
 
       var line = rawLine.replaceFirst(RegExp(r'^[\d]+[.)\-]\s*'), '').trim();
-      if (line.isEmpty || _looksLikeHeaderLine(line)) continue;
+      if (line.isEmpty ||
+          _looksLikeHeaderLine(line) ||
+          _looksLikeAddressLine(line)) {
+        continue;
+      }
 
       // The Rx (℞) symbol commonly sits on the SAME line as the first
       // drug rather than on its own line ("Rx Feso4 tab #30") — unlike
@@ -749,7 +788,8 @@ class PrescriptionParserService {
       // resolved to a real brand-type catalog entry — see the branch
       // below. Hoisted so matchConfidence can reflect the brand match
       // instead of scoring this as an unmatched 0.0 line.
-      final resolvedViaBrand = match.name == null &&
+      final resolvedViaBrand =
+          match.name == null &&
           secondaryIsBrandType &&
           (secondaryGeneric?.trim().isNotEmpty ?? false);
 
@@ -870,6 +910,24 @@ class PrescriptionParserService {
 
     return medicines;
   }
+
+  // Philippine addresses very commonly name a block/lot, barangay, purok,
+  // sitio, or subdivision — vocabulary a real drug name never contains —
+  // and usually carry their own house/block/lot numbers (e.g. "Block 4
+  // Lot 12 Upper Bicutan, Taguig"). That's exactly why this needs its own
+  // check rather than folding into _looksLikeHeaderLine: a line with
+  // digits on it bails out of that check immediately (digits normally
+  // mean "this is a dosage/quantity line", not a header), so an address
+  // line whose "Address:" label got OCR'd onto a separate line (or
+  // dropped entirely) had nothing left to keep it out of the medicine
+  // dictionary's fuzzy-match pass.
+  static final RegExp _addressPattern = RegExp(
+    r'\b(block|blk|barangay|brgy|purok|sitio|subdivision|subd)\b',
+    caseSensitive: false,
+  );
+
+  static bool _looksLikeAddressLine(String line) =>
+      _addressPattern.hasMatch(line);
 
   static bool _looksLikeHeaderLine(String line) {
     final lower = line.toLowerCase();
