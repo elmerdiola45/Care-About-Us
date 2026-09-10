@@ -638,12 +638,6 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
-                ),
               ],
             ),
           ],

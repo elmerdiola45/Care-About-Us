@@ -209,7 +209,7 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                if (_records != null)
+                if (_records != null && _filter == _Filter.all)
                   Flexible(
                     child: Wrap(
                       spacing: 14,

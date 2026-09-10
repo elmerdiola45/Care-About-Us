@@ -461,57 +461,6 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
     );
   }
 
-  Future<void> _enterCodeManually() async {
-    final controller = TextEditingController();
-    final value = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: ScanColors.surface,
-        title: const Text(
-          'Enter prescription code',
-          style: TextStyle(color: ScanColors.text),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: const TextStyle(color: ScanColors.text),
-          decoration: InputDecoration(
-            hintText: 'e.g. RX-2026-95000',
-            hintStyle: const TextStyle(color: ScanColors.muted),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: ScanColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: ScanColors.teal),
-            ),
-          ),
-          onSubmitted: (v) => Navigator.of(dialogContext).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ScanColors.teal,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Open'),
-          ),
-        ],
-      ),
-    );
-
-    if (value == null || value.trim().isEmpty || !mounted) return;
-    setState(() => _processing = true);
-    await _resolveAndOpen(value.trim());
-    if (mounted) setState(() => _processing = false);
-  }
-
   Future<void> _toggleTorch() async {
     await _controller.toggleTorch();
     if (mounted) setState(() => _torchOn = !_torchOn);
@@ -593,19 +542,6 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                         ),
                         const SizedBox(height: 14),
                         _homeBanner(),
-                        const SizedBox(height: 10),
-                        TextButton.icon(
-                          onPressed: _processing ? null : _enterCodeManually,
-                          icon: const Icon(
-                            Icons.keyboard_outlined,
-                            size: 16,
-                            color: ScanColors.muted,
-                          ),
-                          label: const Text(
-                            'Type code instead',
-                            style: TextStyle(color: ScanColors.muted),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -807,10 +743,6 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                 OutlinedButton(
                   onPressed: _controller.start,
                   child: const Text('Try camera again'),
-                ),
-                OutlinedButton(
-                  onPressed: _enterCodeManually,
-                  child: const Text('Type code instead'),
                 ),
               ],
             ),

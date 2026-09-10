@@ -583,12 +583,6 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
-                ),
               ],
             ),
           ],

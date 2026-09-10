@@ -2979,7 +2979,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       widget.onChanged(
         updated.copyWith(
           unitPrice: v.unitPrice ?? 0.0,
-          brandLabel: v.brandName ?? 'Generic (no brand)',
+          brandLabel: v.brandName ?? '',
           needsBrandSelection: false,
           medicineNotFound: false,
           dosageNotStocked: false,
@@ -3002,7 +3002,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
           updated.copyWith(
             medicineLabel: name,
             unitPrice: v.unitPrice ?? 0.0,
-            brandLabel: v.brandName ?? 'Generic (no brand)',
+            brandLabel: v.brandName ?? '',
             needsBrandSelection: false,
             medicineNotFound: false,
             dosageNotStocked: false,
