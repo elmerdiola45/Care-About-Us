@@ -192,7 +192,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   late final TextEditingController _doctorController;
   late final TextEditingController _dateController;
   late final TextEditingController _patientController;
-  late final TextEditingController _diagnosisController;
   late final TextEditingController _licenseController;
   late final TextEditingController _ptController;
   late final TextEditingController _s2Controller;
@@ -263,7 +262,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     _patientController = TextEditingController(
       text: _pick(widget.scanResult?.patientName, parsed.patient),
     );
-    _diagnosisController = TextEditingController(text: parsed.diagnosis);
+
     _licenseController = TextEditingController(text: parsed.licenseNo);
     _ptController = TextEditingController(text: parsed.ptNo);
     _s2Controller = TextEditingController(text: parsed.s2);
@@ -650,7 +649,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     _doctorController.dispose();
     _dateController.dispose();
     _patientController.dispose();
-    _diagnosisController.dispose();
     _licenseController.dispose();
     _ptController.dispose();
     _s2Controller.dispose();
@@ -839,7 +837,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     setState(() => _isSaving = true);
 
     final cleanedPatientName = _cleanPatientName(patientName);
-    final diagnosis = _diagnosisController.text.trim();
     final licenseNo = _licenseController.text.trim();
     final ptNo = _ptController.text.trim();
     final s2 = _s2Controller.text.trim();
@@ -907,7 +904,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       ptNo: ptNo,
       s2: s2,
       patientAddress: patientAddress.isEmpty ? null : patientAddress,
-      diagnosis: diagnosis.isEmpty ? null : diagnosis,
+      diagnosis: null,
       ocrCode: ocrCode,
       dateTime: dateTime,
       medicines: medicines,
@@ -1416,7 +1413,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         'Doctor: ${_doctorController.text.isEmpty ? 'N/A' : _doctorController.text}\n'
         'Patient: ${_patientController.text.isEmpty ? 'N/A' : _patientController.text}\n'
         'Date: ${_dateController.text.isEmpty ? 'N/A' : _dateController.text}\n'
-        'Diagnosis: ${_diagnosisController.text.isEmpty ? 'N/A' : _diagnosisController.text}\n'
         'License: ${_licenseController.text.isEmpty ? 'N/A' : _licenseController.text}\n'
         'PTR: ${_ptController.text.isEmpty ? 'N/A' : _ptController.text}\n'
         'S2: ${_s2Controller.text.isEmpty ? 'N/A' : _s2Controller.text}\n'
@@ -1537,8 +1533,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
-              _fieldBox(label: 'Diagnosis', controller: _diagnosisController),
+
               const SizedBox(height: 10),
               Row(
                 children: [
