@@ -512,43 +512,47 @@ class SavedPrescriptionsStore {
         .toSet()
         .toList();
 
-    // Was a sequential await-per-patient loop — one of the two N+1 chains
-    // that made the dashboard/Saved Rx/Dispense screens slow right after
-    // login. Running every patient's fetch concurrently instead cuts this
-    // from O(patients) sequential round trips to one. Each iteration's
-    // _items mutation happens synchronously right after its own await with
-    // nothing else awaited in between, so concurrent completions can't
-    // interleave and corrupt shared state (Dart's single-threaded event
-    // loop). Per-patient failures are still isolated exactly as before —
-    // one patient's failed fetch doesn't affect any other's.
-    await Future.wait(
-      uniquePatientIds.map((pid) async {
-        try {
-          final statusJson = await _api.fetchPatientAdherence(pid);
-          debugPrint(
-            'STORE: patient=$pid adherence keys=${statusJson.keys.toList()}',
-          );
-          debugPrint(
-            'STORE: patient=$pid has medications=${statusJson['medications'] != null || statusJson['items'] != null} has refill_history=${statusJson['refill_history'] != null || statusJson['refillHistory'] != null || statusJson['dispensing_history'] != null || statusJson['dispensing_history'] != null}',
-          );
-          final adherence = AdherenceStatus.fromJson(statusJson);
-          debugPrint(
-            'STORE: patient=$pid medNames=${adherence.medicationNames} refillCount=${adherence.refillHistory.length} score=${adherence.score} hasData=${adherence.hasData}',
-          );
-          // Write the single fetched result back to EVERY Saved Rx entry for
-          // this patient, not just the first — indexWhere() only matched one,
-          // so a patient's 2nd/3rd prescription kept adherence == null and the
-          // list screen hid its adherence badge.
-          for (var i = 0; i < _items.length; i++) {
-            if (_items[i].patientId == pid) {
-              _items[i] = _items[i].copyWith(adherence: adherence);
+    // Was Future.wait(...) firing EVERY patient's fetch at once. On
+    // Render's free tier, PHP-FPM only has 4 worker slots total (see
+    // docker/php-fpm-www.conf's pm.max_children) — with more patients than
+    // that, this alone occupies every worker, starving a concurrent OCR
+    // scan or any other request into a 502/timeout. Capping to 3 keeps
+    // this still parallel (not the old fully-sequential version either)
+    // while leaving at least one worker free for other traffic.
+    const maxConcurrent = 3;
+
+    for (var i = 0; i < uniquePatientIds.length; i += maxConcurrent) {
+      final batch = uniquePatientIds.skip(i).take(maxConcurrent);
+
+      await Future.wait(
+        batch.map((pid) async {
+          try {
+            final statusJson = await _api.fetchPatientAdherence(pid);
+            debugPrint(
+              'STORE: patient=$pid adherence keys=${statusJson.keys.toList()}',
+            );
+            debugPrint(
+              'STORE: patient=$pid has medications=${statusJson['medications'] != null || statusJson['items'] != null} has refill_history=${statusJson['refill_history'] != null || statusJson['refillHistory'] != null || statusJson['dispensing_history'] != null || statusJson['dispensing_history'] != null}',
+            );
+            final adherence = AdherenceStatus.fromJson(statusJson);
+            debugPrint(
+              'STORE: patient=$pid medNames=${adherence.medicationNames} refillCount=${adherence.refillHistory.length} score=${adherence.score} hasData=${adherence.hasData}',
+            );
+            // Write the single fetched result back to EVERY Saved Rx entry
+            // for this patient, not just the first — indexWhere() only
+            // matched one, so a patient's 2nd/3rd prescription kept
+            // adherence == null and the list screen hid its adherence badge.
+            for (var j = 0; j < _items.length; j++) {
+              if (_items[j].patientId == pid) {
+                _items[j] = _items[j].copyWith(adherence: adherence);
+              }
             }
+          } catch (e) {
+            debugPrint('STORE: patient=$pid adherence fetch failed: $e');
           }
-        } catch (e) {
-          debugPrint('STORE: patient=$pid adherence fetch failed: $e');
-        }
-      }),
-    );
+        }),
+      );
+    }
   }
 
   static DispensingStatus _parseDispensingStatus(String? value) {
