@@ -165,27 +165,35 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       // upload under the backends' size limits, which is the actual point
       // of client-side preprocessing. Mobile keeps the full pass (real
       // background isolate, no freeze).
-      final preprocessSw = Stopwatch()..start();
-      Uint8List preprocessedBytes;
-      try {
-        preprocessedBytes = await compute(
-          kIsWeb
-              ? ImagePreprocessorService.preprocessLiteOrFallback
-              : ImagePreprocessorService.preprocessOrFallback,
-          rawBytes,
-        ).timeout(
-          // Hard ceiling so a pathological decode can never hang the whole
-          // scan. On timeout we upload the raw bytes — the backend accepts
-          // up to 12 MB and resizes server-side, so a plain phone photo
-          // still scans, just with a larger upload.
-          const Duration(seconds: 12),
-        );
-      } catch (_) {
-        // TimeoutException, or a failure of compute() itself.
-        // preprocessLiteOrFallback / preprocessOrFallback already handle
-        // decode/encode errors internally.
-        preprocessedBytes = rawBytes;
+      //
+      // The vision models (Gemini/Groq) get a resized COLOR copy instead
+      // (prepareForVision): binarizing erases faint pen strokes they could
+      // otherwise read. The binarized/lite image above is now built only
+      // if the scan falls all the way back to OCR.space.
+      //
+      // Hard ceiling on each pass so a pathological decode can never hang
+      // the whole scan. On timeout we upload the raw bytes — the backend
+      // accepts up to 8 MB and resizes server-side, so a plain phone photo
+      // still scans, just with a larger upload.
+      Future<Uint8List> runPreprocess(
+        Uint8List Function(Uint8List) pass,
+      ) async {
+        try {
+          return await compute(
+            pass,
+            rawBytes,
+          ).timeout(const Duration(seconds: 12));
+        } catch (_) {
+          // TimeoutException, or a failure of compute() itself. The
+          // *OrFallback passes already handle decode/encode errors.
+          return rawBytes;
+        }
       }
+
+      final preprocessSw = Stopwatch()..start();
+      final visionBytes = await runPreprocess(
+        ImagePreprocessorService.prepareForVisionOrFallback,
+      );
       preprocessSw.stop();
       // Perf timing only — no image content, no OCR output.
       _debugLog('ocr_preprocess_timing_ms:${preprocessSw.elapsedMilliseconds}');
@@ -195,7 +203,14 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       // raw capture, not the preprocessed version. Only the OCR pipeline
       // sees the preprocessed bytes.
 
-      await _processOcr(preprocessedBytes);
+      await _processOcr(
+        visionBytes,
+        ocrSpaceImage: () => runPreprocess(
+          kIsWeb
+              ? ImagePreprocessorService.preprocessLiteOrFallback
+              : ImagePreprocessorService.preprocessOrFallback,
+        ),
+      );
     } on TimeoutException {
       // Shouldn't normally surface here (picker itself has no timeout),
       // but keep the failure path uniform if the platform channel ever
@@ -223,7 +238,10 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
     }
   }
 
-  Future<void> _processOcr(Uint8List bytes) async {
+  Future<void> _processOcr(
+    Uint8List bytes, {
+    Future<Uint8List> Function()? ocrSpaceImage,
+  }) async {
     PrescriptionScanResult result;
     try {
       // Safety net: every network call inside scanPrescription already
@@ -236,6 +254,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       result = await PrescriptionOcrService.scanPrescription(
         bytes,
         pharmacyId: widget.pharmacyId,
+        ocrSpaceImage: ocrSpaceImage,
         onStageChanged: (stage) {
           if (!mounted) return;
           setState(() => _processingStage = stage);

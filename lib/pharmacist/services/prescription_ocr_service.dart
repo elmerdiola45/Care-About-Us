@@ -13,10 +13,15 @@ import '../models/prescription_scan_result.dart';
 export '../models/prescription_scan_result.dart';
 
 class PrescriptionOcrService {
+  /// [imageBytes] goes to the vision models (Gemini/Groq) and should be a
+  /// resized COLOR photo. [ocrSpaceImage], if given, produces the smaller
+  /// image OCR.space gets instead (its free tier caps uploads at ~1 MB);
+  /// it is only called if the scan actually falls back that far.
   static Future<PrescriptionScanResult> scanPrescription(
     Uint8List imageBytes, {
     required String pharmacyId,
     void Function(String stage)? onStageChanged,
+    Future<Uint8List> Function()? ocrSpaceImage,
   }) async {
     final totalSw = Stopwatch()..start();
     onStageChanged?.call('Reading handwriting…');
@@ -58,6 +63,7 @@ class PrescriptionOcrService {
         engineUsed: 'gemini+parser',
         drugDictionary: geminiDictResults[0] as List<String>,
         corrections: geminiDictResults[1] as Map<String, String>,
+        ocrLines: geminiResult.lines,
       );
 
       if (!PrescriptionResultScorer.isWeak(geminiParsed)) {
@@ -99,6 +105,7 @@ class PrescriptionOcrService {
         engineUsed: 'groq+parser',
         drugDictionary: groqDictResults[0] as List<String>,
         corrections: groqDictResults[1] as Map<String, String>,
+        ocrLines: groqResult.lines,
       );
 
       if (!PrescriptionResultScorer.isWeak(groqParsed)) {
@@ -124,8 +131,11 @@ class PrescriptionOcrService {
 
     // ---- Attempt 3: OCR.space Engine 2 -----------------------------------
     onStageChanged?.call('Reading handwriting…');
+    final ocrSpaceBytes = ocrSpaceImage != null
+        ? await ocrSpaceImage()
+        : imageBytes;
     final engine2Sw = Stopwatch()..start();
-    final ocrSpace2 = await OcrService.extractText(imageBytes, engine: '2');
+    final ocrSpace2 = await OcrService.extractText(ocrSpaceBytes, engine: '2');
     engine2Sw.stop();
     // ignore: avoid_print
     print(
@@ -181,7 +191,7 @@ class PrescriptionOcrService {
     // ---- Attempt 4: OCR.space Engine 3, merged with Engine 2 ------------
     onStageChanged?.call('Double-checking hard-to-read lines…');
     final engine3Sw = Stopwatch()..start();
-    final ocrSpace3 = await OcrService.extractText(imageBytes, engine: '3');
+    final ocrSpace3 = await OcrService.extractText(ocrSpaceBytes, engine: '3');
     engine3Sw.stop();
     // ignore: avoid_print
     print(

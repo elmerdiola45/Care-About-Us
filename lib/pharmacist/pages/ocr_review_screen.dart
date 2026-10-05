@@ -5,9 +5,12 @@
 //   PrescriptionOcrService) for structured patient/doctor/medicine
 //   fields, and a regex fallback parser for the fields that pipeline
 //   doesn't extract yet (diagnosis, license/PTR/S2 numbers, address).
-// - Shows scanned OCR text preview with "OCR Complete" badge
+// - Shows the prescription photo (zoomable; pinned beside the form on
+//   wide screens) so every value can be checked against the paper
 // - Provides editable fields: Doctor, Date, Patient, Diagnosis, etc.
-// - Shows MDRP Compliant auto-generated price list table
+// - Shows the auto-generated price list, each medicine marked verified /
+//   check / not matched with what the OCR actually read ("Read as");
+//   "check" rows must be confirmed against the photo before saving
 // - Saves only when the pharmacist explicitly taps "Save & Continue"
 //   after reviewing/correcting fields. Shows a success banner and a
 //   "View Saved List" button afterward.
@@ -365,6 +368,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           isEssential: true,
           duration: _combineSig(m.frequency, m.duration),
           matchConfidence: m.matchConfidence,
+          sourceText: m.sourceText,
+          sourceLegibility: m.sourceLegibility,
         );
       }).toList();
     } else {
@@ -817,6 +822,33 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       return;
     }
 
+    // Rows the pipeline wasn't sure about (weak catalog match, guessed
+    // strength/price, or a line the AI itself rated hard to read) must be
+    // checked against the photo. Saving them unconfirmed is how a misread
+    // turns into a dispensed wrong drug.
+    final unconfirmedCount = _matchedMeds
+        .where((m) => m.reviewStatus == _ReviewStatus.check)
+        .length;
+    if (unconfirmedCount > 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              unconfirmedCount == 1
+                  ? 'Check the medicine marked "Check" against the photo, '
+                        'then tap Confirm before saving.'
+                  : 'Check the $unconfirmedCount medicines marked "Check" '
+                        'against the photo, then tap Confirm on each before '
+                        'saving.',
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
+
     // A Senior Citizen prescription must carry an OSCA ID — it's the
     // identifier the discount/eligibility record keys off downstream.
     if (_isSenior && _oscaIdController.text.trim().isEmpty) {
@@ -1166,28 +1198,28 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         children: [
           ResponsiveCenter.dashboard(
             padding: EdgeInsets.zero,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              children: [
-                _buildScannedNotePreview(),
-                if (_hasUnavailableMedicine) ...[
-                  const SizedBox(height: 12),
-                  _buildMedicineNotAvailableCard(),
-                ],
-                if (_validationWarnings.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  _buildValidationWarnings(),
-                ],
-                if (_isSaved && _ocrCode != null) ...[
-                  const SizedBox(height: 16),
-                  _buildSavedBanner(),
-                ],
-                _buildEditableFieldsSection(),
-                const SizedBox(height: 16),
-                _buildMedicineListSection(),
-                const SizedBox(height: 18),
-                _buildBottomButtons(),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Wide (desktop/tablet web): photo pinned on the left so it
+                // stays visible while scrolling the fields and medicines.
+                // Narrow (phone): photo card at the top of the list.
+                final wide = constraints.maxWidth >= 900;
+                final list = _buildReviewList(showPhoto: !wide);
+                if (!wide) return list;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: constraints.maxWidth * 0.42,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 0, 24),
+                        child: _buildPhotoCard(fillHeight: true),
+                      ),
+                    ),
+                    Expanded(child: list),
+                  ],
+                );
+              },
             ),
           ),
           if (_isOpeningExisting)
@@ -1198,6 +1230,216 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildReviewList({required bool showPhoto}) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      children: [
+        if (showPhoto) _buildPhotoCard(fillHeight: false),
+        if (_hasUnavailableMedicine) ...[
+          const SizedBox(height: 12),
+          _buildMedicineNotAvailableCard(),
+        ],
+        if (_validationWarnings.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildValidationWarnings(),
+        ],
+        if (_isSaved && _ocrCode != null) ...[
+          const SizedBox(height: 16),
+          _buildSavedBanner(),
+        ],
+        if (showPhoto ||
+            _hasUnavailableMedicine ||
+            _validationWarnings.isNotEmpty)
+          const SizedBox(height: 12),
+        _buildEditableFieldsSection(),
+        const SizedBox(height: 16),
+        _buildMedicineListSection(),
+        const SizedBox(height: 18),
+        _buildBottomButtons(),
+      ],
+    );
+  }
+
+  static const _statusGreen = Color(0xFF2E9C6B);
+  static const _statusAmber = Color(0xFFD97706);
+  static const _statusRed = Color(0xFFDC2626);
+
+  static Color _statusColor(_ReviewStatus s) => switch (s) {
+    _ReviewStatus.verified => _statusGreen,
+    _ReviewStatus.check => _statusAmber,
+    _ReviewStatus.problem => _statusRed,
+  };
+
+  static IconData _statusIcon(_ReviewStatus s) => switch (s) {
+    _ReviewStatus.verified => Icons.check_circle_rounded,
+    _ReviewStatus.check => Icons.error_outline_rounded,
+    _ReviewStatus.problem => Icons.cancel_rounded,
+  };
+
+  /// The prescription photo next to (wide) or above (narrow) the fields,
+  /// so every value can be checked against what is actually written.
+  /// Pinch/scroll to zoom in place; the expand button opens it full screen.
+  Widget _buildPhotoCard({required bool fillHeight}) {
+    final photo = ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: ColoredBox(
+        color: const Color(0xFF111827),
+        child: InteractiveViewer(
+          minScale: 1,
+          maxScale: 6,
+          child: Center(
+            child: Image.memory(
+              widget.imageBytes,
+              fit: BoxFit.contain,
+              gaplessPlayback: true,
+              errorBuilder: (_, _, _) => const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'Photo unavailable',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: OcrReviewColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: OcrReviewColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'PRESCRIPTION PHOTO',
+                  style: TextStyle(
+                    color: OcrReviewColors.textSecondary,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'View full screen',
+                icon: const Icon(Icons.open_in_full_rounded, size: 20),
+                onPressed: _openPhotoFullScreen,
+              ),
+            ],
+          ),
+          const Text(
+            'Compare every medicine below with what is written here. '
+            'Pinch or scroll to zoom.',
+            style: TextStyle(
+              fontSize: 12,
+              color: OcrReviewColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (fillHeight)
+            Expanded(child: photo)
+          else
+            SizedBox(height: 300, child: photo),
+          const SizedBox(height: 12),
+          _buildReviewSummary(),
+        ],
+      ),
+    );
+  }
+
+  /// "2 verified · 1 to check · 0 not matched" — live, so it updates as
+  /// the pharmacist confirms or fixes rows.
+  Widget _buildReviewSummary() {
+    var verified = 0, check = 0, problem = 0;
+    for (final m in _matchedMeds) {
+      switch (m.reviewStatus) {
+        case _ReviewStatus.verified:
+          verified++;
+        case _ReviewStatus.check:
+          check++;
+        case _ReviewStatus.problem:
+          problem++;
+      }
+    }
+
+    Widget chip(_ReviewStatus s, String label) {
+      final color = _statusColor(s);
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_statusIcon(s), size: 14, color: color),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      children: [
+        chip(_ReviewStatus.verified, '$verified verified'),
+        chip(_ReviewStatus.check, '$check to check'),
+        chip(_ReviewStatus.problem, '$problem not matched'),
+      ],
+    );
+  }
+
+  void _openPhotoFullScreen() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: InteractiveViewer(
+                minScale: 1,
+                maxScale: 8,
+                child: Center(
+                  child: Image.memory(widget.imageBytes, fit: BoxFit.contain),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: SafeArea(
+                child: IconButton(
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1396,80 +1638,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   fontSize: 13.5,
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScannedNotePreview() {
-    // Use the merged values (structured pipeline result + regex-parsed
-    // admin fields) that already populated the editable controllers,
-    // rather than reading straight off scanResult — our OCR.space/
-    // Tesseract pipeline doesn't extract date/diagnosis/license/PTR/S2/
-    // address itself, so those only exist post-merge.
-    final displayText =
-        'Doctor: ${_doctorController.text.isEmpty ? 'N/A' : _doctorController.text}\n'
-        'Patient: ${_patientController.text.isEmpty ? 'N/A' : _patientController.text}\n'
-        'Date: ${_dateController.text.isEmpty ? 'N/A' : _dateController.text}\n'
-        'License: ${_licenseController.text.isEmpty ? 'N/A' : _licenseController.text}\n'
-        'PTR: ${_ptController.text.isEmpty ? 'N/A' : _ptController.text}\n'
-        'S2: ${_s2Controller.text.isEmpty ? 'N/A' : _s2Controller.text}\n'
-        'Address: ${_addressController.text.isEmpty ? 'N/A' : _addressController.text}\n'
-        'Medicines: ${_matchedMeds.map((m) => m.medicineLabel).join(', ')}';
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: OcrReviewColors.scanNote,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: OcrReviewColors.border),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1B8F3A).withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF1B8F3A)),
-              ),
-              child: const Text(
-                'OCR Complete',
-                style: TextStyle(
-                  color: Color(0xFF1B8F3A),
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Scanned Note',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14.5,
-                    color: OcrReviewColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  displayText.trim(),
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    color: OcrReviewColors.textPrimary.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
             ),
           ),
         ],
@@ -1747,24 +1915,31 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCF3E8),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Text(
-                  'MDRP Compliant',
-                  style: TextStyle(
-                    color: Color(0xFF2E9C6B),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 11.5,
+              // Only claimed when every line is actually priced from the
+              // catalog — it used to show unconditionally, even next to
+              // unmatched ₱0.00 rows.
+              if (_matchedMeds.isNotEmpty &&
+                  _matchedMeds.every(
+                    (m) => m.reviewStatus != _ReviewStatus.problem,
+                  ))
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCF3E8),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'MDRP Compliant',
+                    style: TextStyle(
+                      color: Color(0xFF2E9C6B),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11.5,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -1804,10 +1979,9 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   Widget _buildEditableMedicineList() {
     return Column(
       children: [
-        for (int i = 0; i < _matchedMeds.length; i++) ...[
-          _buildMedicineRow(_matchedMeds[i]),
-          if (i != _matchedMeds.length - 1) const Divider(height: 1),
-        ],
+        // Each row carries its own status-colored left border, so no
+        // dividers are needed between them.
+        for (final m in _matchedMeds) _buildMedicineRow(m),
       ],
     );
   }
@@ -1865,20 +2039,62 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       );
     }
 
-    final needsAttention =
-        m.medicineNotFound || m.dosageNotStocked || m.needsBrandSelection;
+    final status = m.reviewStatus;
+    final statusColor = _statusColor(status);
     final summaryParts = <String>[
       if (m.brandLabel.trim().isNotEmpty) m.brandLabel.trim(),
       if (m.dosageLabel.trim().isNotEmpty) m.dosageLabel.trim(),
       '×${m.quantity}',
       '₱${m.totalLine.toStringAsFixed(2)}',
     ];
+    // What the OCR actually read, so the pharmacist sees the raw text next
+    // to what it was matched to (e.g. "Amaxicillin 500mg" -> Amoxicillin).
+    final readAs = m.isManualEntry
+        ? ''
+        : (m.sourceText.isNotEmpty
+              ? m.sourceText
+              : (m.isFallbackMatch ? m.originalOcrLabel : ''));
 
-    return Padding(
+    final String? statusNote = switch (status) {
+      _ReviewStatus.problem =>
+        m.medicineNotFound
+            ? 'No catalog match — tap Edit'
+            : m.dosageNotStocked
+            ? 'Strength not listed — tap Edit'
+            : 'Select brand — tap Edit',
+      _ReviewStatus.check =>
+        m.aiUnsureOfHandwriting
+            ? 'AI was unsure reading this line — check it against the photo'
+            : 'Not an exact match — check it against the photo',
+      _ReviewStatus.verified => null,
+    };
+
+    return Container(
       key: ValueKey('med_row_${m.id}'),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: status == _ReviewStatus.verified
+            ? Colors.transparent
+            : statusColor.withValues(alpha: 0.06),
+        border: Border(left: BorderSide(color: statusColor, width: 4)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Tooltip(
+              message: switch (status) {
+                _ReviewStatus.verified => 'Verified',
+                _ReviewStatus.check => 'Check against the photo',
+                _ReviewStatus.problem => 'Not matched to the catalog',
+              },
+              child: Icon(_statusIcon(status), size: 18, color: statusColor),
+            ),
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1897,18 +2113,54 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   summaryParts.join('  ·  '),
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
-                if (needsAttention) ...[
-                  const SizedBox(height: 2),
+                if (readAs.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Read as: ',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        TextSpan(
+                          text: '“$readAs”',
+                          style: const TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  ),
+                ],
+                if (statusNote != null) ...[
+                  const SizedBox(height: 3),
                   Text(
-                    m.medicineNotFound
-                        ? 'No catalog match — tap Edit'
-                        : m.dosageNotStocked
-                        ? 'Strength not listed — tap Edit'
-                        : 'Select brand — tap Edit',
-                    style: const TextStyle(
-                      fontSize: 11,
+                    statusNote,
+                    style: TextStyle(
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFD97706),
+                      color: statusColor,
+                    ),
+                  ),
+                ],
+                if (status == _ReviewStatus.check) ...[
+                  const SizedBox(height: 6),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() {
+                      final idx = _matchedMeds.indexWhere((e) => e.id == m.id);
+                      if (idx != -1) {
+                        _matchedMeds[idx] = m.copyWith(reviewConfirmed: true);
+                      }
+                    }),
+                    icon: const Icon(Icons.check_rounded, size: 16),
+                    label: const Text('Confirm — matches the photo'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _statusGreen,
+                      side: const BorderSide(color: _statusGreen),
+                      visualDensity: VisualDensity.compact,
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12.5,
+                      ),
                     ),
                   ),
                 ],
@@ -2965,6 +3217,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       originalOcrLabel: widget.medicine.originalOcrLabel,
       isFallbackMatch: widget.medicine.isFallbackMatch,
       isManualEntry: widget.medicine.isManualEntry,
+      sourceText: widget.medicine.sourceText,
+      sourceLegibility: widget.medicine.sourceLegibility,
+      reviewConfirmed: widget.medicine.reviewConfirmed,
     );
 
     // Pharmacist picked a brand from the picker (or the prescription
@@ -3652,6 +3907,15 @@ class _MatchedMedicine {
   /// catalog SKU via the picker.
   final bool isManualEntry;
 
+  /// What the OCR actually read for this medicine ("Read as"), and the
+  /// vision model's legibility rating for it — see PrescriptionMedicine.
+  final String sourceText;
+  final String sourceLegibility;
+
+  /// The pharmacist tapped Confirm after checking this row against the
+  /// photo. Required before saving for every row in [_ReviewStatus.check].
+  final bool reviewConfirmed;
+
   _MatchedMedicine({
     int? id,
     required this.medicineLabel,
@@ -3672,6 +3936,9 @@ class _MatchedMedicine {
     String? originalOcrLabel,
     this.isFallbackMatch = false,
     this.isManualEntry = false,
+    this.sourceText = '',
+    this.sourceLegibility = '',
+    this.reviewConfirmed = false,
   }) : id = id ?? ++_idSeq,
        originalOcrLabel = originalOcrLabel ?? medicineLabel;
 
@@ -3695,6 +3962,7 @@ class _MatchedMedicine {
     double? matchConfidence,
     bool? isFallbackMatch,
     bool? isManualEntry,
+    bool? reviewConfirmed,
   }) {
     return _MatchedMedicine(
       // Identity is stable across edits — always carried forward.
@@ -3721,6 +3989,9 @@ class _MatchedMedicine {
       originalOcrLabel: originalOcrLabel,
       isFallbackMatch: isFallbackMatch ?? this.isFallbackMatch,
       isManualEntry: isManualEntry ?? this.isManualEntry,
+      sourceText: sourceText,
+      sourceLegibility: sourceLegibility,
+      reviewConfirmed: reviewConfirmed ?? this.reviewConfirmed,
     );
   }
 
@@ -3729,7 +4000,38 @@ class _MatchedMedicine {
   bool get wasManuallyCorrected =>
       medicineLabel.trim().toLowerCase() !=
       originalOcrLabel.trim().toLowerCase();
+
+  /// Below this name-match score a row is shown as "check" even when it
+  /// matched the catalog — the fuzzy matcher accepts scores down to 0.60,
+  /// which is close enough to be a different drug.
+  static const double confidentMatch = 0.85;
+
+  bool get aiUnsureOfHandwriting =>
+      sourceLegibility == 'partial' || sourceLegibility == 'unclear';
+
+  _ReviewStatus get reviewStatus {
+    if (medicineNotFound || dosageNotStocked || needsBrandSelection) {
+      return _ReviewStatus.problem;
+    }
+    // Typed or corrected by the pharmacist, or explicitly confirmed.
+    if (isManualEntry || wasManuallyCorrected || reviewConfirmed) {
+      return _ReviewStatus.verified;
+    }
+    final uncertain =
+        matchConfidence < confidentMatch ||
+        isFallbackMatch ||
+        !unitPriceIsExact ||
+        aiUnsureOfHandwriting;
+    return uncertain ? _ReviewStatus.check : _ReviewStatus.verified;
+  }
 }
+
+/// How much a medicine row needs the pharmacist's attention:
+/// verified (green) — confident catalog match from a clearly read line;
+/// check (amber) — matched, but something about it is a guess and it
+/// must be confirmed against the photo before saving;
+/// problem (red) — not matched/priced from the catalog as written.
+enum _ReviewStatus { verified, check, problem }
 
 class _MedicineResolution {
   static _MatchedMedicine resolve({

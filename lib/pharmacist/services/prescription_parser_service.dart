@@ -80,12 +80,23 @@ class PrescriptionParserService {
   /// the dosage gets silently dropped rather than corrected.
   static const String _digitLikeChars = r'0-9oOlIiZzSsBb';
 
+  /// A numeral that may contain digit-lookalike letters ("5OO"), but must
+  /// contain at least one REAL digit and must not start in the middle of
+  /// a word. Without both rules, ordinary words were read as dosages:
+  /// "Tagu[ig]" -> "1g", "[big]" -> "81g" — which is how an address line
+  /// ended up saved as the medicine "Block Lot Upper Bicutan Tagu 1g".
+  static const String _numeral =
+      '(?<![A-Za-z])[$_digitLikeChars]*\\d[$_digitLikeChars]*';
+
   // Same class of bug as _quantityPattern above: the numeral portion
   // needs its own capturing group so group(1) is the number and group(2)
   // is the unit — previously the numeral wasn't captured at all, so
   // group(1) grabbed the unit word and group(2) didn't exist.
+  //
+  // The second alternative still accepts a strength glued directly to
+  // the name ("Amoxicillin500mg") as long as it starts with a real digit.
   static final RegExp _dosagePattern = RegExp(
-    '([$_digitLikeChars]+(?:\\.[$_digitLikeChars]+)?)'
+    '((?:$_numeral|\\d[$_digitLikeChars]*)(?:\\.[$_digitLikeChars]+)?)'
     '\\s?(mg|mcg|g|ml|iu|%)\\b',
     caseSensitive: false,
   );
@@ -103,10 +114,13 @@ class PrescriptionParserService {
     caseSensitive: false,
   );
 */
+  // Numerals follow the same rules as [_dosagePattern] ([_numeral]) so
+  // "is tab" no longer reads as "15 tab", and the unit word must end at
+  // a word boundary so "1 tablespoon" isn't read as "1 tab".
   static final RegExp _quantityPattern = RegExp(
-    '#\\s?([$_digitLikeChars]+)|(?<![A-Za-z])([$_digitLikeChars]+)\\s?'
+    '#\\s?([$_digitLikeChars]*\\d[$_digitLikeChars]*)|($_numeral)\\s?'
     '(?:tabs?|tablets?|caps?|capsules?|pcs?|pieces?|'
-    'bottles?|amps?|vials?|sachets?)',
+    'bottles?|amps?|vials?|sachets?)\\b',
     caseSensitive: false,
   );
   // The physical dosage FORM word (as opposed to the strength captured
@@ -188,6 +202,7 @@ class PrescriptionParserService {
     String engineUsed = 'ocrspace+parser',
     List<String>? drugDictionary,
     Map<String, String>? corrections,
+    List<OcrLine> ocrLines = const [],
   }) {
     if (rawText.trim().isEmpty) {
       return PrescriptionScanResult(
@@ -216,6 +231,7 @@ class PrescriptionParserService {
       lines,
       drugDictionary ?? _knownDrugs,
       corrections ?? const {},
+      _legibilityPerLine(lines, ocrLines),
     );
     // ignore: avoid_print
     print(
@@ -232,6 +248,7 @@ class PrescriptionParserService {
       doctorName: doctorName,
       medicines: medicines,
       rawText: rawText,
+      ocrLines: ocrLines,
       engineUsed: engineUsed,
     );
   }
@@ -510,10 +527,40 @@ class PrescriptionParserService {
     return '$line $next';
   }
 
+  /// The vision model's legibility rating for each entry of [lines], or
+  /// an empty list when [ocrLines] doesn't line up one-to-one with them
+  /// (no per-line data, or text that came from somewhere else).
+  static List<String> _legibilityPerLine(
+    List<String> lines,
+    List<OcrLine> ocrLines,
+  ) {
+    if (ocrLines.length != lines.length) return const [];
+    for (var i = 0; i < lines.length; i++) {
+      if (ocrLines[i].text.trim() != lines[i]) return const [];
+    }
+    return ocrLines.map((l) => l.legibility).toList();
+  }
+
+  static const List<String> _legibilityOrder = ['clear', 'partial', 'unclear'];
+
+  /// Least legible rating among [indices], or '' when unknown.
+  static String _worstLegibility(List<String> legibility, List<int> indices) {
+    var worst = '';
+    for (final i in indices) {
+      if (i < 0 || i >= legibility.length) return '';
+      final l = legibility[i];
+      if (_legibilityOrder.indexOf(l) > _legibilityOrder.indexOf(worst)) {
+        worst = l;
+      }
+    }
+    return worst;
+  }
+
   static List<PrescriptionMedicine> _extractMedicines(
     List<String> lines,
     List<String> drugDictionary,
     Map<String, String> corrections,
+    List<String> legibility,
   ) {
     final medicines = <PrescriptionMedicine>[];
 
@@ -575,25 +622,7 @@ class PrescriptionParserService {
           lastConsumed = j;
         }
 
-        final sigText = segments.join(' ');
-        final sigFrequency = _findFrequency(sigText);
-        final sigDuration = _findDuration(sigText);
-        if (sigFrequency.isNotEmpty || sigDuration.isNotEmpty) {
-          final prev = medicines.removeLast();
-          medicines.add(
-            PrescriptionMedicine(
-              name: prev.name,
-              dosage: prev.dosage,
-              quantity: prev.quantity,
-              frequency: sigFrequency.isNotEmpty
-                  ? sigFrequency
-                  : prev.frequency,
-              brand: prev.brand,
-              duration: sigDuration.isNotEmpty ? sigDuration : prev.duration,
-              matchConfidence: prev.matchConfidence,
-            ),
-          );
-        }
+        _attachSigToLast(medicines, segments.join(' '));
         i = lastConsumed;
         continue;
       }
@@ -602,6 +631,20 @@ class PrescriptionParserService {
       if (line.isEmpty ||
           _looksLikeHeaderLine(line) ||
           _looksLikeAddressLine(line)) {
+        continue;
+      }
+
+      // Dosing instructions written WITHOUT a "Sig:" label, directly
+      // under their drug — "1 tab 2x a day x 7 days", "Take 1 cap every
+      // 8 hours". These carry a quantity-looking "1 tab", so they used to
+      // pass the "is this a medicine line" check below and show up as
+      // phantom medicines named "Tab X A Day X Days". They are Sig text
+      // for the previous medicine, never a medicine of their own — unless
+      // the line actually names a drug, which the fuzzy check rules out.
+      if (!_dosagePattern.hasMatch(line) &&
+          _looksLikeUnlabeledInstruction(line) &&
+          _fuzzyMatchDrug(line, drugDictionary).name == null) {
+        _attachSigToLast(medicines, line);
         continue;
       }
 
@@ -646,10 +689,15 @@ class PrescriptionParserService {
       // line has a dosage" check is unsafe (it would swallow an
       // unrelated, already-complete drug line on the next iteration
       // into a preceding diagnosis/complaint line).
+      // Every OCR line this medicine is built from, for "Read as" and
+      // the legibility rating on the review screen.
+      final sourceIndices = [nameLineIndex];
+
       final merged = _maybeMergeNameOnlyLine(line, lines, i);
       if (merged != null) {
         line = merged;
         i++;
+        sourceIndices.add(i);
       }
 
       // Brand written inline with the generic name, e.g.
@@ -670,6 +718,7 @@ class PrescriptionParserService {
           r'^\(([A-Za-z][A-Za-z0-9\-\s]{1,30})\)$',
         ).firstMatch(lines[nameLineIndex - 1].trim());
         brand = m?.group(1)?.trim() ?? '';
+        sourceIndices.insert(0, nameLineIndex - 1);
       }
 
       final dosageMatch = _dosagePattern.firstMatch(line);
@@ -895,6 +944,8 @@ class PrescriptionParserService {
                 brandMatch.score,
                 if (dosageWasSnapped) dosageSnapConfidence,
               ].reduce((a, b) => a < b ? a : b),
+        sourceText: sourceIndices.map((k) => lines[k]).join('  /  '),
+        sourceLegibility: _worstLegibility(legibility, sourceIndices),
       );
       // ignore: avoid_print
       print(
@@ -909,6 +960,56 @@ class PrescriptionParserService {
     }
 
     return medicines;
+  }
+
+  /// Applies the frequency/duration found in [sigText] to the most
+  /// recently parsed medicine. No-op when there is no previous medicine
+  /// or the text carries neither.
+  static void _attachSigToLast(
+    List<PrescriptionMedicine> medicines,
+    String sigText,
+  ) {
+    if (medicines.isEmpty) return;
+    final sigFrequency = _findFrequency(sigText);
+    final sigDuration = _findDuration(sigText);
+    if (sigFrequency.isEmpty && sigDuration.isEmpty) return;
+    final prev = medicines.removeLast();
+    medicines.add(
+      PrescriptionMedicine(
+        name: prev.name,
+        dosage: prev.dosage,
+        quantity: prev.quantity,
+        frequency: sigFrequency.isNotEmpty ? sigFrequency : prev.frequency,
+        brand: prev.brand,
+        dosageForm: prev.dosageForm,
+        duration: sigDuration.isNotEmpty ? sigDuration : prev.duration,
+        matchConfidence: prev.matchConfidence,
+        sourceText: prev.sourceText,
+        sourceLegibility: prev.sourceLegibility,
+      ),
+    );
+  }
+
+  static final RegExp _numberLead = RegExp(r'^(?:\d+(?:\s*/\s*\d+)?|½)');
+  static final RegExp _verbLead = RegExp(
+    r'^(?:take|inom|apply|give|instill|use)\b',
+    caseSensitive: false,
+  );
+
+  /// True for an unlabeled Sig line: one that opens with an amount
+  /// ("1 tab", "1/2 tsp") or an instruction verb ("Take", "Inom") and
+  /// carries dosing information. A number-led line must include a
+  /// frequency or duration, so a quantity-first medicine line such as
+  /// "2 bottles Ambroxol syrup" is not mistaken for an instruction.
+  static bool _looksLikeUnlabeledInstruction(String line) {
+    final trimmed = line.trim();
+    final hasTiming =
+        _findFrequency(trimmed).isNotEmpty || _findDuration(trimmed).isNotEmpty;
+    if (_numberLead.hasMatch(trimmed)) return hasTiming;
+    if (_verbLead.hasMatch(trimmed)) {
+      return hasTiming || _quantityPattern.hasMatch(trimmed);
+    }
+    return false;
   }
 
   // Philippine addresses very commonly name a block/lot, barangay, purok,
@@ -1268,12 +1369,22 @@ class PrescriptionParserService {
     // the raw text ISN'T already something the pharmacy stocks under
     // its own name, which is what actually makes it safe to treat as
     // an abbreviation rather than a coincidental short match.
+    //
+    // Tokenized separately from `words` above because abbreviations are
+    // chemical formulas whose digits matter: `cleaned` strips "feso4" to
+    // "feso", which is not a known abbreviation — that is why "FeSO4 tab
+    // #30" was being saved as the unmatched item "FeSO Tab".
+    final rawWords = candidate
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9\s\-]'), ' ')
+        .trim()
+        .split(RegExp(r'\s+'));
     for (
       int windowSize = 1;
-      windowSize <= 3 && windowSize <= words.length;
+      windowSize <= 3 && windowSize <= rawWords.length;
       windowSize++
     ) {
-      final window = words.take(windowSize).join(' ');
+      final window = rawWords.take(windowSize).join(' ');
       final target = DrugAbbreviations.resolve(window, drugDictionary);
       if (target != null) {
         return (name: target.split(' ').map(_capitalize).join(' '), score: 1.0);

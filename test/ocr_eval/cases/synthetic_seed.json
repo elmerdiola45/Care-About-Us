@@ -1,0 +1,110 @@
+[
+  {
+    "id": "S01_clean_single",
+    "source": "synthetic",
+    "note": "Clean transcription, brand inline, labeled Sig and footer.",
+    "raw_text": "Patient: Juan Dela Cruz\nAge: 34  Sex: M\nDate: 09/12/2026\nAmoxicillin (Himox) 500mg cap #21\nSig: 1 cap 3x a day for 7 days\nDr. Maria Santos\nLic. No. 0123456\nPTR No. 7654321",
+    "expected": [
+      { "name": "Amoxicillin", "aliases": ["Himox"], "dosage": "500mg", "quantity": "21" }
+    ]
+  },
+  {
+    "id": "S02_unlabeled_sig",
+    "source": "synthetic",
+    "note": "Sig lines written without the 'Sig:' label, directly under each drug.",
+    "raw_text": "Patient: Ana Reyes  Age: 29  Sex: F\nCefuroxime 500mg tab #14\n1 tab 2x a day x 7 days\nParacetamol 500mg tab #10\n1 tab every 4 hrs PRN fever",
+    "expected": [
+      { "name": "Cefuroxime", "dosage": "500mg", "quantity": "14" },
+      { "name": "Paracetamol", "dosage": "500mg", "quantity": "10" }
+    ]
+  },
+  {
+    "id": "S03_address_taguig",
+    "source": "synthetic",
+    "note": "Address with no block/brgy keyword. Mirrors the saved 'Block Lot Upper Bicutan Tagu 1g' phantom item.",
+    "raw_text": "Patient: Liza Mendoza  Age: 45  Sex: F\nAddress: 12 Upper Bicutan, Taguig City\nLosartan 50mg tab #30\nSig: 1 tab once a day",
+    "expected": [
+      { "name": "Losartan", "dosage": "50mg", "quantity": "30" }
+    ]
+  },
+  {
+    "id": "S04_letterhead_leak",
+    "source": "synthetic",
+    "note": "Model failed to skip the printed letterhead.",
+    "raw_text": "ST. LUKE'S FAMILY CLINIC\nMabini St., Brgy. 5, Lipa City\nTel. No. 043-756-1234\nClinic Hours: Mon-Sat 9AM-5PM\nPatient: Carlo Bautista  Age: 52\nAmlodipine 5mg tab #30\nSig: 1 tab OD\nAtorvastatin 20mg tab #30\nSig: 1 tab at bedtime",
+    "expected": [
+      { "name": "Amlodipine", "dosage": "5mg", "quantity": "30" },
+      { "name": "Atorvastatin", "dosage": "20mg", "quantity": "30" }
+    ]
+  },
+  {
+    "id": "S05_brand_first",
+    "source": "synthetic",
+    "note": "Doctor wrote brand names instead of generics.",
+    "raw_text": "Biogesic 500mg tab #20\nSig: 1 tab every 4 hours as needed for fever\nNeozep Forte tab #10\nSig: 1 tab 3x a day",
+    "expected": [
+      { "name": "Paracetamol", "aliases": ["Biogesic"], "dosage": "500mg", "quantity": "20" },
+      { "name": "Neozep", "quantity": "10" }
+    ]
+  },
+  {
+    "id": "S06_misspelled_names",
+    "source": "synthetic",
+    "note": "Handwriting misreads of drug names and O-for-0 in the strength.",
+    "raw_text": "Amoxicilin 5OOmg cap #21\nSig: 1 cap TID x 7 days\nCetirizne 10mg tab #10\nSig: 1 tab OD at bedtime",
+    "expected": [
+      { "name": "Amoxicillin", "dosage": "500mg", "quantity": "21" },
+      { "name": "Cetirizine", "dosage": "10mg", "quantity": "10" }
+    ]
+  },
+  {
+    "id": "S07_diagnosis_and_notes",
+    "source": "synthetic",
+    "note": "Diagnosis and follow-up notes around the Rx lines.",
+    "raw_text": "Patient: Rosa Garcia  Age: 67  Sex: F\nDx: Hypertension, Type 2 Diabetes\nMetformin 500mg tab #60\nSig: 1 tab 2x a day after meals\nLosartan 50mg tab #30\nSig: 1 tab once a day\nFollow up after 2 weeks\nBring latest lab results",
+    "expected": [
+      { "name": "Metformin", "dosage": "500mg", "quantity": "60" },
+      { "name": "Losartan", "dosage": "50mg", "quantity": "30" }
+    ]
+  },
+  {
+    "id": "S08_split_name_line",
+    "source": "synthetic",
+    "note": "Name on one line, strength/quantity on the next.",
+    "raw_text": "Ascorbic Acid\n#30 500mg tab\nSig: 1 tab OD\nFerrous Sulfate\n#30 tab\nSig: 1 tab OD",
+    "expected": [
+      { "name": "Ascorbic Acid", "dosage": "500mg", "quantity": "30" },
+      { "name": "Ferrous Sulfate", "quantity": "30" }
+    ]
+  },
+  {
+    "id": "S09_feso4_abbrev",
+    "source": "synthetic",
+    "note": "Chemical-formula abbreviation with Rx symbol on the same line.",
+    "raw_text": "Rx FeSO4 tab #30\nSig: 1 tab once a day\nFolic acid 5mg tab #30\nSig: 1 tab OD",
+    "expected": [
+      { "name": "Ferrous Sulfate", "aliases": ["FeSO4"], "quantity": "30" },
+      { "name": "Folic Acid", "dosage": "5mg", "quantity": "30" }
+    ]
+  },
+  {
+    "id": "S10_take_instruction_lines",
+    "source": "synthetic",
+    "note": "Instructions start with 'Take' instead of 'Sig'.",
+    "raw_text": "Mefenamic acid 500mg cap #10\nTake 1 cap every 8 hours if with pain\nOmeprazole 40mg cap #7\nTake 1 cap 30 mins before breakfast",
+    "expected": [
+      { "name": "Mefenamic Acid", "dosage": "500mg", "quantity": "10" },
+      { "name": "Omeprazole", "dosage": "40mg", "quantity": "7" }
+    ]
+  },
+  {
+    "id": "S11_footer_block",
+    "source": "synthetic",
+    "note": "Doctor footer with license numbers and clinic room on one line.",
+    "raw_text": "Salbutamol 2mg tab #15\nSig: 1 tab 3x a day\nGuaifenesin 100mg/5ml syrup 60ml\nSig: 5ml 3x a day\nDr. Jose Cruz, MD\nLic No. 0098765  PTR No. 1122334  S2 No. 55667\nClinic: Rm 204 Medical Arts Bldg, 8AM-12NN",
+    "expected": [
+      { "name": "Salbutamol", "dosage": "2mg", "quantity": "15" },
+      { "name": "Guaifenesin", "dosage": "100mg" }
+    ]
+  }
+]

@@ -1,0 +1,5157 @@
+{
+ "source": "products table, dump-defaultdb-202609290749.sql",
+ "products": [
+  {
+   "id": 641,
+   "name": "ACETYLCYSTEINE 200 MG.",
+   "generic_name": "ACETYLCYSTEINE",
+   "brand_name": null,
+   "dosage_form": "200 MG.",
+   "unit_price": 14.0
+  },
+  {
+   "id": 642,
+   "name": "ACETYLCYSTEINE 600 MG.",
+   "generic_name": "ACETYLCYSTEINE",
+   "brand_name": null,
+   "dosage_form": "600 MG.",
+   "unit_price": 29.0
+  },
+  {
+   "id": 643,
+   "name": "ACETYLCYSTEINE 100/100ML.",
+   "generic_name": "ACETYLCYSTEINE",
+   "brand_name": null,
+   "dosage_form": "100/100ML.",
+   "unit_price": 200.0
+  },
+  {
+   "id": 644,
+   "name": "ACETYLCYSTEINE ( Fluimucil ) 100 MG.",
+   "generic_name": "ACETYLCYSTEINE",
+   "brand_name": "Fluimucil",
+   "dosage_form": "100 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 645,
+   "name": "ACETYLCYSTEINE ( Fluimucil ) 200 MG.",
+   "generic_name": "ACETYLCYSTEINE",
+   "brand_name": "Fluimucil",
+   "dosage_form": "200 MG.",
+   "unit_price": 18.0
+  },
+  {
+   "id": 646,
+   "name": "ACETYLCYSTEINE ( Fluimucil ) 600 MG.",
+   "generic_name": "ACETYLCYSTEINE",
+   "brand_name": "Fluimucil",
+   "dosage_form": "600 MG.",
+   "unit_price": 38.0
+  },
+  {
+   "id": 647,
+   "name": "APIXABAN 2.5 MG.",
+   "generic_name": "APIXABAN",
+   "brand_name": null,
+   "dosage_form": "2.5 MG.",
+   "unit_price": 25.0
+  },
+  {
+   "id": 648,
+   "name": "APIXABAN 5 MG.",
+   "generic_name": "APIXABAN",
+   "brand_name": null,
+   "dosage_form": "5 MG.",
+   "unit_price": 28.0
+  },
+  {
+   "id": 649,
+   "name": "AMBROXOL TAB. 30 MG.",
+   "generic_name": "AMBROXOL TAB.",
+   "brand_name": null,
+   "dosage_form": "30 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 650,
+   "name": "AMBROXOL CAP. 75 MG.",
+   "generic_name": "AMBROXOL CAP.",
+   "brand_name": null,
+   "dosage_form": "75 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 651,
+   "name": "AMBROXOL ( Mucosolvan ) 30 MG.",
+   "generic_name": "AMBROXOL",
+   "brand_name": "Mucosolvan",
+   "dosage_form": "30 MG.",
+   "unit_price": 21.0
+  },
+  {
+   "id": 652,
+   "name": "AMOXICILLIN DROPS",
+   "generic_name": "AMOXICILLIN DROPS",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 50.0
+  },
+  {
+   "id": 653,
+   "name": "AMOXICILLKIN 125/60ML.",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": null,
+   "dosage_form": "125/60ML.",
+   "unit_price": 50.0
+  },
+  {
+   "id": 654,
+   "name": "AMOXICILLIN 250/60ML.",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": null,
+   "dosage_form": "250/60ML.",
+   "unit_price": 60.0
+  },
+  {
+   "id": 655,
+   "name": "AMOXICILLIN ( HIMOX DROPS )",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": "HIMOX DROPS",
+   "dosage_form": null,
+   "unit_price": 103.0
+  },
+  {
+   "id": 656,
+   "name": "AMOXICILLIN ( HIMOX 125/60 )",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": "HIMOX",
+   "dosage_form": "125/60",
+   "unit_price": 119.0
+  },
+  {
+   "id": 657,
+   "name": "AMOXICILLIN ( HIMOX 250/60 )",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": "HIMOX",
+   "dosage_form": "250/60",
+   "unit_price": 190.0
+  },
+  {
+   "id": 658,
+   "name": "AMOXICILLIN ( PEDIAMOX DROP )",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": "PEDIAMOX DROP",
+   "dosage_form": null,
+   "unit_price": 103.0
+  },
+  {
+   "id": 659,
+   "name": "AMOXICILLIN ( PEDIAMOX 250/60ML.",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": "PEDIAMOX",
+   "dosage_form": "250/60ML.",
+   "unit_price": 172.0
+  },
+  {
+   "id": 660,
+   "name": "AMBROXOL DROP",
+   "generic_name": "AMBROXOL DROP",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 50.0
+  },
+  {
+   "id": 661,
+   "name": "AMBROXOL 15/60ML.",
+   "generic_name": "AMBROXOL",
+   "brand_name": null,
+   "dosage_form": "15/60ML.",
+   "unit_price": 50.0
+  },
+  {
+   "id": 662,
+   "name": "AMBROXOL 30/60ML.",
+   "generic_name": "AMBROXOL",
+   "brand_name": null,
+   "dosage_form": "30/60ML.",
+   "unit_price": 65.0
+  },
+  {
+   "id": 663,
+   "name": "AMBROXOL ( EXPEL DROP )",
+   "generic_name": "AMBROXOL",
+   "brand_name": "EXPEL DROP",
+   "dosage_form": null,
+   "unit_price": 129.0
+  },
+  {
+   "id": 664,
+   "name": "AMBROXOL ( EXPEL 15/60 )",
+   "generic_name": "AMBROXOL",
+   "brand_name": "EXPEL",
+   "dosage_form": "15/60",
+   "unit_price": 164.0
+  },
+  {
+   "id": 665,
+   "name": "AMBROXOL ( MUCOSOLVAN 15/60 )",
+   "generic_name": "AMBROXOL",
+   "brand_name": "MUCOSOLVAN",
+   "dosage_form": "15/60",
+   "unit_price": 162.0
+  },
+  {
+   "id": 666,
+   "name": "AMBROXOL ( MUCOSOLVAN 30/60 )",
+   "generic_name": "AMBROXOL",
+   "brand_name": "MUCOSOLVAN",
+   "dosage_form": "30/60",
+   "unit_price": 217.0
+  },
+  {
+   "id": 667,
+   "name": "B-COMPLEX TABLET",
+   "generic_name": "B-COMPLEX TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 2.0
+  },
+  {
+   "id": 668,
+   "name": "COMPLEX TABLET",
+   "generic_name": "COMPLEX TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 2.0
+  },
+  {
+   "id": 669,
+   "name": "CALCIUM + VIT-D3 ( AMBICAL PLUS )",
+   "generic_name": "CALCIUM + VIT-D3",
+   "brand_name": "AMBICAL PLUS",
+   "dosage_form": null,
+   "unit_price": 8.0
+  },
+  {
+   "id": 670,
+   "name": "CALCIUM + VIT D3 ( OSCIVIT )",
+   "generic_name": "CALCIUM + VIT D3",
+   "brand_name": "OSCIVIT",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 671,
+   "name": "CALCIUM ( CALTRATE ADVANCE )",
+   "generic_name": "CALCIUM",
+   "brand_name": "CALTRATE ADVANCE",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 672,
+   "name": "CALCIUM ( CALCIUMADE )",
+   "generic_name": "CALCIUM",
+   "brand_name": "CALCIUMADE",
+   "dosage_form": null,
+   "unit_price": 12.0
+  },
+  {
+   "id": 673,
+   "name": "CARBAMAZEPINE 200 MG.",
+   "generic_name": "CARBAMAZEPINE",
+   "brand_name": null,
+   "dosage_form": "200 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 674,
+   "name": "CARBAMAZEPINE ( TEGRETOL )",
+   "generic_name": "CARBAMAZEPINE",
+   "brand_name": "TEGRETOL",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 675,
+   "name": "CAPTOPRIL 25 MG.",
+   "generic_name": "CAPTOPRIL",
+   "brand_name": null,
+   "dosage_form": "25 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 676,
+   "name": "CEFALEXIN DROP",
+   "generic_name": "CEFALEXIN DROP",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 70.0
+  },
+  {
+   "id": 677,
+   "name": "CEFALEXIN 125/60",
+   "generic_name": "CEFALEXIN",
+   "brand_name": null,
+   "dosage_form": "125/60",
+   "unit_price": 80.0
+  },
+  {
+   "id": 678,
+   "name": "CEFALEXIN 250/60",
+   "generic_name": "CEFALEXIN",
+   "brand_name": null,
+   "dosage_form": "250/60",
+   "unit_price": 100.0
+  },
+  {
+   "id": 679,
+   "name": "CEFUROXIME TABLET 500 MG.",
+   "generic_name": "CEFUROXIME TABLET",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 35.0
+  },
+  {
+   "id": 680,
+   "name": "CO-AMOXICLAV 625 MG.",
+   "generic_name": "CO-AMOXICLAV",
+   "brand_name": null,
+   "dosage_form": "625 MG.",
+   "unit_price": 30.0
+  },
+  {
+   "id": 681,
+   "name": "CARBOCISTEIN 500 MG.",
+   "generic_name": "CARBOCISTEIN",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 682,
+   "name": "CARBOCISTEIN DROPS",
+   "generic_name": "CARBOCISTEIN DROPS",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 50.0
+  },
+  {
+   "id": 683,
+   "name": "CARBICISTEIN 100/60ML.",
+   "generic_name": "CARBICISTEIN",
+   "brand_name": null,
+   "dosage_form": "100/60ML.",
+   "unit_price": 50.0
+  },
+  {
+   "id": 684,
+   "name": "CARBOCISTEIN 125/60ML.",
+   "generic_name": "CARBOCISTEIN",
+   "brand_name": null,
+   "dosage_form": "125/60ML.",
+   "unit_price": 50.0
+  },
+  {
+   "id": 685,
+   "name": "CARBOCISTEIN 250/60ML.",
+   "generic_name": "CARBOCISTEIN",
+   "brand_name": null,
+   "dosage_form": "250/60ML.",
+   "unit_price": 60.0
+  },
+  {
+   "id": 686,
+   "name": "CARBOCISTEIN ( SOLMUX ) 500 MG.",
+   "generic_name": "CARBOCISTEIN",
+   "brand_name": "SOLMUX",
+   "dosage_form": "500 MG.",
+   "unit_price": 12.0
+  },
+  {
+   "id": 687,
+   "name": "CARBOCISTEIN ( SOLMUX ADVANCE )",
+   "generic_name": "CARBOCISTEIN",
+   "brand_name": "SOLMUX ADVANCE",
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 688,
+   "name": "CHLORPHENAMINE TABLET 4 MG.",
+   "generic_name": "CHLORPHENAMINE TABLET",
+   "brand_name": null,
+   "dosage_form": "4 MG.",
+   "unit_price": 2.0
+  },
+  {
+   "id": 689,
+   "name": "CINNARIZINE 25 MG.",
+   "generic_name": "CINNARIZINE",
+   "brand_name": null,
+   "dosage_form": "25 MG.",
+   "unit_price": 8.0
+  },
+  {
+   "id": 690,
+   "name": "CARVEDILOL TABLET 6.25 MG.",
+   "generic_name": "CARVEDILOL TABLET",
+   "brand_name": null,
+   "dosage_form": "6.25 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 691,
+   "name": "CARVEDILOL TABLET 12.5 MG.",
+   "generic_name": "CARVEDILOL TABLET",
+   "brand_name": null,
+   "dosage_form": "12.5 MG.",
+   "unit_price": 12.0
+  },
+  {
+   "id": 692,
+   "name": "CARVEDILOL TABLET 25 MG.",
+   "generic_name": "CARVEDILOL TABLET",
+   "brand_name": null,
+   "dosage_form": "25 MG.",
+   "unit_price": 25.0
+  },
+  {
+   "id": 693,
+   "name": "CLOXACILLIN 125/60ML.",
+   "generic_name": "CLOXACILLIN",
+   "brand_name": null,
+   "dosage_form": "125/60ML.",
+   "unit_price": 80.0
+  },
+  {
+   "id": 694,
+   "name": "CLOXACILLIN 250/60 ML.",
+   "generic_name": "CLOXACILLIN",
+   "brand_name": null,
+   "dosage_form": "250/60 ML.",
+   "unit_price": 100.0
+  },
+  {
+   "id": 695,
+   "name": "COLCHICINE TABLET 500 MCG.",
+   "generic_name": "COLCHICINE TABLET",
+   "brand_name": null,
+   "dosage_form": "500 MCG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 696,
+   "name": "COLECALCIFEROL ( FORTI-D 800 )",
+   "generic_name": "COLECALCIFEROL",
+   "brand_name": "FORTI-D",
+   "dosage_form": "800",
+   "unit_price": 8.5
+  },
+  {
+   "id": 697,
+   "name": "COLECALCIFEROL ( FORTI-D 2000 )",
+   "generic_name": "COLECALCIFEROL",
+   "brand_name": "FORTI-D",
+   "dosage_form": "2000",
+   "unit_price": 12.0
+  },
+  {
+   "id": 698,
+   "name": "CETIRIZINE ( ALLECUR PLUS 60 )",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALLECUR PLUS",
+   "dosage_form": "60",
+   "unit_price": 210.0
+  },
+  {
+   "id": 699,
+   "name": "CETIRIZINE ( VIRLIX ) 10 MG.",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "VIRLIX",
+   "dosage_form": "10 MG.",
+   "unit_price": 37.0
+  },
+  {
+   "id": 700,
+   "name": "CEFALEXINE 500 MG.",
+   "generic_name": "CEFALEXINE",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 701,
+   "name": "C-LIUM FIBER",
+   "generic_name": "C-LIUM FIBER",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 16.0
+  },
+  {
+   "id": 702,
+   "name": "CLINDAMYCIN 150 MG.",
+   "generic_name": "CLINDAMYCIN",
+   "brand_name": null,
+   "dosage_form": "150 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 703,
+   "name": "CLINDAMYCIN 300 MG.",
+   "generic_name": "CLINDAMYCIN 300 MG.",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 30.0
+  },
+  {
+   "id": 704,
+   "name": "CLINDAMYCIN ( DALACIN-C ) 150 MG.",
+   "generic_name": "CLINDAMYCIN",
+   "brand_name": "DALACIN-C",
+   "dosage_form": "150 MG.",
+   "unit_price": 82.0
+  },
+  {
+   "id": 705,
+   "name": "CLINDAMYCIN ( DALACIN-C ) 300 MG.",
+   "generic_name": "CLINDAMYCIN",
+   "brand_name": "DALACIN-C",
+   "dosage_form": "300 MG.",
+   "unit_price": 120.0
+  },
+  {
+   "id": 706,
+   "name": "CHLORPHENAMINE 60 ML.",
+   "generic_name": "CHLORPHENAMINE",
+   "brand_name": null,
+   "dosage_form": "60 ML.",
+   "unit_price": 50.0
+  },
+  {
+   "id": 707,
+   "name": "CIPROFLOXACIN TAB. 500 MG.",
+   "generic_name": "CIPROFLOXACIN TAB.",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 708,
+   "name": "CONDOMS ( TRUST )",
+   "generic_name": "CONDOMS",
+   "brand_name": "TRUST",
+   "dosage_form": null,
+   "unit_price": 33.0
+  },
+  {
+   "id": 709,
+   "name": "COTRIMOXAZOLE 400 MG.",
+   "generic_name": "COTRIMOXAZOLE",
+   "brand_name": null,
+   "dosage_form": "400 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 710,
+   "name": "COTRIMOXAZOLE 800 MG.",
+   "generic_name": "COTRIMOXAZOLE",
+   "brand_name": null,
+   "dosage_form": "800 MG.",
+   "unit_price": 7.0
+  },
+  {
+   "id": 711,
+   "name": "CO-AMOXICLAV 156/60 ML.",
+   "generic_name": "CO-AMOXICLAV",
+   "brand_name": null,
+   "dosage_form": "156/60ML.",
+   "unit_price": 150.0
+  },
+  {
+   "id": 712,
+   "name": "CO- AMOXICLAV 250/60 ML.",
+   "generic_name": "CO-AMOXICLAV",
+   "brand_name": null,
+   "dosage_form": "250/60ML.",
+   "unit_price": 190.0
+  },
+  {
+   "id": 713,
+   "name": "CO-AMOXICLAV 457/ 70 ML.",
+   "generic_name": "CO-AMOXICLAV",
+   "brand_name": null,
+   "dosage_form": "457/70ML.",
+   "unit_price": 350.0
+  },
+  {
+   "id": 714,
+   "name": "CO-AMOXI ( NATRAVOX 156/60 ML )",
+   "generic_name": "CO-AMOXI",
+   "brand_name": "NATRAVOX",
+   "dosage_form": "156/60ML",
+   "unit_price": 130.0
+  },
+  {
+   "id": 715,
+   "name": "CO-AMOXI ( NATRAVOX 228/70 )",
+   "generic_name": "CO-AMOXI",
+   "brand_name": "NATRAVOX",
+   "dosage_form": "228/70",
+   "unit_price": 213.0
+  },
+  {
+   "id": 716,
+   "name": "CO-AMOXI ( NATRAVOX 312/60 )",
+   "generic_name": "CO-AMOXI",
+   "brand_name": "NATRAVOX",
+   "dosage_form": "312/60",
+   "unit_price": 231.0
+  },
+  {
+   "id": 717,
+   "name": "CO-AMOXI ( NATRAVOX 457/70 )",
+   "generic_name": "CO-AMOXI",
+   "brand_name": "NATRAVOX",
+   "dosage_form": "457/70",
+   "unit_price": 378.0
+  },
+  {
+   "id": 718,
+   "name": "CLOXACILLIN 500 MG.",
+   "generic_name": "CLOXACILLIN",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 719,
+   "name": "MUCOBRON FORTE",
+   "generic_name": "MUCOBRON FORTE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 720,
+   "name": "RIDOCOF CAPSULE",
+   "generic_name": "RIDOCOF CAPSULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 721,
+   "name": "MUCUTUSS CAPSULE",
+   "generic_name": "MUCUTUSS CAPSULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 7.0
+  },
+  {
+   "id": 722,
+   "name": "DEXTROMETHORPHAN 54ML.",
+   "generic_name": "DEXTROMETHORPHAN",
+   "brand_name": null,
+   "dosage_form": "54ML.",
+   "unit_price": 108.0
+  },
+  {
+   "id": 723,
+   "name": "DEXTROMETHORPHAN 100ML.",
+   "generic_name": "DEXTROMETHORPHAN",
+   "brand_name": null,
+   "dosage_form": "100ML.",
+   "unit_price": 179.0
+  },
+  {
+   "id": 724,
+   "name": "DEXTROMETHORPHAN ( MUCOTUS 60 )",
+   "generic_name": "DEXTROMETHORPHAN",
+   "brand_name": "MUCOTUS",
+   "dosage_form": "60",
+   "unit_price": 99.0
+  },
+  {
+   "id": 725,
+   "name": "DIPHENHYDRAMINE 25 MG.",
+   "generic_name": "DIPHENHYDRAMINE",
+   "brand_name": null,
+   "dosage_form": "25 MG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 726,
+   "name": "DIPHENHYDRAMINE 50 MG.",
+   "generic_name": "DIPHENHYDRAMINE",
+   "brand_name": null,
+   "dosage_form": "50 MG.",
+   "unit_price": 6.0
+  },
+  {
+   "id": 727,
+   "name": "DIPHENHYDRAMINE 60ML.",
+   "generic_name": "DIPHENHYDRAMINE",
+   "brand_name": null,
+   "dosage_form": "60ML.",
+   "unit_price": 80.0
+  },
+  {
+   "id": 728,
+   "name": "DEXAMETHASONE 500 MCG.",
+   "generic_name": "DEXAMETHASONE",
+   "brand_name": null,
+   "dosage_form": "500 MCG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 729,
+   "name": "DEXAMETHASONE ( DECILONE FRT. )",
+   "generic_name": "DEXAMETHASONE",
+   "brand_name": "DECILONE FRT.",
+   "dosage_form": null,
+   "unit_price": 37.0
+  },
+  {
+   "id": 730,
+   "name": "DEXAMETHASONE ( DRENEX ) 3 MG.",
+   "generic_name": "DEXAMETHASONE",
+   "brand_name": "DRENEX",
+   "dosage_form": "3 MG.",
+   "unit_price": 35.0
+  },
+  {
+   "id": 731,
+   "name": "DOXOFYLLINE 400 MG.",
+   "generic_name": "DOXOFYLLINE",
+   "brand_name": null,
+   "dosage_form": "400 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 732,
+   "name": "DICYCLOVERINE 10 MG.",
+   "generic_name": "DICYCLOVERINE",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 733,
+   "name": "DOMPERIDONE 10 MG.",
+   "generic_name": "DOMPERIDONE",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 734,
+   "name": "DOMPERIDONE ( MOTILLIUM )",
+   "generic_name": "DOMPERIDONE",
+   "brand_name": "MOTILLIUM",
+   "dosage_form": null,
+   "unit_price": 43.0
+  },
+  {
+   "id": 735,
+   "name": "DYNATUSSIN CAPSULE",
+   "generic_name": "DYNATUSSIN CAPSULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 13.0
+  },
+  {
+   "id": 736,
+   "name": "DICLOFENAC ( BOREN )50 MG.",
+   "generic_name": "DICLOFENAC",
+   "brand_name": "BOREN",
+   "dosage_form": "50 MG.",
+   "unit_price": 2.0
+  },
+  {
+   "id": 737,
+   "name": "DICLOFENAC ( PHILFLAM ) 50 MG.",
+   "generic_name": "DICLOFENAC",
+   "brand_name": "PHILFLAM",
+   "dosage_form": "50 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 738,
+   "name": "DICLOFENAC ( CATAFLAM ) 50 MG.",
+   "generic_name": "DICLOFENAC",
+   "brand_name": "CATAFLAM",
+   "dosage_form": "50 MG.",
+   "unit_price": 43.0
+  },
+  {
+   "id": 739,
+   "name": "DICLOFENAC ( CURAFEN ) 100 MG.",
+   "generic_name": "DICLOFENAC",
+   "brand_name": "CURAFEN",
+   "dosage_form": "100 MG.",
+   "unit_price": 9.0
+  },
+  {
+   "id": 740,
+   "name": "DAPAGLIFLOZIN 10 MG.",
+   "generic_name": "DAPAGLIFLOZIN",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 35.0
+  },
+  {
+   "id": 741,
+   "name": "DECOLSIN CAPSULE",
+   "generic_name": "DECOLSIN CAPSULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 15.5
+  },
+  {
+   "id": 742,
+   "name": "DICYCLOVERINE 10/60ML.",
+   "generic_name": "DICYCLOVERINE",
+   "brand_name": null,
+   "dosage_form": "10/60ML.",
+   "unit_price": 60.0
+  },
+  {
+   "id": 743,
+   "name": "DICYCLOVERINE ( RELESTAL ) 60ML.",
+   "generic_name": "DICYCLOVERINE",
+   "brand_name": "RELESTAL",
+   "dosage_form": "60ML.",
+   "unit_price": 215.0
+  },
+  {
+   "id": 744,
+   "name": "DIBENCOZIDE ( HERACLENE ) 1 MG.",
+   "generic_name": "DIBENCOZIDE",
+   "brand_name": "HERACLENE",
+   "dosage_form": "1 MG.",
+   "unit_price": 19.0
+  },
+  {
+   "id": 745,
+   "name": "DIBENCOZIDE ( HERACLENE ) 3 MG.",
+   "generic_name": "DIBENCOZIDE",
+   "brand_name": "HERACLENE",
+   "dosage_form": "3 MG.",
+   "unit_price": 49.0
+  },
+  {
+   "id": 746,
+   "name": "DYDROGESTERONE ( DUPHASTON )",
+   "generic_name": "DYDROGESTERONE",
+   "brand_name": "DUPHASTON",
+   "dosage_form": null,
+   "unit_price": 89.0
+  },
+  {
+   "id": 747,
+   "name": "DIOSMIN+HESPERIDIN 450MG/50MG",
+   "generic_name": "DIOSMIN+HESPERIDIN",
+   "brand_name": null,
+   "dosage_form": "450MG/50MG",
+   "unit_price": 30.0
+  },
+  {
+   "id": 748,
+   "name": "DIOSMIN+HESPERIDIN ( DAFLON )",
+   "generic_name": "DIOSMIN+HESPERIDIN",
+   "brand_name": "DAFLON",
+   "dosage_form": null,
+   "unit_price": 52.0
+  },
+  {
+   "id": 749,
+   "name": "DEQUALINIUM ( DEQUADIN )",
+   "generic_name": "DEQUALINIUM",
+   "brand_name": "DEQUADIN",
+   "dosage_form": null,
+   "unit_price": 7.0
+  },
+  {
+   "id": 750,
+   "name": "DOXOFYLLINE ( ANSIMAR 100 )",
+   "generic_name": "DOXOFYLLINE",
+   "brand_name": "ANSIMAR",
+   "dosage_form": "100",
+   "unit_price": 286.0
+  },
+  {
+   "id": 751,
+   "name": "DOMPERIDONE 60 ML.",
+   "generic_name": "DOMPERIDONE",
+   "brand_name": null,
+   "dosage_form": "60 ML.",
+   "unit_price": 190.0
+  },
+  {
+   "id": 752,
+   "name": "EAR ( APLOSYN OTIC )",
+   "generic_name": "EAR",
+   "brand_name": "APLOSYN OTIC",
+   "dosage_form": null,
+   "unit_price": 423.0
+  },
+  {
+   "id": 753,
+   "name": "EAR ( P.N.D. )",
+   "generic_name": "EAR",
+   "brand_name": "P.N.D.",
+   "dosage_form": null,
+   "unit_price": 295.0
+  },
+  {
+   "id": 754,
+   "name": "EAR ( GENTAMICIN )",
+   "generic_name": "EAR",
+   "brand_name": "GENTAMICIN",
+   "dosage_form": null,
+   "unit_price": 295.0
+  },
+  {
+   "id": 755,
+   "name": "EAR ( OFLOXACIN )",
+   "generic_name": "EAR",
+   "brand_name": "OFLOXACIN",
+   "dosage_form": null,
+   "unit_price": 295.0
+  },
+  {
+   "id": 756,
+   "name": "EBASTIN BETAMETHASONE ( CO-ALEVA )",
+   "generic_name": "EBASTIN BETAMETHASONE",
+   "brand_name": "CO-ALEVA",
+   "dosage_form": null,
+   "unit_price": 35.0
+  },
+  {
+   "id": 757,
+   "name": "EPERISONE ( EPERTON ) 50 MG.",
+   "generic_name": "EPERISONE",
+   "brand_name": "EPERTON",
+   "dosage_form": "50 MG.",
+   "unit_price": 30.0
+  },
+  {
+   "id": 758,
+   "name": "EPERISONE ( MYONAL ) 50 MG.",
+   "generic_name": "EPERISONE",
+   "brand_name": "MYONAL",
+   "dosage_form": "50 MG.",
+   "unit_price": 32.0
+  },
+  {
+   "id": 759,
+   "name": "ERYTHROMYCIN 200/60ML.",
+   "generic_name": "ERYTHROMYCIN",
+   "brand_name": null,
+   "dosage_form": "200/60ML.",
+   "unit_price": 100.0
+  },
+  {
+   "id": 760,
+   "name": "ETORICOXIB 90 MG.",
+   "generic_name": "ETORICOXIB",
+   "brand_name": null,
+   "dosage_form": "90 MG.",
+   "unit_price": 35.0
+  },
+  {
+   "id": 761,
+   "name": "ETORICOXIB 120 MG.",
+   "generic_name": "ETORICOXIB",
+   "brand_name": null,
+   "dosage_form": "120 MG.",
+   "unit_price": 45.0
+  },
+  {
+   "id": 762,
+   "name": "ETORICOXIB ( ARCOXIA ) 60 MG.",
+   "generic_name": "ETORICOXIB",
+   "brand_name": "ARCOXIA",
+   "dosage_form": "60 MG.",
+   "unit_price": 70.0
+  },
+  {
+   "id": 763,
+   "name": "ETORICOXIB ( ARCOXIA ) 90 MG.",
+   "generic_name": "ETORICOXIB",
+   "brand_name": "ARCOXIA",
+   "dosage_form": "90 MG.",
+   "unit_price": 70.0
+  },
+  {
+   "id": 764,
+   "name": "ETORICOXIB ( ARCOXIA ) 120 MG.",
+   "generic_name": "ETORICOXIB",
+   "brand_name": "ARCOXIA",
+   "dosage_form": "120 MG.",
+   "unit_price": 89.0
+  },
+  {
+   "id": 765,
+   "name": "ERYTHROMYCIN 500 MG.",
+   "generic_name": "ERYTHROMYCIN",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 766,
+   "name": "EYEBERRY CAPSULE",
+   "generic_name": "EYEBERRY CAPSULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 19.0
+  },
+  {
+   "id": 767,
+   "name": "EYE ( EYE MO  BLUE )",
+   "generic_name": "EYE",
+   "brand_name": "EYE MO  BLUE",
+   "dosage_form": null,
+   "unit_price": 108.0
+  },
+  {
+   "id": 768,
+   "name": "EYE ( EYE MO RED )",
+   "generic_name": "EYE",
+   "brand_name": "EYE MO RED",
+   "dosage_form": null,
+   "unit_price": 100.0
+  },
+  {
+   "id": 769,
+   "name": "EYE ( ERYTHROMYCIN 5G )",
+   "generic_name": "EYE",
+   "brand_name": "ERYTHROMYCIN",
+   "dosage_form": "5G",
+   "unit_price": 295.0
+  },
+  {
+   "id": 770,
+   "name": "EYE ( TOBRAMYCIN + DEXA )",
+   "generic_name": "EYE",
+   "brand_name": "TOBRAMYCIN + DEXA",
+   "dosage_form": null,
+   "unit_price": 295.0
+  },
+  {
+   "id": 771,
+   "name": "EYE ( OFLOXACIN )",
+   "generic_name": "EYE",
+   "brand_name": "OFLOXACIN",
+   "dosage_form": null,
+   "unit_price": 295.0
+  },
+  {
+   "id": 772,
+   "name": "EYE ( P.N.D. )",
+   "generic_name": "EYE",
+   "brand_name": "P.N.D.",
+   "dosage_form": null,
+   "unit_price": 295.0
+  },
+  {
+   "id": 773,
+   "name": "EYE ( TOBRAMYCIN )",
+   "generic_name": "EYE",
+   "brand_name": "TOBRAMYCIN",
+   "dosage_form": null,
+   "unit_price": 295.0
+  },
+  {
+   "id": 774,
+   "name": "EYE ( GENTAMICIN )",
+   "generic_name": "EYE",
+   "brand_name": "GENTAMICIN",
+   "dosage_form": null,
+   "unit_price": 295.0
+  },
+  {
+   "id": 775,
+   "name": "EVENING PRIMROSE",
+   "generic_name": "EVENING PRIMROSE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 24.0
+  },
+  {
+   "id": 776,
+   "name": "ESOMEPRAZOLE 40 MG.",
+   "generic_name": "ESOMEPRAZOLE",
+   "brand_name": null,
+   "dosage_form": "40 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 777,
+   "name": "FENOFIBRATE 160",
+   "generic_name": "FENOFIBRATE",
+   "brand_name": null,
+   "dosage_form": "160",
+   "unit_price": 15.0
+  },
+  {
+   "id": 778,
+   "name": "FENOFIBRATE 200",
+   "generic_name": "FENOFIBRATE",
+   "brand_name": null,
+   "dosage_form": "200",
+   "unit_price": 20.0
+  },
+  {
+   "id": 779,
+   "name": "FERROUS SULFATE 325 MG.",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": null,
+   "dosage_form": "325 MG.",
+   "unit_price": 2.0
+  },
+  {
+   "id": 780,
+   "name": "FERROUS SULFATE 15 ML.",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": null,
+   "dosage_form": "15 ML.",
+   "unit_price": 45.0
+  },
+  {
+   "id": 781,
+   "name": "FERROUS SULFATE 60 ML.",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": null,
+   "dosage_form": "60 ML.",
+   "unit_price": 50.0
+  },
+  {
+   "id": 782,
+   "name": "FERROUS SULFATE 25O MG.",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": null,
+   "dosage_form": "25O MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 783,
+   "name": "FERROUS SULFATE ( COM-FEMIC )",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": "COM-FEMIC",
+   "dosage_form": null,
+   "unit_price": 6.0
+  },
+  {
+   "id": 784,
+   "name": "FERROUS SULFATE ( SORBIFER )",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": "SORBIFER",
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 785,
+   "name": "FERROUS SULFATE ( GLOBIFER )",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": "GLOBIFER",
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 786,
+   "name": "FERROUS SULFATE ( HEMARATE FA )",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": "HEMARATE FA",
+   "dosage_form": null,
+   "unit_price": 29.0
+  },
+  {
+   "id": 787,
+   "name": "FERROUS SULFATE ( HEMARATE TAB )",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": "HEMARATE TAB",
+   "dosage_form": null,
+   "unit_price": 30.0
+  },
+  {
+   "id": 788,
+   "name": "FERROUS SULFATE ( AMECIRON )",
+   "generic_name": "FERROUS SULFATE",
+   "brand_name": "AMECIRON",
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 789,
+   "name": "FOLIC ACID",
+   "generic_name": "FOLIC ACID",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 790,
+   "name": "FOLIC ACID ( FOLART )",
+   "generic_name": "FOLIC ACID",
+   "brand_name": "FOLART",
+   "dosage_form": null,
+   "unit_price": 11.0
+  },
+  {
+   "id": 791,
+   "name": "FISH OIL 1000 MG.",
+   "generic_name": "FISH OIL",
+   "brand_name": null,
+   "dosage_form": "1000 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 792,
+   "name": "FUROSEMIDE 20 MG.",
+   "generic_name": "FUROSEMIDE",
+   "brand_name": null,
+   "dosage_form": "20 MG.",
+   "unit_price": 2.0
+  },
+  {
+   "id": 793,
+   "name": "FUROSEMIDE 40 MG.",
+   "generic_name": "FUROSEMIDE",
+   "brand_name": null,
+   "dosage_form": "40 MG.",
+   "unit_price": 3.0
+  },
+  {
+   "id": 794,
+   "name": "FEBUXOSTAT 40 MG.",
+   "generic_name": "FEBUXOSTAT",
+   "brand_name": null,
+   "dosage_form": "40 MG.",
+   "unit_price": 25.0
+  },
+  {
+   "id": 795,
+   "name": "FEBUXOSTAT 80 MG.",
+   "generic_name": "FEBUXOSTAT",
+   "brand_name": null,
+   "dosage_form": "80 MG.",
+   "unit_price": 30.0
+  },
+  {
+   "id": 796,
+   "name": "FENOFIBRATE 160 MG.",
+   "generic_name": "FENOFIBRATE",
+   "brand_name": null,
+   "dosage_form": "160 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 797,
+   "name": "FENOFIBRATE 200 MG.",
+   "generic_name": "FENOFIBRATE",
+   "brand_name": null,
+   "dosage_form": "200 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 798,
+   "name": "GLICLAZIDE 30 MG.",
+   "generic_name": "GLICLAZIDE",
+   "brand_name": null,
+   "dosage_form": "30 MG.",
+   "unit_price": 8.0
+  },
+  {
+   "id": 799,
+   "name": "GLICLAZIDE 60 MG.",
+   "generic_name": "GLICLAZIDE",
+   "brand_name": null,
+   "dosage_form": "60 MG.",
+   "unit_price": 9.5
+  },
+  {
+   "id": 800,
+   "name": "GLICLAZIDE 80 MG.",
+   "generic_name": "GLICLAZIDE",
+   "brand_name": null,
+   "dosage_form": "80 MG.",
+   "unit_price": 6.0
+  },
+  {
+   "id": 801,
+   "name": "GLIMEPIRIDE 2 MG.",
+   "generic_name": "GLIMEPIRIDE",
+   "brand_name": null,
+   "dosage_form": "2 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 802,
+   "name": "GLIMEPIRIDE 3 MG.",
+   "generic_name": "GLIMEPIRIDE",
+   "brand_name": null,
+   "dosage_form": "3 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 803,
+   "name": "GUAIFENESIN 100 MG.",
+   "generic_name": "GUAIFENESIN",
+   "brand_name": null,
+   "dosage_form": "100 MG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 804,
+   "name": "GUAIFENESIN ( ROBITUSSIN GEL )",
+   "generic_name": "GUAIFENESIN",
+   "brand_name": "ROBITUSSIN GEL",
+   "dosage_form": null,
+   "unit_price": 12.0
+  },
+  {
+   "id": 805,
+   "name": "GUAIFENESIN SYRUP",
+   "generic_name": "GUAIFENESIN SYRUP",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 50.0
+  },
+  {
+   "id": 806,
+   "name": "GUAIFENESIN ( RUBITUSSIN 60ML.)",
+   "generic_name": "GUAIFENESIN",
+   "brand_name": "RUBITUSSIN",
+   "dosage_form": "60ML.",
+   "unit_price": 124.0
+  },
+  {
+   "id": 807,
+   "name": "GUAIFENESIN ( RUBITUSSIN 120ML.)",
+   "generic_name": "GUAIFENESIN",
+   "brand_name": "RUBITUSSIN",
+   "dosage_form": "120ML.",
+   "unit_price": 181.0
+  },
+  {
+   "id": 808,
+   "name": "GUAIFENESIN ( RUBITUSSIN DM 60 )",
+   "generic_name": "GUAIFENESIN",
+   "brand_name": "RUBITUSSIN DM",
+   "dosage_form": "60",
+   "unit_price": 156.0
+  },
+  {
+   "id": 809,
+   "name": "GUAIFENESIN ( RUBITUSSIN DM 120 )",
+   "generic_name": "GUAIFENESIN",
+   "brand_name": "RUBITUSSIN DM",
+   "dosage_form": "120",
+   "unit_price": 217.0
+  },
+  {
+   "id": 810,
+   "name": "GUAIFENESIN ( PULMOX 60ML.)",
+   "generic_name": "GUAIFENESIN",
+   "brand_name": "PULMOX",
+   "dosage_form": "60ML.",
+   "unit_price": 90.0
+  },
+  {
+   "id": 811,
+   "name": "GUAIFENESIN ( PULMOX 120ML. )",
+   "generic_name": "GUAIFENESIN",
+   "brand_name": "PULMOX",
+   "dosage_form": "120ML.",
+   "unit_price": 130.0
+  },
+  {
+   "id": 812,
+   "name": "GUAIFENESIN ( DYNATUSSIN 60 )",
+   "generic_name": "GUAIFENESIN",
+   "brand_name": "DYNATUSSIN",
+   "dosage_form": "60",
+   "unit_price": 134.0
+  },
+  {
+   "id": 813,
+   "name": "HYOSCINE 10 MG.",
+   "generic_name": "HYOSCINE",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 814,
+   "name": "HYOSCINE 60ML.",
+   "generic_name": "HYOSCINE",
+   "brand_name": null,
+   "dosage_form": "60ML.",
+   "unit_price": 80.0
+  },
+  {
+   "id": 815,
+   "name": "HYOSCINE ( BUSCOPAN )",
+   "generic_name": "HYOSCINE",
+   "brand_name": "BUSCOPAN",
+   "dosage_form": null,
+   "unit_price": 35.0
+  },
+  {
+   "id": 816,
+   "name": "HYOSCINE ( BUSCOPAN PLUS )",
+   "generic_name": "HYOSCINE",
+   "brand_name": "BUSCOPAN PLUS",
+   "dosage_form": null,
+   "unit_price": 42.0
+  },
+  {
+   "id": 817,
+   "name": "HYOSCINE ( BUSCOPAN VENUS )",
+   "generic_name": "HYOSCINE",
+   "brand_name": "BUSCOPAN VENUS",
+   "dosage_form": null,
+   "unit_price": 42.0
+  },
+  {
+   "id": 818,
+   "name": "IRBESARTAN 150 MG.",
+   "generic_name": "IRBESARTAN",
+   "brand_name": null,
+   "dosage_form": "150 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 819,
+   "name": "IRBESARTAN 300 MG.",
+   "generic_name": "IRBESARTAN",
+   "brand_name": null,
+   "dosage_form": "300 MG.",
+   "unit_price": 28.0
+  },
+  {
+   "id": 820,
+   "name": "IBUPROFEN 200/60ML.",
+   "generic_name": "IBUPROFEN",
+   "brand_name": null,
+   "dosage_form": "200/60ML.",
+   "unit_price": 90.0
+  },
+  {
+   "id": 821,
+   "name": "IBUPROFEN ( DOLAN FP )",
+   "generic_name": "IBUPROFEN",
+   "brand_name": "DOLAN FP",
+   "dosage_form": null,
+   "unit_price": 100.0
+  },
+  {
+   "id": 822,
+   "name": "IBUPROFEN ( DOLAN FORTE )",
+   "generic_name": "IBUPROFEN",
+   "brand_name": "DOLAN FORTE",
+   "dosage_form": null,
+   "unit_price": 168.0
+  },
+  {
+   "id": 823,
+   "name": "INOSINE ( IMMUNOSIN 60 )",
+   "generic_name": "INOSINE",
+   "brand_name": "IMMUNOSIN",
+   "dosage_form": "60",
+   "unit_price": 301.0
+  },
+  {
+   "id": 824,
+   "name": "INOSINE ( ISOPRINOSINE 60 )",
+   "generic_name": "INOSINE",
+   "brand_name": "ISOPRINOSINE",
+   "dosage_form": "60",
+   "unit_price": 295.0
+  },
+  {
+   "id": 825,
+   "name": "ISOXSUPRINE 10 MG.",
+   "generic_name": "ISOXSUPRINE",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 826,
+   "name": "ISOXSUPRINE ( DUVADILAN )",
+   "generic_name": "ISOXSUPRINE",
+   "brand_name": "DUVADILAN",
+   "dosage_form": null,
+   "unit_price": 33.0
+  },
+  {
+   "id": 827,
+   "name": "INOSINE ACEDOBEN ( ISOPRINOSINE )",
+   "generic_name": "INOSINE ACEDOBEN",
+   "brand_name": "ISOPRINOSINE",
+   "dosage_form": null,
+   "unit_price": 31.0
+  },
+  {
+   "id": 828,
+   "name": "IBUPROFEN 200 MG.",
+   "generic_name": "IBUPROFEN",
+   "brand_name": null,
+   "dosage_form": "200 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 829,
+   "name": "IBUPROFEN ( MIDOL )",
+   "generic_name": "IBUPROFEN",
+   "brand_name": "MIDOL",
+   "dosage_form": null,
+   "unit_price": 16.0
+  },
+  {
+   "id": 830,
+   "name": "IBUPROFEN ( ADVIL )",
+   "generic_name": "IBUPROFEN",
+   "brand_name": "ADVIL",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 831,
+   "name": "IBUPROFEN ( ALAXAN FR )",
+   "generic_name": "IBUPROFEN",
+   "brand_name": "ALAXAN FR",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 832,
+   "name": "KIDNEY CARE",
+   "generic_name": "KIDNEY CARE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 19.0
+  },
+  {
+   "id": 833,
+   "name": "KETOANALOUGES +AMINO ACIDS",
+   "generic_name": "KETOANALOUGES +AMINO ACIDS",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 25.0
+  },
+  {
+   "id": 834,
+   "name": "LACTULOSE 60 ML.",
+   "generic_name": "LACTULOSE",
+   "brand_name": null,
+   "dosage_form": "60 ML.",
+   "unit_price": 190.0
+  },
+  {
+   "id": 835,
+   "name": "LACTULOSE 120 ML.",
+   "generic_name": "LACTULOSE",
+   "brand_name": null,
+   "dosage_form": "120 ML.",
+   "unit_price": 220.0
+  },
+  {
+   "id": 836,
+   "name": "LACTULOSE ( DUPHALAC 45 )",
+   "generic_name": "LACTULOSE",
+   "brand_name": "DUPHALAC",
+   "dosage_form": "45",
+   "unit_price": 218.0
+  },
+  {
+   "id": 837,
+   "name": "LADY PILLS",
+   "generic_name": "LADY PILLS",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 53.0
+  },
+  {
+   "id": 838,
+   "name": "LAGUNDI 300 MG.",
+   "generic_name": "LAGUNDI",
+   "brand_name": null,
+   "dosage_form": "300 MG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 839,
+   "name": "LAGUNDI 600 MG.",
+   "generic_name": "LAGUNDI",
+   "brand_name": null,
+   "dosage_form": "600 MG.",
+   "unit_price": 7.0
+  },
+  {
+   "id": 840,
+   "name": "LAGUNDI ( ASCOF TAB. )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "ASCOF TAB.",
+   "dosage_form": null,
+   "unit_price": 8.0
+  },
+  {
+   "id": 841,
+   "name": "LAGUNDI ( ASCOF CAPSULE )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "ASCOF CAPSULE",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 842,
+   "name": "LAGUNDI ( PLEMEX CAPSULE )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "PLEMEX CAPSULE",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 843,
+   "name": "LORATADINE ( LORAPED 60 )",
+   "generic_name": "LORATADINE",
+   "brand_name": "LORAPED",
+   "dosage_form": "60",
+   "unit_price": 310.0
+  },
+  {
+   "id": 844,
+   "name": "LEVOCETIRIZINE 5 MG.",
+   "generic_name": "LEVOCETIRIZINE",
+   "brand_name": null,
+   "dosage_form": "5 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 845,
+   "name": "LEVOCETIRIZINE 60 ML.",
+   "generic_name": "LEVOCETIRIZINE",
+   "brand_name": null,
+   "dosage_form": "60 ML.",
+   "unit_price": 200.0
+  },
+  {
+   "id": 846,
+   "name": "LEVODROPROPIZINE ( LEVOPRONT )",
+   "generic_name": "LEVODROPROPIZINE",
+   "brand_name": "LEVOPRONT",
+   "dosage_form": null,
+   "unit_price": 755.0
+  },
+  {
+   "id": 847,
+   "name": "LEVOFLOXACIN 500 MG.",
+   "generic_name": "LEVOFLOXACIN",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 30.0
+  },
+  {
+   "id": 848,
+   "name": "LAGUNDI ( ASCOF TAB )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "ASCOF TAB",
+   "dosage_form": null,
+   "unit_price": 8.0
+  },
+  {
+   "id": 849,
+   "name": "LAGUNDI ( ASCOF CAP )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "ASCOF CAP",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 850,
+   "name": "LAGUNDI ( ASCOF 300/60 )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "ASCOF",
+   "dosage_form": "300/60",
+   "unit_price": 108.0
+  },
+  {
+   "id": 851,
+   "name": "LAGUNDI ( ASCOF 600/60 )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "ASCOF",
+   "dosage_form": "600/60",
+   "unit_price": 134.0
+  },
+  {
+   "id": 852,
+   "name": "LAGUNDI ( ASCOF 600/120 )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "ASCOF",
+   "dosage_form": "600/120",
+   "unit_price": 189.0
+  },
+  {
+   "id": 853,
+   "name": "LAGUNDI ( PLEMEX CAP )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "PLEMEX CAP",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 854,
+   "name": "LAGUNDI ( PLEMEX 300/60 )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "PLEMEX",
+   "dosage_form": "300/60",
+   "unit_price": 104.0
+  },
+  {
+   "id": 855,
+   "name": "LAGUNDI (  PLEMEX 600/60 )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "PLEMEX",
+   "dosage_form": "600/60",
+   "unit_price": 135.0
+  },
+  {
+   "id": 856,
+   "name": "LAGUNDI ( PLEMEX 600/120 )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "PLEMEX",
+   "dosage_form": "600/120",
+   "unit_price": 179.0
+  },
+  {
+   "id": 857,
+   "name": "LAGUNDI ( PLEMEX 300/120 )",
+   "generic_name": "LAGUNDI",
+   "brand_name": "PLEMEX",
+   "dosage_form": "300/120",
+   "unit_price": 149.0
+  },
+  {
+   "id": 858,
+   "name": "LOSARTAN 50 MG.",
+   "generic_name": "LOSARTAN",
+   "brand_name": null,
+   "dosage_form": "50 MG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 859,
+   "name": "LOSARTAN 100 MG.",
+   "generic_name": "LOSARTAN",
+   "brand_name": null,
+   "dosage_form": "100 MG.",
+   "unit_price": 8.0
+  },
+  {
+   "id": 860,
+   "name": "LOSARTAN POTASSIUM ( ARTAZIDE )",
+   "generic_name": "LOSARTAN POTASSIUM",
+   "brand_name": "ARTAZIDE",
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 861,
+   "name": "LOSARTAN POTASSIU ( SAPHLODINE )",
+   "generic_name": "LOSARTAN POTASSIU",
+   "brand_name": "SAPHLODINE",
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 862,
+   "name": "LORATADINE 10 MG.",
+   "generic_name": "LORATADINE",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 7.0
+  },
+  {
+   "id": 863,
+   "name": "LORATADINE ( ALLERTA )",
+   "generic_name": "LORATADINE",
+   "brand_name": "ALLERTA",
+   "dosage_form": null,
+   "unit_price": 25.0
+  },
+  {
+   "id": 864,
+   "name": "LORATADINE ( CLARITIN )",
+   "generic_name": "LORATADINE",
+   "brand_name": "CLARITIN",
+   "dosage_form": null,
+   "unit_price": 37.0
+  },
+  {
+   "id": 865,
+   "name": "LORATADINE ( CLARICORT )",
+   "generic_name": "LORATADINE",
+   "brand_name": "CLARICORT",
+   "dosage_form": null,
+   "unit_price": 47.0
+  },
+  {
+   "id": 866,
+   "name": "LOPERAMIDE 2 MG.",
+   "generic_name": "LOPERAMIDE",
+   "brand_name": null,
+   "dosage_form": "2 MG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 867,
+   "name": "LOPERAMIDE ( LOMOTIL )",
+   "generic_name": "LOPERAMIDE",
+   "brand_name": "LOMOTIL",
+   "dosage_form": null,
+   "unit_price": 14.0
+  },
+  {
+   "id": 868,
+   "name": "LOPERAMIDE ( DIATABS )",
+   "generic_name": "LOPERAMIDE",
+   "brand_name": "DIATABS",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 869,
+   "name": "LOPERAMIDE IMODIUM )",
+   "generic_name": "LOPERAMIDE IMODIUM )",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 18.0
+  },
+  {
+   "id": 870,
+   "name": "MANGOSTEEN ( XANTHONE PLUS )",
+   "generic_name": "MANGOSTEEN",
+   "brand_name": "XANTHONE PLUS",
+   "dosage_form": null,
+   "unit_price": 18.0
+  },
+  {
+   "id": 871,
+   "name": "MANGOSTEEN ( XANTHONE GOLD )",
+   "generic_name": "MANGOSTEEN",
+   "brand_name": "XANTHONE GOLD",
+   "dosage_form": null,
+   "unit_price": 18.0
+  },
+  {
+   "id": 872,
+   "name": "MEFENAMIC ACID 250 MG.",
+   "generic_name": "MEFENAMIC ACID",
+   "brand_name": null,
+   "dosage_form": "250 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 873,
+   "name": "MEFENAMIC ACID 500 MG.",
+   "generic_name": "MEFENAMIC ACID",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 874,
+   "name": "MEFENAMIC 50/60ML.",
+   "generic_name": "MEFENAMIC",
+   "brand_name": null,
+   "dosage_form": "50/60ML.",
+   "unit_price": 60.0
+  },
+  {
+   "id": 875,
+   "name": "MEFENAMIC ACID ( RITEMED )",
+   "generic_name": "MEFENAMIC ACID",
+   "brand_name": "RITEMED",
+   "dosage_form": null,
+   "unit_price": 7.5
+  },
+  {
+   "id": 876,
+   "name": "MEFENAMIC ACID TABLET",
+   "generic_name": "MEFENAMIC ACID TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 877,
+   "name": "MEFENAMIC ( DOLFENAL 250 )",
+   "generic_name": "MEFENAMIC",
+   "brand_name": "DOLFENAL",
+   "dosage_form": "250",
+   "unit_price": 20.0
+  },
+  {
+   "id": 878,
+   "name": "MEFENAMIC ( DOLFENAL 500 )",
+   "generic_name": "MEFENAMIC",
+   "brand_name": "DOLFENAL",
+   "dosage_form": "500",
+   "unit_price": 38.0
+  },
+  {
+   "id": 879,
+   "name": "MEFENAMIC ( PONSTAN 250 )",
+   "generic_name": "MEFENAMIC",
+   "brand_name": "PONSTAN",
+   "dosage_form": "250",
+   "unit_price": 22.0
+  },
+  {
+   "id": 880,
+   "name": "MEFENAMIC ( PONSTAN TAB. 500 )",
+   "generic_name": "MEFENAMIC",
+   "brand_name": "PONSTAN TAB.",
+   "dosage_form": "500",
+   "unit_price": 42.0
+  },
+  {
+   "id": 881,
+   "name": "MEFENAMIC ( PONSTAN SF 500 )",
+   "generic_name": "MEFENAMIC",
+   "brand_name": "PONSTAN SF",
+   "dosage_form": "500",
+   "unit_price": 44.0
+  },
+  {
+   "id": 882,
+   "name": "MEFENAMIC ( GARDAN 500 )",
+   "generic_name": "MEFENAMIC",
+   "brand_name": "GARDAN",
+   "dosage_form": "500",
+   "unit_price": 36.0
+  },
+  {
+   "id": 883,
+   "name": "MECLIZINE 12.5 MG.",
+   "generic_name": "MECLIZINE",
+   "brand_name": null,
+   "dosage_form": "12.5 MG.",
+   "unit_price": 8.0
+  },
+  {
+   "id": 884,
+   "name": "MECLIZINE ( BONAMINE KIDS )",
+   "generic_name": "MECLIZINE",
+   "brand_name": "BONAMINE KIDS",
+   "dosage_form": null,
+   "unit_price": 13.0
+  },
+  {
+   "id": 885,
+   "name": "MECLIZINE ( BONAMINE ADULT )",
+   "generic_name": "MECLIZINE",
+   "brand_name": "BONAMINE ADULT",
+   "dosage_form": null,
+   "unit_price": 16.0
+  },
+  {
+   "id": 886,
+   "name": "MELOXICAM 15 MG.",
+   "generic_name": "MELOXICAM",
+   "brand_name": null,
+   "dosage_form": "15 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 887,
+   "name": "METRONIDAZOLE 125/ 60 ML.",
+   "generic_name": "METRONIDAZOLE",
+   "brand_name": null,
+   "dosage_form": "125/60ML.",
+   "unit_price": 65.0
+  },
+  {
+   "id": 888,
+   "name": "MORINGGA ( MALUNGGAY )",
+   "generic_name": "MORINGGA",
+   "brand_name": "MALUNGGAY",
+   "dosage_form": null,
+   "unit_price": 8.0
+  },
+  {
+   "id": 889,
+   "name": "MX3 COFFEE",
+   "generic_name": "MX3 COFFEE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 22.0
+  },
+  {
+   "id": 890,
+   "name": "MX3 CAPSULE",
+   "generic_name": "MX3 CAPSULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 17.0
+  },
+  {
+   "id": 891,
+   "name": "MELATONIN ( SLEEPWELL )",
+   "generic_name": "MELATONIN",
+   "brand_name": "SLEEPWELL",
+   "dosage_form": null,
+   "unit_price": 19.0
+  },
+  {
+   "id": 892,
+   "name": "MELATONIN ( SLEEPASIL )",
+   "generic_name": "MELATONIN",
+   "brand_name": "SLEEPASIL",
+   "dosage_form": null,
+   "unit_price": 17.0
+  },
+  {
+   "id": 893,
+   "name": "METFOMIN 500 MG.",
+   "generic_name": "METFOMIN",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 2.0
+  },
+  {
+   "id": 894,
+   "name": "METFORMIN ( GLUMET 500)",
+   "generic_name": "METFORMIN",
+   "brand_name": "GLUMET",
+   "dosage_form": "500",
+   "unit_price": 13.0
+  },
+  {
+   "id": 895,
+   "name": "METFORMIN ( I-MAX 500 )",
+   "generic_name": "METFORMIN",
+   "brand_name": "I-MAX",
+   "dosage_form": "500",
+   "unit_price": 8.0
+  },
+  {
+   "id": 896,
+   "name": "METFORMIN ( RITEMED 850 )",
+   "generic_name": "METFORMIN",
+   "brand_name": "RITEMED",
+   "dosage_form": "850",
+   "unit_price": 9.0
+  },
+  {
+   "id": 897,
+   "name": "MEMO PLUS GOLD",
+   "generic_name": "MEMO PLUS GOLD",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 16.0
+  },
+  {
+   "id": 898,
+   "name": "MONTELUKAST 4 MG.",
+   "generic_name": "MONTELUKAST",
+   "brand_name": null,
+   "dosage_form": "4 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 899,
+   "name": "MONTELUKAST 5 MG.",
+   "generic_name": "MONTELUKAST",
+   "brand_name": null,
+   "dosage_form": "5 MG.",
+   "unit_price": 12.0
+  },
+  {
+   "id": 900,
+   "name": "MONTELUKAST 10 MG.",
+   "generic_name": "MONTELUKAST",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 901,
+   "name": "MONTELUKAST ( MONTRALVO )",
+   "generic_name": "MONTELUKAST",
+   "brand_name": "MONTRALVO",
+   "dosage_form": null,
+   "unit_price": 30.0
+  },
+  {
+   "id": 902,
+   "name": "MONTELUKAST ( ZYKAST )",
+   "generic_name": "MONTELUKAST",
+   "brand_name": "ZYKAST",
+   "dosage_form": null,
+   "unit_price": 33.0
+  },
+  {
+   "id": 903,
+   "name": "MONTELUKAST ( CO-ALTRIA )",
+   "generic_name": "MONTELUKAST",
+   "brand_name": "CO-ALTRIA",
+   "dosage_form": null,
+   "unit_price": 31.0
+  },
+  {
+   "id": 904,
+   "name": "METOPROLOL 50 MG.",
+   "generic_name": "METOPROLOL",
+   "brand_name": null,
+   "dosage_form": "50 MG.",
+   "unit_price": 2.0
+  },
+  {
+   "id": 905,
+   "name": "METOPROLOL ( NEOBLOC 50 )",
+   "generic_name": "METOPROLOL",
+   "brand_name": "NEOBLOC",
+   "dosage_form": "50",
+   "unit_price": 5.5
+  },
+  {
+   "id": 906,
+   "name": "METOPROLOL ( NEOBLOC 100 )",
+   "generic_name": "METOPROLOL",
+   "brand_name": "NEOBLOC",
+   "dosage_form": "100",
+   "unit_price": 9.0
+  },
+  {
+   "id": 907,
+   "name": "METHYLDOPA 250 MG.",
+   "generic_name": "METHYLDOPA",
+   "brand_name": null,
+   "dosage_form": "250 MG.",
+   "unit_price": 13.0
+  },
+  {
+   "id": 908,
+   "name": "METOCLOPRAMIDE 10 MG.",
+   "generic_name": "METOCLOPRAMIDE",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 909,
+   "name": "METRONIDAZOLE 500 MG.",
+   "generic_name": "METRONIDAZOLE",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 7.0
+  },
+  {
+   "id": 910,
+   "name": "MEDROXYPROGESTERONE ( PROVERA )",
+   "generic_name": "MEDROXYPROGESTERONE",
+   "brand_name": "PROVERA",
+   "dosage_form": null,
+   "unit_price": 95.0
+  },
+  {
+   "id": 911,
+   "name": "MULTIVITAMIN ( APPEBON 60 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "APPEBON",
+   "dosage_form": "60",
+   "unit_price": 127.0
+  },
+  {
+   "id": 912,
+   "name": "MULTIVITAMIN ( APPEBON 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "APPEBON",
+   "dosage_form": "120",
+   "unit_price": 205.0
+  },
+  {
+   "id": 913,
+   "name": "MULTIVITAMIN ( APPEBON 250 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "APPEBON",
+   "dosage_form": "250",
+   "unit_price": 436.0
+  },
+  {
+   "id": 914,
+   "name": "MULTIVITAMIN ( APPECZIN 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "APPECZIN",
+   "dosage_form": "120",
+   "unit_price": 220.0
+  },
+  {
+   "id": 915,
+   "name": "MULTIVITAMIN ( CALTRATE ADV 30 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "CALTRATE ADV",
+   "dosage_form": "30",
+   "unit_price": 265.0
+  },
+  {
+   "id": 916,
+   "name": "MULTIVITAMINS ( TIKI-TIKI 15 )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "TIKI-TIKI",
+   "dosage_form": "15",
+   "unit_price": 64.0
+  },
+  {
+   "id": 917,
+   "name": "MULTIVITAMINS ( TIKI-TIKI 30 )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "TIKI-TIKI",
+   "dosage_form": "30",
+   "unit_price": 102.0
+  },
+  {
+   "id": 918,
+   "name": "MULTIVITAMIN ( TIKI-TIKI 60 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "TIKI-TIKI",
+   "dosage_form": "60",
+   "unit_price": 77.0
+  },
+  {
+   "id": 919,
+   "name": "MULTIVITAMIN ( TIKI-TIKI 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "TIKI-TIKI",
+   "dosage_form": "120",
+   "unit_price": 138.0
+  },
+  {
+   "id": 920,
+   "name": "MULTIVITAMINS ( MYREVIT )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "MYREVIT",
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 921,
+   "name": "MULTIVITAMINS ( HANIZIN )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "HANIZIN",
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 922,
+   "name": "MULTIVITAMINS ( FORALIVIT )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "FORALIVIT",
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 923,
+   "name": "MULTIVITAMINS ( IBERET ACTIVE )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "IBERET ACTIVE",
+   "dosage_form": null,
+   "unit_price": 35.0
+  },
+  {
+   "id": 924,
+   "name": "MULTIVITAMINS ( IBERET FOLIC )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "IBERET FOLIC",
+   "dosage_form": null,
+   "unit_price": 37.0
+  },
+  {
+   "id": 925,
+   "name": "MULTIVITAMINS ( STRESSTAB )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "STRESSTAB",
+   "dosage_form": null,
+   "unit_price": 12.0
+  },
+  {
+   "id": 926,
+   "name": "MULTIVITAMIN ( STRESSTAB 30’S )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "STRESSTAB 30’S",
+   "dosage_form": null,
+   "unit_price": 322.0
+  },
+  {
+   "id": 927,
+   "name": "MULTIVITAMINS ( CLUSIVOL )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CLUSIVOL",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 928,
+   "name": "MULTIVITAMINS ( CENTRUM ADV.)",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CENTRUM ADV.",
+   "dosage_form": null,
+   "unit_price": 11.0
+  },
+  {
+   "id": 929,
+   "name": "MULTIVITAMINS ( CENTRUM SILVER )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CENTRUM SILVER",
+   "dosage_form": null,
+   "unit_price": 14.0
+  },
+  {
+   "id": 930,
+   "name": "MULTIVITAMIN ( CENTRUM ADV.30 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "CENTRUM ADV.30",
+   "dosage_form": null,
+   "unit_price": 305.0
+  },
+  {
+   "id": 931,
+   "name": "MULTIVITAMIN ( CENTRUM SILV 30 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "CENTRUM SILV 30",
+   "dosage_form": null,
+   "unit_price": 392.0
+  },
+  {
+   "id": 932,
+   "name": "MULTIVITAMINS ( CHERIFER PGM )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CHERIFER PGM",
+   "dosage_form": null,
+   "unit_price": 20.0
+  },
+  {
+   "id": 933,
+   "name": "MULTIVITAMINS ( CHERIFER /ZINC )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CHERIFER /ZINC",
+   "dosage_form": null,
+   "unit_price": 21.0
+  },
+  {
+   "id": 934,
+   "name": "MULTIVITAMINS ( CHERIFER IMUMAX)",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CHERIFER IMUMAX",
+   "dosage_form": null,
+   "unit_price": 27.0
+  },
+  {
+   "id": 935,
+   "name": "MULTIVITAMINS ( CHERIFER 15 ML.)",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CHERIFER",
+   "dosage_form": "15 ML.",
+   "unit_price": 79.0
+  },
+  {
+   "id": 936,
+   "name": "MULTIVITAMINS ( CHERIFER 30 ML.)",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CHERIFER",
+   "dosage_form": "30 ML.",
+   "unit_price": 167.0
+  },
+  {
+   "id": 937,
+   "name": "MULTIVITAMINS ( CHERIFER 120 )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CHERIFER",
+   "dosage_form": "120",
+   "unit_price": 196.0
+  },
+  {
+   "id": 938,
+   "name": "MULTIVITAMIN ( CHERIFER /ZINC 120)",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "CHERIFER /ZINC",
+   "dosage_form": "120",
+   "unit_price": 200.0
+  },
+  {
+   "id": 939,
+   "name": "MULTIVITAMIN ( CHERIFER FTR 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "CHERIFER FTR",
+   "dosage_form": "120",
+   "unit_price": 206.0
+  },
+  {
+   "id": 940,
+   "name": "MULTIVITA ( CHERIFER FTR/ZINC 120)",
+   "generic_name": "MULTIVITA",
+   "brand_name": "CHERIFER FTR/ZINC",
+   "dosage_form": "120",
+   "unit_price": 240.0
+  },
+  {
+   "id": 941,
+   "name": "MULTI ( CHERIFER IMMUNOMAX 120 )",
+   "generic_name": "MULTI",
+   "brand_name": "CHERIFER IMMUNOMAX",
+   "dosage_form": "120",
+   "unit_price": 443.0
+  },
+  {
+   "id": 942,
+   "name": "MULTIVITAMI ( CHERIFER 240 )",
+   "generic_name": "MULTIVITAMI",
+   "brand_name": "CHERIFER",
+   "dosage_form": "240",
+   "unit_price": 356.0
+  },
+  {
+   "id": 943,
+   "name": "MULTIVITAMIN ( CHERIFER/ZINC 240 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "CHERIFER/ZINC",
+   "dosage_form": "240",
+   "unit_price": 378.0
+  },
+  {
+   "id": 944,
+   "name": "MULTIVITAM( CHERIFER FORTE 240 )",
+   "generic_name": "MULTIVITAM",
+   "brand_name": "CHERIFER FORTE",
+   "dosage_form": "240",
+   "unit_price": 365.0
+  },
+  {
+   "id": 945,
+   "name": "MULTIVITA( CHERIFER FTR/ZINC 240 )",
+   "generic_name": "MULTIVITA",
+   "brand_name": "CHERIFER FTR/ZINC",
+   "dosage_form": "240",
+   "unit_price": 407.0
+  },
+  {
+   "id": 946,
+   "name": "MULTIVITAMIN ( EURIVIT 250 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "EURIVIT",
+   "dosage_form": "250",
+   "unit_price": 220.0
+  },
+  {
+   "id": 947,
+   "name": "MULTIVITAMIN ( FERLIN 15 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "FERLIN",
+   "dosage_form": "15",
+   "unit_price": 180.0
+  },
+  {
+   "id": 948,
+   "name": "MULTIVITAMIN ( FERLIN 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "FERLIN",
+   "dosage_form": "120",
+   "unit_price": 400.0
+  },
+  {
+   "id": 949,
+   "name": "MULTIVITAMIN ( FERLIN VITA 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "FERLIN VITA",
+   "dosage_form": "120",
+   "unit_price": 361.0
+  },
+  {
+   "id": 950,
+   "name": "MULTIVITAMIN ( IROPLUS 60 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "IROPLUS",
+   "dosage_form": "60",
+   "unit_price": 175.0
+  },
+  {
+   "id": 951,
+   "name": "MULTIVITAMIN ( IROPLUS 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "IROPLUS",
+   "dosage_form": "120",
+   "unit_price": 275.0
+  },
+  {
+   "id": 952,
+   "name": "MULTIVITAMIN ( IROPLUS 250 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "IROPLUS",
+   "dosage_form": "250",
+   "unit_price": 375.0
+  },
+  {
+   "id": 953,
+   "name": "MULTIVITAMIN ( MULTILEM 15 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "MULTILEM",
+   "dosage_form": "15",
+   "unit_price": 45.0
+  },
+  {
+   "id": 954,
+   "name": "MULTIVITAMIN ( MULTILEM 60 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "MULTILEM",
+   "dosage_form": "60",
+   "unit_price": 45.0
+  },
+  {
+   "id": 955,
+   "name": "MULTIVITAMIN ( MULTILEM 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "MULTILEM",
+   "dosage_form": "120",
+   "unit_price": 70.0
+  },
+  {
+   "id": 956,
+   "name": "MULLTIVITAMIN ( MULTILEM PLUS 60 )",
+   "generic_name": "MULLTIVITAMIN",
+   "brand_name": "MULTILEM PLUS",
+   "dosage_form": "60",
+   "unit_price": 50.0
+  },
+  {
+   "id": 957,
+   "name": "MULTIVITAMIN ( MULTILEM PLUS 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "MULTILEM PLUS",
+   "dosage_form": "120",
+   "unit_price": 80.0
+  },
+  {
+   "id": 958,
+   "name": "MULTIVITAMIN ( NUTRILIN 15 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "NUTRILIN",
+   "dosage_form": "15",
+   "unit_price": 104.0
+  },
+  {
+   "id": 959,
+   "name": "MULTIVITAMIN ( NUTRILIN 30 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "NUTRILIN",
+   "dosage_form": "30",
+   "unit_price": 158.0
+  },
+  {
+   "id": 960,
+   "name": "MULTIVITAMIN ( NUTRILIN 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "NUTRILIN",
+   "dosage_form": "120",
+   "unit_price": 231.0
+  },
+  {
+   "id": 961,
+   "name": "MULTIVITAMIN ( NUTRILIN 250 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "NUTRILIN",
+   "dosage_form": "250",
+   "unit_price": 387.0
+  },
+  {
+   "id": 962,
+   "name": "MULTIVITAMIN ( PROPAN TLC 15 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "PROPAN TLC",
+   "dosage_form": "15",
+   "unit_price": 103.0
+  },
+  {
+   "id": 963,
+   "name": "MULTIVITAMIN ( PROPAN TLC 60 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "PROPAN TLC",
+   "dosage_form": "60",
+   "unit_price": 133.0
+  },
+  {
+   "id": 964,
+   "name": "MULTIVITAMIN ( PROPAN TLC 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "PROPAN TLC",
+   "dosage_form": "120",
+   "unit_price": 217.0
+  },
+  {
+   "id": 965,
+   "name": "MULTIVITAMIN ( PROPAN TLC 250 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "PROPAN TLC",
+   "dosage_form": "250",
+   "unit_price": 389.0
+  },
+  {
+   "id": 966,
+   "name": "MULTIVITAMIN ( PROPAN/BUC 60 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "PROPAN/BUC",
+   "dosage_form": "60",
+   "unit_price": 360.0
+  },
+  {
+   "id": 967,
+   "name": "MULTIVITAMIN ( PROPAN/BUC 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "PROPAN/BUC",
+   "dosage_form": "120",
+   "unit_price": 670.0
+  },
+  {
+   "id": 968,
+   "name": "MULTIVITAMINS ( SANGOBION)",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "SANGOBION",
+   "dosage_form": null,
+   "unit_price": 30.0
+  },
+  {
+   "id": 969,
+   "name": "MULTIVITAMINS ( SANGOBION FORTE)",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "SANGOBION FORTE",
+   "dosage_form": null,
+   "unit_price": 32.0
+  },
+  {
+   "id": 970,
+   "name": "MULTIVITAMIN ( SUPERGROW 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "SUPERGROW",
+   "dosage_form": "120",
+   "unit_price": 239.0
+  },
+  {
+   "id": 971,
+   "name": "MULTIVITAMINS ( ENERVON C )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "ENERVON C",
+   "dosage_form": null,
+   "unit_price": 11.0
+  },
+  {
+   "id": 972,
+   "name": "MULTIVITAMINS ( MORIAMIN )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "MORIAMIN",
+   "dosage_form": null,
+   "unit_price": 13.0
+  },
+  {
+   "id": 973,
+   "name": "MULTIVITAMINS ( REVICON )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "REVICON",
+   "dosage_form": null,
+   "unit_price": 9.5
+  },
+  {
+   "id": 974,
+   "name": "MULTIVITAMINS ( KORGIVIT E )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "KORGIVIT E",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 975,
+   "name": "MULTIVITAMINS ( PHARMATON )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "PHARMATON",
+   "dosage_form": null,
+   "unit_price": 29.0
+  },
+  {
+   "id": 976,
+   "name": "MULTIVITAMINS ( ROGEN E )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "ROGEN E",
+   "dosage_form": null,
+   "unit_price": 29.0
+  },
+  {
+   "id": 977,
+   "name": "MULTIVITAMINS ( CONZACE )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "CONZACE",
+   "dosage_form": null,
+   "unit_price": 16.0
+  },
+  {
+   "id": 978,
+   "name": "MULTIVITAMINS ( APPETREX )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "APPETREX",
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 979,
+   "name": "MULTIVITAMINS ( APCIRON PLUS )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "APCIRON PLUS",
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 980,
+   "name": "MULTIVITAMINS ( PEDIAFORTAN AS )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "PEDIAFORTAN AS",
+   "dosage_form": null,
+   "unit_price": 22.0
+  },
+  {
+   "id": 981,
+   "name": "MULTIVITAMINS ( PROPAN )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "PROPAN",
+   "dosage_form": null,
+   "unit_price": 35.0
+  },
+  {
+   "id": 982,
+   "name": "MULTIVITAMINS ( APPEBON )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "APPEBON",
+   "dosage_form": null,
+   "unit_price": 27.0
+  },
+  {
+   "id": 983,
+   "name": "MULTIVITAMINS ( OBYNAL )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "OBYNAL",
+   "dosage_form": null,
+   "unit_price": 16.0
+  },
+  {
+   "id": 984,
+   "name": "MULTIVITAMINS ( HEMARATE )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "HEMARATE",
+   "dosage_form": null,
+   "unit_price": 30.0
+  },
+  {
+   "id": 985,
+   "name": "MULTIVITAMINS ( NUTROPLEX 120 )",
+   "generic_name": "MULTIVITAMINS",
+   "brand_name": "NUTROPLEX",
+   "dosage_form": "120",
+   "unit_price": 191.0
+  },
+  {
+   "id": 986,
+   "name": "MULTIVITAMIN ( NUTROPLEX 25O )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "NUTROPLEX",
+   "dosage_form": "25O",
+   "unit_price": 329.0
+  },
+  {
+   "id": 987,
+   "name": "MULTIVITAMIN ( PRYCE KIDS 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "PRYCE KIDS",
+   "dosage_form": "120",
+   "unit_price": 130.0
+  },
+  {
+   "id": 988,
+   "name": "MULTIVITAMIN ( PRYCE KIDS 250 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "PRYCE KIDS",
+   "dosage_form": "250",
+   "unit_price": 220.0
+  },
+  {
+   "id": 989,
+   "name": "MULTIVITAMIN ( POLYNERV 120 )",
+   "generic_name": "MULTIVITAMIN",
+   "brand_name": "POLYNERV",
+   "dosage_form": "120",
+   "unit_price": 197.0
+  },
+  {
+   "id": 990,
+   "name": "NAPROXEN 500 MG.",
+   "generic_name": "NAPROXEN .",
+   "brand_name": null,
+   "dosage_form": "500 MG",
+   "unit_price": 10.0
+  },
+  {
+   "id": 991,
+   "name": "NAPROXEN ( FLANAX 275 )",
+   "generic_name": "NAPROXEN",
+   "brand_name": "FLANAX",
+   "dosage_form": "275",
+   "unit_price": 12.0
+  },
+  {
+   "id": 992,
+   "name": "NAPROXEN ( FLANAX FORTE )",
+   "generic_name": "NAPROXEN",
+   "brand_name": "FLANAX FORTE",
+   "dosage_form": null,
+   "unit_price": 24.0
+  },
+  {
+   "id": 993,
+   "name": "NAPROXEN ( SKELAN )",
+   "generic_name": "NAPROXEN",
+   "brand_name": "SKELAN",
+   "dosage_form": null,
+   "unit_price": 22.0
+  },
+  {
+   "id": 994,
+   "name": "NEVIBOLOL 5 MG.",
+   "generic_name": "NEVIBOLOL",
+   "brand_name": null,
+   "dosage_form": "5 MG.",
+   "unit_price": 17.0
+  },
+  {
+   "id": 995,
+   "name": "NEFEDIFINE 5 MG.",
+   "generic_name": "NEFEDIFINE",
+   "brand_name": null,
+   "dosage_form": "5 MG.",
+   "unit_price": 3.5
+  },
+  {
+   "id": 996,
+   "name": "NSS PLAIN 100 ML.",
+   "generic_name": "NSS PLAIN",
+   "brand_name": null,
+   "dosage_form": "100 ML.",
+   "unit_price": 95.0
+  },
+  {
+   "id": 997,
+   "name": "NYSTATIN 30 ML.",
+   "generic_name": "NYSTATIN",
+   "brand_name": null,
+   "dosage_form": "30 ML.",
+   "unit_price": 300.0
+  },
+  {
+   "id": 998,
+   "name": "OMEPRAZOLE 20 MG.",
+   "generic_name": "OMEPRAZOLE",
+   "brand_name": null,
+   "dosage_form": "20 MG.",
+   "unit_price": 7.5
+  },
+  {
+   "id": 999,
+   "name": "OMEPRAZOLE 40 MG.",
+   "generic_name": "OMEPRAZOLE",
+   "brand_name": null,
+   "dosage_form": "40 MG.",
+   "unit_price": 18.0
+  },
+  {
+   "id": 1000,
+   "name": "OMEPRAZOLE ( ZOSEC 20 )",
+   "generic_name": "OMEPRAZOLE",
+   "brand_name": "ZOSEC",
+   "dosage_form": "20",
+   "unit_price": 14.0
+  },
+  {
+   "id": 1001,
+   "name": "OFLOXACIN 200 MG.",
+   "generic_name": "OFLOXACIN",
+   "brand_name": null,
+   "dosage_form": "200 MG.",
+   "unit_price": 13.0
+  },
+  {
+   "id": 1002,
+   "name": "OPTEIN",
+   "generic_name": "OPTEIN",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 30.0
+  },
+  {
+   "id": 1003,
+   "name": "PARACETAMOL TABLET",
+   "generic_name": "PARACETAMOL TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 2.0
+  },
+  {
+   "id": 1004,
+   "name": "PARACETAMOL DROP",
+   "generic_name": "PARACETAMOL DROP",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 40.0
+  },
+  {
+   "id": 1005,
+   "name": "PARACETAMOL 125/60ML.",
+   "generic_name": "PARACETAMOL",
+   "brand_name": null,
+   "dosage_form": "125/60ML.",
+   "unit_price": 40.0
+  },
+  {
+   "id": 1006,
+   "name": "PARACETAMOL 250/60ML.",
+   "generic_name": "PARACETAMOL",
+   "brand_name": null,
+   "dosage_form": "250/60ML.",
+   "unit_price": 50.0
+  },
+  {
+   "id": 1007,
+   "name": "PARACETAMOL ( BIOGESIC TAB )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "BIOGESIC TAB",
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 1008,
+   "name": "PARACETAMOL ( BIOGESIC DROPS )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "BIOGESIC DROPS",
+   "dosage_form": null,
+   "unit_price": 96.0
+  },
+  {
+   "id": 1009,
+   "name": "PARACETAMOL ( BIOGESIC 120/60 )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "BIOGESIC",
+   "dosage_form": "120/60",
+   "unit_price": 115.0
+  },
+  {
+   "id": 1010,
+   "name": "PARACETAMOL ( BIOGESIC 250/60 )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "BIOGESIC",
+   "dosage_form": "250/60",
+   "unit_price": 163.0
+  },
+  {
+   "id": 1011,
+   "name": "PARACETAMOL ( CALPOL DROPS )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "CALPOL DROPS",
+   "dosage_form": null,
+   "unit_price": 99.0
+  },
+  {
+   "id": 1012,
+   "name": "PARACETAMOL ( CALPOL 120/60 )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "CALPOL",
+   "dosage_form": "120/60",
+   "unit_price": 99.0
+  },
+  {
+   "id": 1013,
+   "name": "PARACETAMOL ( CALPOL 250/60 )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "CALPOL",
+   "dosage_form": "250/60",
+   "unit_price": 152.0
+  },
+  {
+   "id": 1014,
+   "name": "PARACETAMOL ( KIDDILETS )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "KIDDILETS",
+   "dosage_form": null,
+   "unit_price": 4.5
+  },
+  {
+   "id": 1015,
+   "name": "PARACETAMOL ( TEMPRA 325 )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "TEMPRA",
+   "dosage_form": "325",
+   "unit_price": 4.5
+  },
+  {
+   "id": 1016,
+   "name": "PARACETAMOL ( TEMPRA 500 )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "TEMPRA",
+   "dosage_form": "500",
+   "unit_price": 5.0
+  },
+  {
+   "id": 1017,
+   "name": "PARACETAMOL ( TEMPRA DROPS )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "TEMPRA DROPS",
+   "dosage_form": null,
+   "unit_price": 92.0
+  },
+  {
+   "id": 1018,
+   "name": "PARACETAMOL ( TEMPRA 120/60ML.)",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "TEMPRA 120/60ML.",
+   "dosage_form": null,
+   "unit_price": 110.0
+  },
+  {
+   "id": 1019,
+   "name": "PARACETAMOL ( TEMPRA 250/60 )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "TEMPRA",
+   "dosage_form": "250/60",
+   "unit_price": 169.0
+  },
+  {
+   "id": 1020,
+   "name": "PARACETAMOL ( TEMPRA 125/120 )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "TEMPRA",
+   "dosage_form": "125/120",
+   "unit_price": 189.0
+  },
+  {
+   "id": 1021,
+   "name": "PARACETAMOL ( TEMPRA 250/120)",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "TEMPRA",
+   "dosage_form": "250/120",
+   "unit_price": 277.0
+  },
+  {
+   "id": 1022,
+   "name": "PARACETAMOL ( REXIDOL )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "REXIDOL",
+   "dosage_form": null,
+   "unit_price": 7.0
+  },
+  {
+   "id": 1023,
+   "name": "PARACETAMOL ( SARIDON )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "SARIDON",
+   "dosage_form": null,
+   "unit_price": 8.0
+  },
+  {
+   "id": 1024,
+   "name": "PARACETAMOL ( NORGESIC PLAIN )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "NORGESIC PLAIN",
+   "dosage_form": null,
+   "unit_price": 29.0
+  },
+  {
+   "id": 1025,
+   "name": "PARACETAMOL ( NORGESIC FORTE )",
+   "generic_name": "PARACETAMOL",
+   "brand_name": "NORGESIC FORTE",
+   "dosage_form": null,
+   "unit_price": 41.0
+  },
+  {
+   "id": 1026,
+   "name": "PANTOPRAZOLE 40 MG.",
+   "generic_name": "PANTOPRAZOLE",
+   "brand_name": null,
+   "dosage_form": "40 MG.",
+   "unit_price": 25.0
+  },
+  {
+   "id": 1027,
+   "name": "PANTOPRAZOLEN ( PRAZOLE PLUS )",
+   "generic_name": "PANTOPRAZOLEN",
+   "brand_name": "PRAZOLE PLUS",
+   "dosage_form": null,
+   "unit_price": 61.0
+  },
+  {
+   "id": 1028,
+   "name": "PHENYLPROPANOLAMINE 60ML.",
+   "generic_name": "PHENYLPROPANOLAMINE",
+   "brand_name": null,
+   "dosage_form": "60ML.",
+   "unit_price": 50.0
+  },
+  {
+   "id": 1029,
+   "name": "PHENYLPROPANOLAMINE DROPS",
+   "generic_name": "PHENYLPROPANOLAMINE DROPS",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 50.0
+  },
+  {
+   "id": 1030,
+   "name": "PHENYLEPRINE ( DECOLGEN)",
+   "generic_name": "PHENYLEPRINE",
+   "brand_name": "DECOLGEN",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 1031,
+   "name": "PHENYLEPRIN ( NEOZEP FTR. )",
+   "generic_name": "PHENYLEPRIN",
+   "brand_name": "NEOZEP FTR.",
+   "dosage_form": null,
+   "unit_price": 8.5
+  },
+  {
+   "id": 1032,
+   "name": "PHENYLEPRINE ( NEOZEP NON )",
+   "generic_name": "PHENYLEPRINE",
+   "brand_name": "NEOZEP NON",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 1033,
+   "name": "PHENYLEPRINE ( SINUTAB )",
+   "generic_name": "PHENYLEPRINE",
+   "brand_name": "SINUTAB",
+   "dosage_form": null,
+   "unit_price": 12.0
+  },
+  {
+   "id": 1034,
+   "name": "PHENYLEPRINE ( NASATAPP )",
+   "generic_name": "PHENYLEPRINE",
+   "brand_name": "NASATAPP",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 1035,
+   "name": "PHENYLEPRINE ( NAFARIN )",
+   "generic_name": "PHENYLEPRINE",
+   "brand_name": "NAFARIN",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 1036,
+   "name": "PHENYLEPRINE ( NEOBROHEXAN )",
+   "generic_name": "PHENYLEPRINE",
+   "brand_name": "NEOBROHEXAN",
+   "dosage_form": null,
+   "unit_price": 14.0
+  },
+  {
+   "id": 1037,
+   "name": "PHOSPHOLIPIDS CAPSULE",
+   "generic_name": "PHOSPHOLIPIDS CAPSULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 20.0
+  },
+  {
+   "id": 1038,
+   "name": "PHOSPHOLIPIDS ( ESSENTIALE FORTE)",
+   "generic_name": "PHOSPHOLIPIDS",
+   "brand_name": "ESSENTIALE FORTE",
+   "dosage_form": null,
+   "unit_price": 41.0
+  },
+  {
+   "id": 1039,
+   "name": "PILLS ( ALTHEA )",
+   "generic_name": "PILLS",
+   "brand_name": "ALTHEA",
+   "dosage_form": null,
+   "unit_price": 470.0
+  },
+  {
+   "id": 1040,
+   "name": "PILLS ( DAPHNE )",
+   "generic_name": "PILLS",
+   "brand_name": "DAPHNE",
+   "dosage_form": null,
+   "unit_price": 143.0
+  },
+  {
+   "id": 1041,
+   "name": "PILSS ( DIANE 35 )",
+   "generic_name": "PILSS",
+   "brand_name": "DIANE",
+   "dosage_form": "35",
+   "unit_price": 754.0
+  },
+  {
+   "id": 1042,
+   "name": "PILLS ( LADY )",
+   "generic_name": "PILLS",
+   "brand_name": "LADY",
+   "dosage_form": null,
+   "unit_price": 53.0
+  },
+  {
+   "id": 1043,
+   "name": "PILLS ( MARVELON )",
+   "generic_name": "PILLS",
+   "brand_name": "MARVELON",
+   "dosage_form": null,
+   "unit_price": 323.0
+  },
+  {
+   "id": 1044,
+   "name": "PILLS MICROPIL )",
+   "generic_name": "PILLS MICROPIL )",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 77.0
+  },
+  {
+   "id": 1045,
+   "name": "PILLS  (TRUST )",
+   "generic_name": "PILLS",
+   "brand_name": "TRUST",
+   "dosage_form": null,
+   "unit_price": 53.0
+  },
+  {
+   "id": 1046,
+   "name": "PIZOTIFEN 60 ML.",
+   "generic_name": "PIZOTIFEN",
+   "brand_name": null,
+   "dosage_form": "60 ML.",
+   "unit_price": 90.0
+  },
+  {
+   "id": 1047,
+   "name": "PREGABALIN 75 MG.",
+   "generic_name": "PREGABALIN",
+   "brand_name": null,
+   "dosage_form": "75 MG.",
+   "unit_price": 40.0
+  },
+  {
+   "id": 1048,
+   "name": "PREDNISONE 5 MG.",
+   "generic_name": "PREDNISONE",
+   "brand_name": null,
+   "dosage_form": "5 MG.",
+   "unit_price": 2.0
+  },
+  {
+   "id": 1049,
+   "name": "PREDNISONE 10 MG.",
+   "generic_name": "PREDNISONE",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 1050,
+   "name": "PREDNISONE 10/60ML.",
+   "generic_name": "PREDNISONE",
+   "brand_name": null,
+   "dosage_form": "10/60ML.",
+   "unit_price": 150.0
+  },
+  {
+   "id": 1051,
+   "name": "PREDNISONE ( PRED 10/60ML. )",
+   "generic_name": "PREDNISONE",
+   "brand_name": "PRED",
+   "dosage_form": "10/60ML.",
+   "unit_price": 194.0
+  },
+  {
+   "id": 1052,
+   "name": "PREDNISONE ( PRED 20/60ML.)",
+   "generic_name": "PREDNISONE",
+   "brand_name": "PRED",
+   "dosage_form": "20/60ML.",
+   "unit_price": 335.0
+  },
+  {
+   "id": 1053,
+   "name": "PREDNISONE ( PRED 10 )",
+   "generic_name": "PREDNISONE",
+   "brand_name": "PRED",
+   "dosage_form": "10",
+   "unit_price": 7.0
+  },
+  {
+   "id": 1054,
+   "name": "PREDNISONE ( PRED 20 )",
+   "generic_name": "PREDNISONE",
+   "brand_name": "PRED",
+   "dosage_form": "20",
+   "unit_price": 10.0
+  },
+  {
+   "id": 1055,
+   "name": "PECOF TABLET",
+   "generic_name": "PECOF TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 20.0
+  },
+  {
+   "id": 1056,
+   "name": "PROPANOLOL 10 MG.",
+   "generic_name": "PROPANOLOL",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 1057,
+   "name": "PROCATEROL ( BREZU 60 )",
+   "generic_name": "PROCATEROL",
+   "brand_name": "BREZU",
+   "dosage_form": "60",
+   "unit_price": 228.0
+  },
+  {
+   "id": 1058,
+   "name": "PROCATEROL ( MEPTIN 60 )",
+   "generic_name": "PROCATEROL",
+   "brand_name": "MEPTIN",
+   "dosage_form": "60",
+   "unit_price": 236.0
+  },
+  {
+   "id": 1059,
+   "name": "PIROXICAM 10 MG.",
+   "generic_name": "PIROXICAM",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 1060,
+   "name": "POTASSIUM CHLORIDE 600",
+   "generic_name": "POTASSIUM CHLORIDE",
+   "brand_name": null,
+   "dosage_form": "600",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1061,
+   "name": "POTASSIUM CITRATE 1,080",
+   "generic_name": "POTASSIUM CITRATE",
+   "brand_name": null,
+   "dosage_form": "1080",
+   "unit_price": 10.0
+  },
+  {
+   "id": 1062,
+   "name": "RANITIDINE 150 MG.",
+   "generic_name": "RANITIDINE",
+   "brand_name": null,
+   "dosage_form": "150 MG.",
+   "unit_price": 8.0
+  },
+  {
+   "id": 1063,
+   "name": "RANITIDINE 300 MG.",
+   "generic_name": "RANITIDINE",
+   "brand_name": null,
+   "dosage_form": "300 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 1064,
+   "name": "RIFAMPICIN ( FIXCOM 2 )",
+   "generic_name": "RIFAMPICIN",
+   "brand_name": "FIXCOM",
+   "dosage_form": "2",
+   "unit_price": 9.0
+  },
+  {
+   "id": 1065,
+   "name": "RIFAMPICIN ( FIXCOM 3 )",
+   "generic_name": "RIFAMPICIN",
+   "brand_name": "FIXCOM",
+   "dosage_form": "3",
+   "unit_price": 12.0
+  },
+  {
+   "id": 1066,
+   "name": "RIFAMPICIN ( FIXCOM 4 )",
+   "generic_name": "RIFAMPICIN",
+   "brand_name": "FIXCOM",
+   "dosage_form": "4",
+   "unit_price": 13.0
+  },
+  {
+   "id": 1067,
+   "name": "ROBUST TABLET",
+   "generic_name": "ROBUST TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 77.0
+  },
+  {
+   "id": 1068,
+   "name": "ROBUST EXTREME CAP.",
+   "generic_name": "ROBUST EXTREME CAP.",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 151.0
+  },
+  {
+   "id": 1069,
+   "name": "ROSUVASTATIN 5 MG.",
+   "generic_name": "ROSUVASTATIN",
+   "brand_name": null,
+   "dosage_form": "5 MG.",
+   "unit_price": 8.0
+  },
+  {
+   "id": 1070,
+   "name": "ROSUVASTATIN 10 MG.",
+   "generic_name": "ROSUVASTATIN",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 12.0
+  },
+  {
+   "id": 1071,
+   "name": "ROSUVASTATIN 20 MG.",
+   "generic_name": "ROSUVASTATIN",
+   "brand_name": null,
+   "dosage_form": "20 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 1072,
+   "name": "ROSUVASTATIN 40 MG.",
+   "generic_name": "ROSUVASTATIN",
+   "brand_name": null,
+   "dosage_form": "40 MG.",
+   "unit_price": 22.0
+  },
+  {
+   "id": 1073,
+   "name": "ROWACHOL",
+   "generic_name": "ROWACHOL",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 51.0
+  },
+  {
+   "id": 1074,
+   "name": "ROWATINEX",
+   "generic_name": "ROWATINEX",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 37.0
+  },
+  {
+   "id": 1075,
+   "name": "SALBUTAMOL TAB. 2 MG.",
+   "generic_name": "SALBUTAMOL TAB.",
+   "brand_name": null,
+   "dosage_form": "2 MG.",
+   "unit_price": 2.0
+  },
+  {
+   "id": 1076,
+   "name": "SALBUTAMOL TAB. 4 MG.",
+   "generic_name": "SALBUTAMOL TAB.",
+   "brand_name": null,
+   "dosage_form": "4 MG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 1077,
+   "name": "SALBUTAMOL NEBULE",
+   "generic_name": "SALBUTAMOL NEBULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 1078,
+   "name": "SALBUTAMOL ( VENTOLIN TAB. )",
+   "generic_name": "SALBUTAMOL",
+   "brand_name": "VENTOLIN TAB.",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 1079,
+   "name": "SALBUTAMOL  SYRUP 60 ML.",
+   "generic_name": "SALBUTAMOL  SYRUP",
+   "brand_name": null,
+   "dosage_form": "60 ML.",
+   "unit_price": 50.0
+  },
+  {
+   "id": 1080,
+   "name": "SALBUTAMOL ( ASMALIN 60 )",
+   "generic_name": "SALBUTAMOL",
+   "brand_name": "ASMALIN",
+   "dosage_form": "60",
+   "unit_price": 164.0
+  },
+  {
+   "id": 1081,
+   "name": "SALBUTAMOL ( VENTAR 60 )",
+   "generic_name": "SALBUTAMOL",
+   "brand_name": "VENTAR",
+   "dosage_form": "60",
+   "unit_price": 73.0
+  },
+  {
+   "id": 1082,
+   "name": "SALBUTAMOL ( VENTOLIN 60 )",
+   "generic_name": "SALBUTAMOL",
+   "brand_name": "VENTOLIN",
+   "dosage_form": "60",
+   "unit_price": null
+  },
+  {
+   "id": 1083,
+   "name": "SALBUTAMOL+GUAIFENESIN 60 ML.",
+   "generic_name": "SALBUTAMOL+GUAIFENESIN",
+   "brand_name": null,
+   "dosage_form": "60 ML.",
+   "unit_price": 65.0
+  },
+  {
+   "id": 1084,
+   "name": "SALBU+GUAIFE ( BRONCAIRE )",
+   "generic_name": "SALBU+GUAIFE",
+   "brand_name": "BRONCAIRE",
+   "dosage_form": null,
+   "unit_price": 106.0
+  },
+  {
+   "id": 1085,
+   "name": "SALBU + GUAIFE ( VENTOLIN 60 )",
+   "generic_name": "SALBU + GUAIFE",
+   "brand_name": "VENTOLIN",
+   "dosage_form": "60",
+   "unit_price": 322.0
+  },
+  {
+   "id": 1086,
+   "name": "SALBU + GUAIFE ( VENTO-BRONCHO )",
+   "generic_name": "SALBU + GUAIFE",
+   "brand_name": "VENTO-BRONCHO",
+   "dosage_form": null,
+   "unit_price": 130.0
+  },
+  {
+   "id": 1087,
+   "name": "SALBUTAMOL ( VENTOLIN NEB )",
+   "generic_name": "SALBUTAMOL",
+   "brand_name": "VENTOLIN NEB",
+   "dosage_form": null,
+   "unit_price": 45.0
+  },
+  {
+   "id": 1088,
+   "name": "SALBUTAMOL ( ASMALIN NEB. )",
+   "generic_name": "SALBUTAMOL",
+   "brand_name": "ASMALIN NEB.",
+   "dosage_form": null,
+   "unit_price": 38.0
+  },
+  {
+   "id": 1089,
+   "name": "SALBUTAMOL INHALER",
+   "generic_name": "SALBUTAMOL INHALER",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 250.0
+  },
+  {
+   "id": 1090,
+   "name": "SALBUTAMOL + IPRA NEBULE",
+   "generic_name": "SALBUTAMOL + IPRA NEBULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 25.0
+  },
+  {
+   "id": 1091,
+   "name": "SALBUTAMOL + IPRA ( DUAVENT )",
+   "generic_name": "SALBUTAMOL + IPRA",
+   "brand_name": "DUAVENT",
+   "dosage_form": null,
+   "unit_price": 48.0
+  },
+  {
+   "id": 1092,
+   "name": "SALBUTAMOL + GUAIFENESIN",
+   "generic_name": "SALBUTAMOL + GUAIFENESIN",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 1093,
+   "name": "SANTE BARLEY",
+   "generic_name": "SANTE BARLEY",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 12.0
+  },
+  {
+   "id": 1094,
+   "name": "SILYMARIN CAPSULE",
+   "generic_name": "SILYMARIN CAPSULE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 1095,
+   "name": "SILYMARIN ( LIVERAIDE )",
+   "generic_name": "SILYMARIN",
+   "brand_name": "LIVERAIDE",
+   "dosage_form": null,
+   "unit_price": 22.0
+  },
+  {
+   "id": 1096,
+   "name": "SAMBONG  500 MG.",
+   "generic_name": "SAMBONG",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 7.0
+  },
+  {
+   "id": 1097,
+   "name": "SAMBONG ( RELEAF FORTE )",
+   "generic_name": "SAMBONG",
+   "brand_name": "RELEAF FORTE",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 1098,
+   "name": "SKIN ( ACICLOVIR CREAM )",
+   "generic_name": "SKIN",
+   "brand_name": "ACICLOVIR CREAM",
+   "dosage_form": null,
+   "unit_price": 250.0
+  },
+  {
+   "id": 1099,
+   "name": "SKIN ( HYDROCORTISONE CRM )",
+   "generic_name": "SKIN",
+   "brand_name": "HYDROCORTISONE CRM",
+   "dosage_form": null,
+   "unit_price": 220.0
+  },
+  {
+   "id": 1100,
+   "name": "SKIN ( FUSIDIC ACID )",
+   "generic_name": "SKIN",
+   "brand_name": "FUSIDIC ACID",
+   "dosage_form": null,
+   "unit_price": 240.0
+  },
+  {
+   "id": 1101,
+   "name": "SKIN ( SILVER SULFADIAZINE 25 G )",
+   "generic_name": "SKIN",
+   "brand_name": "SILVER SULFADIAZINE",
+   "dosage_form": "25 G",
+   "unit_price": 220.0
+  },
+  {
+   "id": 1102,
+   "name": "SKIN ( DIPROGENTA CREAM )",
+   "generic_name": "SKIN",
+   "brand_name": "DIPROGENTA CREAM",
+   "dosage_form": null,
+   "unit_price": 514.0
+  },
+  {
+   "id": 1103,
+   "name": "SKIN ( DIPROGENTA OINTMENT )",
+   "generic_name": "SKIN",
+   "brand_name": "DIPROGENTA OINTMENT",
+   "dosage_form": null,
+   "unit_price": 514.0
+  },
+  {
+   "id": 1104,
+   "name": "SKIN ( TRIDERM OINTMENT 5 )",
+   "generic_name": "SKIN",
+   "brand_name": "TRIDERM OINTMENT",
+   "dosage_form": "5",
+   "unit_price": 618.0
+  },
+  {
+   "id": 1105,
+   "name": "SKIN ( ELICA CREAM 5 )",
+   "generic_name": "SKIN",
+   "brand_name": "ELICA CREAM",
+   "dosage_form": "5",
+   "unit_price": 482.0
+  },
+  {
+   "id": 1106,
+   "name": "SKIN ( ELICA OINTMENT 5 )",
+   "generic_name": "SKIN",
+   "brand_name": "ELICA OINTMENT",
+   "dosage_form": "5",
+   "unit_price": 482.0
+  },
+  {
+   "id": 1107,
+   "name": "SKIN ( MOMETASONE 1OG )",
+   "generic_name": "SKIN",
+   "brand_name": "MOMETASONE",
+   "dosage_form": "1OG",
+   "unit_price": 330.0
+  },
+  {
+   "id": 1108,
+   "name": "SKIN ( MUPIROCIN OINTMENT 5 )",
+   "generic_name": "SKIN",
+   "brand_name": "MUPIROCIN OINTMENT",
+   "dosage_form": "5",
+   "unit_price": 200.0
+  },
+  {
+   "id": 1109,
+   "name": "SKIN ( BACTROBAN OINTMENT 5 )",
+   "generic_name": "SKIN",
+   "brand_name": "BACTROBAN OINTMENT",
+   "dosage_form": "5",
+   "unit_price": 416.0
+  },
+  {
+   "id": 1110,
+   "name": "SKIN ( FOSKINA OINTMENT 5 )",
+   "generic_name": "SKIN",
+   "brand_name": "FOSKINA OINTMENT",
+   "dosage_form": "5",
+   "unit_price": 289.0
+  },
+  {
+   "id": 1111,
+   "name": "SKIN CLOBETASOLE CREAM 15G",
+   "generic_name": "SKIN CLOBETASOLE CREAM",
+   "brand_name": null,
+   "dosage_form": "15G",
+   "unit_price": 150.0
+  },
+  {
+   "id": 1112,
+   "name": "SKIN ( DERMOVATE CREAM 5 )",
+   "generic_name": "SKIN",
+   "brand_name": "DERMOVATE CREAM",
+   "dosage_form": "5",
+   "unit_price": 392.0
+  },
+  {
+   "id": 1113,
+   "name": "SKIN ( DERMOVATE OINT 5 )",
+   "generic_name": "SKIN",
+   "brand_name": "DERMOVATE OINT",
+   "dosage_form": "5",
+   "unit_price": 392.0
+  },
+  {
+   "id": 1114,
+   "name": "SKIN CLOTRIMAZOLE 15 G",
+   "generic_name": "SKIN CLOTRIMAZOLE",
+   "brand_name": null,
+   "dosage_form": "15 G",
+   "unit_price": 150.0
+  },
+  {
+   "id": 1115,
+   "name": "SKIN ( CANESTEN 3G )",
+   "generic_name": "SKIN",
+   "brand_name": "CANESTEN",
+   "dosage_form": "3G",
+   "unit_price": 142.0
+  },
+  {
+   "id": 1116,
+   "name": "SKIN ( CANESTEN 5G )",
+   "generic_name": "SKIN",
+   "brand_name": "CANESTEN",
+   "dosage_form": "5G",
+   "unit_price": 209.0
+  },
+  {
+   "id": 1117,
+   "name": "SKIN KETOCONAZOLE CREAM 10G",
+   "generic_name": "SKIN KETOCONAZOLE CREAM",
+   "brand_name": null,
+   "dosage_form": "10G",
+   "unit_price": 150.0
+  },
+  {
+   "id": 1118,
+   "name": "SKIN ( NIZORAL CREAM 3.5G )",
+   "generic_name": "SKIN",
+   "brand_name": "NIZORAL CREAM",
+   "dosage_form": "3.5G",
+   "unit_price": 182.0
+  },
+  {
+   "id": 1119,
+   "name": "SKIN ( FUNGISOL SOLUTION )",
+   "generic_name": "SKIN",
+   "brand_name": "FUNGISOL SOLUTION",
+   "dosage_form": null,
+   "unit_price": 182.0
+  },
+  {
+   "id": 1120,
+   "name": "SKIN ( UNILAB BURN 15G )",
+   "generic_name": "SKIN",
+   "brand_name": "UNILAB BURN",
+   "dosage_form": "15G",
+   "unit_price": 151.0
+  },
+  {
+   "id": 1121,
+   "name": "SKIN ( UNILAB WHITFIELDS 15 G )",
+   "generic_name": "SKIN",
+   "brand_name": "UNILAB WHITFIELDS",
+   "dosage_form": "15 G",
+   "unit_price": 118.0
+  },
+  {
+   "id": 1122,
+   "name": "SULTAMICILLIN 750 MG.",
+   "generic_name": "SULTAMICILLIN",
+   "brand_name": null,
+   "dosage_form": "750 MG.",
+   "unit_price": 78.0
+  },
+  {
+   "id": 1123,
+   "name": "SIMVASTATIN 10 MG.",
+   "generic_name": "SIMVASTATIN .",
+   "brand_name": null,
+   "dosage_form": "10 MG",
+   "unit_price": 6.0
+  },
+  {
+   "id": 1124,
+   "name": "SIMVASTATIN 20 MG.",
+   "generic_name": "SIMVASTATIN",
+   "brand_name": null,
+   "dosage_form": "20 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 1125,
+   "name": "SIMVASTATIN 40 MG.",
+   "generic_name": "SIMVASTATIN",
+   "brand_name": null,
+   "dosage_form": "40 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1126,
+   "name": "SPIRONOLACTONE 25 MG.",
+   "generic_name": "SPIRONOLACTONE",
+   "brand_name": null,
+   "dosage_form": "25 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1127,
+   "name": "SPIRONOLACTONE 50 MG.",
+   "generic_name": "SPIRONOLACTONE",
+   "brand_name": null,
+   "dosage_form": "50 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 1128,
+   "name": "SPIRONOLACTONE ( ALDACTONE 25 )",
+   "generic_name": "SPIRONOLACTONE",
+   "brand_name": "ALDACTONE",
+   "dosage_form": "25",
+   "unit_price": 24.0
+  },
+  {
+   "id": 1129,
+   "name": "SPIRONOLACTONE ( ALDACTONE 50 )",
+   "generic_name": "SPIRONOLACTONE",
+   "brand_name": "ALDACTONE",
+   "dosage_form": "50",
+   "unit_price": 37.5
+  },
+  {
+   "id": 1130,
+   "name": "SODIUM ASCORBATE 500 MG.",
+   "generic_name": "SODIUM ASCORBATE",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 1131,
+   "name": "SODIUM ASCORBATE ( FERN C )",
+   "generic_name": "SODIUM ASCORBATE",
+   "brand_name": "FERN C",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 1132,
+   "name": "SODIUM ASCORBATE ( IMMUNPRO )",
+   "generic_name": "SODIUM ASCORBATE",
+   "brand_name": "IMMUNPRO",
+   "dosage_form": null,
+   "unit_price": 9.5
+  },
+  {
+   "id": 1133,
+   "name": "SODIUM BICAR ( GAVISCON )",
+   "generic_name": "SODIUM BICAR",
+   "brand_name": "GAVISCON",
+   "dosage_form": null,
+   "unit_price": 35.0
+  },
+  {
+   "id": 1134,
+   "name": "SODIUM BICAR ( GAVISCON DOUBLE )",
+   "generic_name": "SODIUM BICAR",
+   "brand_name": "GAVISCON DOUBLE",
+   "dosage_form": null,
+   "unit_price": 42.0
+  },
+  {
+   "id": 1135,
+   "name": "SINUPRET TABLET",
+   "generic_name": "SINUPRET TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 1136,
+   "name": "SINUPRET FORTE",
+   "generic_name": "SINUPRET FORTE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 19.0
+  },
+  {
+   "id": 1137,
+   "name": "SITAGLIPTIN 50 MG.",
+   "generic_name": "SITAGLIPTIN",
+   "brand_name": null,
+   "dosage_form": "50 MG.",
+   "unit_price": 19.0
+  },
+  {
+   "id": 1138,
+   "name": "SITAGLIPTIN 100 MG.",
+   "generic_name": "SITAGLIPTIN",
+   "brand_name": null,
+   "dosage_form": "100 MG.",
+   "unit_price": 30.0
+  },
+  {
+   "id": 1139,
+   "name": "SITAGLIPTIN + METFORMIN 50/500",
+   "generic_name": "SITAGLIPTIN + METFORMIN",
+   "brand_name": null,
+   "dosage_form": "50/500",
+   "unit_price": 25.0
+  },
+  {
+   "id": 1140,
+   "name": "SITAGLIPTIN + METFORMIN 50/1G.",
+   "generic_name": "SITAGLIPTIN + METFORMIN",
+   "brand_name": null,
+   "dosage_form": "50/1G.",
+   "unit_price": 28.0
+  },
+  {
+   "id": 1141,
+   "name": "SODIUM CHLORIDE ( SALINASE 30 )",
+   "generic_name": "SODIUM CHLORIDE",
+   "brand_name": "SALINASE",
+   "dosage_form": "30",
+   "unit_price": 90.0
+  },
+  {
+   "id": 1142,
+   "name": "SODIUM CHLORIDE ( SALINSE SPRAY )",
+   "generic_name": "SODIUM CHLORIDE",
+   "brand_name": "SALINSE SPRAY",
+   "dosage_form": null,
+   "unit_price": 114.0
+  },
+  {
+   "id": 1143,
+   "name": "SODIUM CHLORIDE ( NASOCLEAR 30 )",
+   "generic_name": "SODIUM CHLORIDE",
+   "brand_name": "NASOCLEAR",
+   "dosage_form": "30",
+   "unit_price": 96.0
+  },
+  {
+   "id": 1144,
+   "name": "SOLMUX THROAT SPRAY",
+   "generic_name": "SOLMUX THROAT SPRAY",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 364.0
+  },
+  {
+   "id": 1145,
+   "name": "STREPSILS 8’S",
+   "generic_name": "STREPSILS 8’S",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 75.0
+  },
+  {
+   "id": 1146,
+   "name": "TAMSULUSIN 400 MCG.",
+   "generic_name": "TAMSULUSIN",
+   "brand_name": null,
+   "dosage_form": "400 MCG.",
+   "unit_price": 33.0
+  },
+  {
+   "id": 1147,
+   "name": "TAURINE ( TAUREX 30 )",
+   "generic_name": "TAURINE",
+   "brand_name": "TAUREX",
+   "dosage_form": "30",
+   "unit_price": 142.0
+  },
+  {
+   "id": 1148,
+   "name": "TAURINE ( TAUREX 120 )",
+   "generic_name": "TAURINE",
+   "brand_name": "TAUREX",
+   "dosage_form": "120",
+   "unit_price": 154.0
+  },
+  {
+   "id": 1149,
+   "name": "TAURINE (TAUREX 240 )",
+   "generic_name": "TAURINE",
+   "brand_name": "TAUREX",
+   "dosage_form": "240",
+   "unit_price": 275.0
+  },
+  {
+   "id": 1150,
+   "name": "TRUST PILL",
+   "generic_name": "TRUST PILL",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 53.0
+  },
+  {
+   "id": 1151,
+   "name": "TELMISARTAN 40 MG.",
+   "generic_name": "TELMISARTAN",
+   "brand_name": null,
+   "dosage_form": "40 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 1152,
+   "name": "TELMISARTAN 80 MG.",
+   "generic_name": "TELMISARTAN",
+   "brand_name": null,
+   "dosage_form": "80 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1153,
+   "name": "TELMISARTAN + HYDRO 40/12.5",
+   "generic_name": "TELMISARTAN + HYDRO",
+   "brand_name": null,
+   "dosage_form": "40/12.5",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1154,
+   "name": "TRAMADOL 50 MG.",
+   "generic_name": "TRAMADOL",
+   "brand_name": null,
+   "dosage_form": "50 MG.",
+   "unit_price": 9.0
+  },
+  {
+   "id": 1155,
+   "name": "TRAMADOL + PARA",
+   "generic_name": "TRAMADOL + PARA",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 20.0
+  },
+  {
+   "id": 1156,
+   "name": "TRAMADOL ( DOLCET )",
+   "generic_name": "TRAMADOL",
+   "brand_name": "DOLCET",
+   "dosage_form": null,
+   "unit_price": 58.0
+  },
+  {
+   "id": 1157,
+   "name": "TRIMETAZIDINE 35 MG.",
+   "generic_name": "TRIMETAZIDINE",
+   "brand_name": null,
+   "dosage_form": "35 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 1158,
+   "name": "TOCOPHERYL ( LACTEZIN )",
+   "generic_name": "TOCOPHERYL",
+   "brand_name": "LACTEZIN",
+   "dosage_form": null,
+   "unit_price": 30.0
+  },
+  {
+   "id": 1159,
+   "name": "URSODEOXYCHOLIC ACID 250 MG.",
+   "generic_name": "URSODEOXYCHOLIC ACID",
+   "brand_name": null,
+   "dosage_form": "250 MG.",
+   "unit_price": 30.0
+  },
+  {
+   "id": 1160,
+   "name": "URSODEOXYCHOLIC ACID 300 MG.",
+   "generic_name": "URSODEOXYCHOLIC ACID",
+   "brand_name": null,
+   "dosage_form": "300 MG.",
+   "unit_price": 52.0
+  },
+  {
+   "id": 1161,
+   "name": "TOCOPHERYL ( DELLA E )",
+   "generic_name": "TOCOPHERYL",
+   "brand_name": "DELLA E",
+   "dosage_form": null,
+   "unit_price": 8.0
+  },
+  {
+   "id": 1162,
+   "name": "TOCOPHERYL ( PHAREX E )",
+   "generic_name": "TOCOPHERYL",
+   "brand_name": "PHAREX E",
+   "dosage_form": null,
+   "unit_price": 9.0
+  },
+  {
+   "id": 1163,
+   "name": "TOCOPHERYL ( MYRA E )",
+   "generic_name": "TOCOPHERYL",
+   "brand_name": "MYRA E",
+   "dosage_form": null,
+   "unit_price": 13.0
+  },
+  {
+   "id": 1164,
+   "name": "TRANEXAMIC ACID 500 MG.",
+   "generic_name": "TRANEXAMIC ACID",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1165,
+   "name": "TRANEXAMIC ( HEMOSTAN 500 )",
+   "generic_name": "TRANEXAMIC",
+   "brand_name": "HEMOSTAN",
+   "dosage_form": "500",
+   "unit_price": 48.0
+  },
+  {
+   "id": 1166,
+   "name": "VITAMIN - E ( MYRA E 400 )",
+   "generic_name": "VITAMIN - E",
+   "brand_name": "MYRA E",
+   "dosage_form": "400",
+   "unit_price": 13.0
+  },
+  {
+   "id": 1167,
+   "name": "VITAMIN -E ( MYRA E 30’S )",
+   "generic_name": "VITAMIN -E",
+   "brand_name": "MYRA E 30’S",
+   "dosage_form": null,
+   "unit_price": 383.0
+  },
+  {
+   "id": 1168,
+   "name": "VITAMIN-E ( MYRA E ULTIMATE )",
+   "generic_name": "VITAMIN-E",
+   "brand_name": "MYRA E ULTIMATE",
+   "dosage_form": null,
+   "unit_price": 21.0
+  },
+  {
+   "id": 1169,
+   "name": "XYLOGEL ORAL GEL",
+   "generic_name": "XYLOGEL ORAL GEL",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 164.0
+  },
+  {
+   "id": 1170,
+   "name": "AMBROXOL ( ZOBRIXOL DROP )",
+   "generic_name": "AMBROXOL",
+   "brand_name": "ZOBRIXOL DROP",
+   "dosage_form": null,
+   "unit_price": 76.0
+  },
+  {
+   "id": 1171,
+   "name": "AMBROXOL ( Mucosolvan ) 75 MG.",
+   "generic_name": "AMBROXOL",
+   "brand_name": "Mucosolvan",
+   "dosage_form": "75 MG.",
+   "unit_price": 52.0
+  },
+  {
+   "id": 1172,
+   "name": "ALUMINUM MAGNESIUM 60ML.",
+   "generic_name": "ALUMINUM MAGNESIUM",
+   "brand_name": null,
+   "dosage_form": "60ML.",
+   "unit_price": 45.0
+  },
+  {
+   "id": 1173,
+   "name": "ALUMINUM MAGNESIUM 120ML.",
+   "generic_name": "ALUMINUM MAGNESIUM",
+   "brand_name": null,
+   "dosage_form": "120ML.",
+   "unit_price": 70.0
+  },
+  {
+   "id": 1174,
+   "name": "AZITHROMYCIN TAB. 500 MG.",
+   "generic_name": "AZITHROMYCIN TAB.",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 80.0
+  },
+  {
+   "id": 1175,
+   "name": "AZITHROMYCIN CAP. 500 MG.",
+   "generic_name": "AZITHROMYCIN CAP.",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 60.0
+  },
+  {
+   "id": 1176,
+   "name": "AMPALAYA PLUS CAP.",
+   "generic_name": "AMPALAYA PLUS CAP.",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 8.0
+  },
+  {
+   "id": 1177,
+   "name": "ALLOPURINOL 100 MG.",
+   "generic_name": "ALLOPURINOL",
+   "brand_name": null,
+   "dosage_form": "100 MG.",
+   "unit_price": 3.0
+  },
+  {
+   "id": 1178,
+   "name": "ALLOPURINOL 300 MG.",
+   "generic_name": "ALLOPURINOL",
+   "brand_name": null,
+   "dosage_form": "300 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 1179,
+   "name": "ATENOLOL 50 MG.",
+   "generic_name": "ATENOLOL",
+   "brand_name": null,
+   "dosage_form": "50 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 1180,
+   "name": "AMLODIPINE 5 MG.",
+   "generic_name": "AMLODIPINE",
+   "brand_name": null,
+   "dosage_form": "5 MG.",
+   "unit_price": 3.5
+  },
+  {
+   "id": 1181,
+   "name": "AMLODIPINE 10 MG.",
+   "generic_name": "AMLODIPINE",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 1182,
+   "name": "ACICLOVIR 200 MG.",
+   "generic_name": "ACICLOVIR",
+   "brand_name": null,
+   "dosage_form": "200 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1183,
+   "name": "ACICLOVIR 400 MG.",
+   "generic_name": "ACICLOVIR",
+   "brand_name": null,
+   "dosage_form": "400 MG.",
+   "unit_price": 25.0
+  },
+  {
+   "id": 1184,
+   "name": "ACICLOVIR 800 MG.",
+   "generic_name": "ACICLOVIR",
+   "brand_name": null,
+   "dosage_form": "800 MG.",
+   "unit_price": 39.0
+  },
+  {
+   "id": 1185,
+   "name": "AMOXICILLIN 250 MG.",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": null,
+   "dosage_form": "250 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 1186,
+   "name": "AMOXICILLIN 500 MG.",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 5.0
+  },
+  {
+   "id": 1187,
+   "name": "AMOXICILLIN ( Himox ) 500 MG.",
+   "generic_name": "AMOXICILLIN",
+   "brand_name": "Himox",
+   "dosage_form": "500 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 1188,
+   "name": "AMOXICILLIIN ( Amoxil ) 500 MG.",
+   "generic_name": "AMOXICILLIIN",
+   "brand_name": "Amoxil",
+   "dosage_form": "500 MG.",
+   "unit_price": 21.0
+  },
+  {
+   "id": 1189,
+   "name": "ASPIRIN 80 MG.",
+   "generic_name": "ASPIRIN",
+   "brand_name": null,
+   "dosage_form": "80 MG.",
+   "unit_price": 2.0
+  },
+  {
+   "id": 1190,
+   "name": "ASPIRIN ( ASPILETS ) 80 MG.",
+   "generic_name": "ASPIRIN",
+   "brand_name": "ASPILETS",
+   "dosage_form": "80 MG.",
+   "unit_price": 4.5
+  },
+  {
+   "id": 1191,
+   "name": "ATORVASTATIN 10 MG.",
+   "generic_name": "ATORVASTATIN",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 6.0
+  },
+  {
+   "id": 1192,
+   "name": "ATORVASTATIN 20 MG.",
+   "generic_name": "ATORVASTATIN",
+   "brand_name": null,
+   "dosage_form": "20 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 1193,
+   "name": "ATORVASTATIN 40 MG.",
+   "generic_name": "ATORVASTATIN",
+   "brand_name": null,
+   "dosage_form": "40 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1194,
+   "name": "ATORVASTATIN 80 MG.",
+   "generic_name": "ATORVASTATIN",
+   "brand_name": null,
+   "dosage_form": "80 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 1195,
+   "name": "ASCORBIC ACID TABLET",
+   "generic_name": "ASCORBIC ACID TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 2.0
+  },
+  {
+   "id": 1196,
+   "name": "ASCORBIC ACID 120 ML.",
+   "generic_name": "ASCORBIC ACID",
+   "brand_name": null,
+   "dosage_form": "120 ML.",
+   "unit_price": 90.0
+  },
+  {
+   "id": 1197,
+   "name": "ASCORBIC ACID 250 ML.",
+   "generic_name": "ASCORBIC ACID",
+   "brand_name": null,
+   "dosage_form": "250 ML.",
+   "unit_price": 175.0
+  },
+  {
+   "id": 1198,
+   "name": "ASCORBIC ( CEELIN 15 ML.)",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN",
+   "dosage_form": "15 ML.",
+   "unit_price": 80.0
+  },
+  {
+   "id": 1199,
+   "name": "ASCORBIC ( CEELIN 30 ML. )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN",
+   "dosage_form": "30 ML.",
+   "unit_price": 140.0
+  },
+  {
+   "id": 1200,
+   "name": "ASCORBIC ( CEELIN 60 ML. )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN",
+   "dosage_form": "60 ML.",
+   "unit_price": 73.0
+  },
+  {
+   "id": 1201,
+   "name": "ASCORBIC ( CEELIN 120 ML. )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN",
+   "dosage_form": "120 ML.",
+   "unit_price": 134.0
+  },
+  {
+   "id": 1202,
+   "name": "ASCORBIC ( CEELIN 250 ML. )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN",
+   "dosage_form": "250 ML.",
+   "unit_price": 259.0
+  },
+  {
+   "id": 1203,
+   "name": "ASCORBIC ( CEELIN PLUS 15 )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN PLUS",
+   "dosage_form": "15",
+   "unit_price": 97.0
+  },
+  {
+   "id": 1204,
+   "name": "ASCORBIC ( CEELIN PLUS 30 )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN PLUS",
+   "dosage_form": "30",
+   "unit_price": 186.0
+  },
+  {
+   "id": 1205,
+   "name": "ASCORBIC ( CEELIN PLUS 60 )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN PLUS",
+   "dosage_form": "60",
+   "unit_price": 99.0
+  },
+  {
+   "id": 1206,
+   "name": "ASCORBIC ( CEELIN PLUS 120 )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN PLUS",
+   "dosage_form": "120",
+   "unit_price": 184.0
+  },
+  {
+   "id": 1207,
+   "name": "ASCORBIC ( CEELIN PLUS 250 )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN PLUS",
+   "dosage_form": "250",
+   "unit_price": 347.0
+  },
+  {
+   "id": 1208,
+   "name": "ASCORBIC ( CEELIN IMMUNPED 120 )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN IMMUNPED",
+   "dosage_form": "120",
+   "unit_price": 462.0
+  },
+  {
+   "id": 1209,
+   "name": "ASCORBIC ( CEELIN GUMMIES 30’S )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN GUMMIES 30’S",
+   "dosage_form": null,
+   "unit_price": 234.0
+  },
+  {
+   "id": 1210,
+   "name": "ASCORBIC ( CEELIN GUM/ZINC 30’S )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CEELIN GUM/ZINC 30’S",
+   "dosage_form": null,
+   "unit_price": 281.0
+  },
+  {
+   "id": 1211,
+   "name": "ASCORBIC ( POTENCEE ) 500 MG.",
+   "generic_name": "ASCORBIC",
+   "brand_name": "POTENCEE",
+   "dosage_form": "500 MG.",
+   "unit_price": 7.0
+  },
+  {
+   "id": 1212,
+   "name": "ASCORBIC ( POTENCEE FORTE )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "POTENCEE FORTE",
+   "dosage_form": null,
+   "unit_price": 13.0
+  },
+  {
+   "id": 1213,
+   "name": "ASCORBIC ( POTENCEE W/ COLLAGEN )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "POTENCEE W/ COLLAGEN",
+   "dosage_form": null,
+   "unit_price": 22.0
+  },
+  {
+   "id": 1214,
+   "name": "ASCORBIC ( CECON ) 500 MG.",
+   "generic_name": "ASCORBIC",
+   "brand_name": "CECON",
+   "dosage_form": "500 MG.",
+   "unit_price": 10.5
+  },
+  {
+   "id": 1215,
+   "name": "ASCORBIC ( BEWELL-C ) 500MG.",
+   "generic_name": "ASCORBIC",
+   "brand_name": "BEWELL-C",
+   "dosage_form": "500MG.",
+   "unit_price": 7.0
+  },
+  {
+   "id": 1216,
+   "name": "ASCORBIC ( BEWELL C KIDS 120 ML. )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "BEWELL C KIDS",
+   "dosage_form": "120 ML.",
+   "unit_price": 132.0
+  },
+  {
+   "id": 1217,
+   "name": "ASCORBIC ( FERN-C ) 500 MG.",
+   "generic_name": "ASCORBIC",
+   "brand_name": "FERN-C",
+   "dosage_form": "500 MG.",
+   "unit_price": 10.0
+  },
+  {
+   "id": 1218,
+   "name": "ASCORBIC ( PEDZINC PLUS C 30 )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "PEDZINC PLUS C",
+   "dosage_form": "30",
+   "unit_price": 154.0
+  },
+  {
+   "id": 1219,
+   "name": "ASCORBIC ( PEDZINC PLUS C 120 )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "PEDZINC PLUS C",
+   "dosage_form": "120",
+   "unit_price": 156.0
+  },
+  {
+   "id": 1220,
+   "name": "ASCORBIC ( PEDZINC PLUS C 240 )",
+   "generic_name": "ASCORBIC",
+   "brand_name": "PEDZINC PLUS C",
+   "dosage_form": "240",
+   "unit_price": 289.0
+  },
+  {
+   "id": 1221,
+   "name": "ALUMINUM MAGNESIUM TAB.",
+   "generic_name": "ALUMINUM MAGNESIUM TAB.",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 2.5
+  },
+  {
+   "id": 1222,
+   "name": "ALUMINUM ( MAALAOX )",
+   "generic_name": "ALUMINUM",
+   "brand_name": "MAALAOX",
+   "dosage_form": null,
+   "unit_price": 13.0
+  },
+  {
+   "id": 1223,
+   "name": "ALUMINUM ( MAALOX PLUS )",
+   "generic_name": "ALUMINUM",
+   "brand_name": "MAALOX PLUS",
+   "dosage_form": null,
+   "unit_price": 17.0
+  },
+  {
+   "id": 1224,
+   "name": "AZITHROMYZIN 200/15 ML.",
+   "generic_name": "AZITHROMYZIN",
+   "brand_name": null,
+   "dosage_form": "200/15 ML.",
+   "unit_price": 200.0
+  },
+  {
+   "id": 1225,
+   "name": "KREMIL-S TABLET",
+   "generic_name": "KREMIL-S TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 10.5
+  },
+  {
+   "id": 1226,
+   "name": "KREMIL-S ADVANCE",
+   "generic_name": "KREMIL-S ADVANCE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 24.0
+  },
+  {
+   "id": 1227,
+   "name": "SIMECO TABLET",
+   "generic_name": "SIMECO TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 7.0
+  },
+  {
+   "id": 1228,
+   "name": "BACILLUS CLAUSII +ZINC",
+   "generic_name": "BACILLUS CLAUSII +ZINC",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 39.0
+  },
+  {
+   "id": 1229,
+   "name": "BACILLUS CLAUSII ( ERCEFLORA )",
+   "generic_name": "BACILLUS CLAUSII",
+   "brand_name": "ERCEFLORA",
+   "dosage_form": null,
+   "unit_price": 47.0
+  },
+  {
+   "id": 1230,
+   "name": "BUTAMIRATE CITRATE",
+   "generic_name": "BUTAMIRATE CITRATE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 15.0
+  },
+  {
+   "id": 1231,
+   "name": "BUTAMIRATE ( SENECOD FORTE )",
+   "generic_name": "BUTAMIRATE",
+   "brand_name": "SENECOD FORTE",
+   "dosage_form": null,
+   "unit_price": 25.0
+  },
+  {
+   "id": 1232,
+   "name": "DIFFLAM LOZENGES",
+   "generic_name": "DIFFLAM LOZENGES",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 36.0
+  },
+  {
+   "id": 1233,
+   "name": "BISACODIL TABLET",
+   "generic_name": "BISACODIL TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 1234,
+   "name": "DULCOLAX TABLET",
+   "generic_name": "DULCOLAX TABLET",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 30.0
+  },
+  {
+   "id": 1235,
+   "name": "BETAHISTINE 8 MG.",
+   "generic_name": "BETAHISTINE",
+   "brand_name": null,
+   "dosage_form": "8 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1236,
+   "name": "BETAHISTINE 16 MG.",
+   "generic_name": "BETAHISTINE",
+   "brand_name": null,
+   "dosage_form": "16 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 1237,
+   "name": "BETAHISTINE 24 MG.",
+   "generic_name": "BETAHISTINE",
+   "brand_name": null,
+   "dosage_form": "24 MG.",
+   "unit_price": 35.0
+  },
+  {
+   "id": 1238,
+   "name": "BETAHISTINE ( SERC ) 8 MG.",
+   "generic_name": "BETAHISTINE",
+   "brand_name": "SERC",
+   "dosage_form": "8 MG.",
+   "unit_price": 64.0
+  },
+  {
+   "id": 1239,
+   "name": "BETAHISTINE ( SERC ) 16 MG.",
+   "generic_name": "BETAHISTINE",
+   "brand_name": "SERC",
+   "dosage_form": "16 MG.",
+   "unit_price": 73.0
+  },
+  {
+   "id": 1240,
+   "name": "BETAHISTINE ( SERC ) 24 MG.",
+   "generic_name": "BETAHISTINE",
+   "brand_name": "SERC",
+   "dosage_form": "24 MG.",
+   "unit_price": 98.0
+  },
+  {
+   "id": 1241,
+   "name": "B-COMPLEX ( VITAPLEX )",
+   "generic_name": "B-COMPLEX",
+   "brand_name": "VITAPLEX",
+   "dosage_form": null,
+   "unit_price": 7.0
+  },
+  {
+   "id": 1242,
+   "name": "B-COMPLEX ( NEURONERV )",
+   "generic_name": "B-COMPLEX",
+   "brand_name": "NEURONERV",
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 1243,
+   "name": "B-COMPLEX ( PHAREX )",
+   "generic_name": "B-COMPLEX",
+   "brand_name": "PHAREX",
+   "dosage_form": null,
+   "unit_price": 5.5
+  },
+  {
+   "id": 1244,
+   "name": "B-COMPLEX ( NUEROGEN-E )",
+   "generic_name": "B-COMPLEX",
+   "brand_name": "NUEROGEN-E",
+   "dosage_form": null,
+   "unit_price": 21.0
+  },
+  {
+   "id": 1245,
+   "name": "B-COMPLEX ( NEUROBION )",
+   "generic_name": "B-COMPLEX",
+   "brand_name": "NEUROBION",
+   "dosage_form": null,
+   "unit_price": 26.0
+  },
+  {
+   "id": 1246,
+   "name": "B-COMPLEX ( DOLO-NEUROBION )",
+   "generic_name": "B-COMPLEX",
+   "brand_name": "DOLO-NEUROBION",
+   "dosage_form": null,
+   "unit_price": 28.0
+  },
+  {
+   "id": 1247,
+   "name": "B-COMPLEX ( VANEULAR )",
+   "generic_name": "B-COMPLEX",
+   "brand_name": "VANEULAR",
+   "dosage_form": null,
+   "unit_price": 24.0
+  },
+  {
+   "id": 1248,
+   "name": "B-COMPLEX ( GLUTHAPOS )",
+   "generic_name": "B-COMPLEX",
+   "brand_name": "GLUTHAPOS",
+   "dosage_form": null,
+   "unit_price": 10.0
+  },
+  {
+   "id": 1249,
+   "name": "B-COMPLEX ( SUPRANEURON )",
+   "generic_name": "B-COMPLEX",
+   "brand_name": "SUPRANEURON",
+   "dosage_form": null,
+   "unit_price": 25.0
+  },
+  {
+   "id": 1250,
+   "name": "BUTAMIRATE 100 ML.",
+   "generic_name": "BUTAMIRATE",
+   "brand_name": null,
+   "dosage_form": "100 ML.",
+   "unit_price": 250.0
+  },
+  {
+   "id": 1251,
+   "name": "BUTAMIRATE ( SINECOD FORTE 12O )",
+   "generic_name": "BUTAMIRATE",
+   "brand_name": "SINECOD FORTE",
+   "dosage_form": "12O",
+   "unit_price": 307.0
+  },
+  {
+   "id": 1252,
+   "name": "CALCIUM CARBONATE",
+   "generic_name": "CALCIUM CARBONATE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 5.0
+  },
+  {
+   "id": 1253,
+   "name": "CARVEDILOL TABLET 12.5 MG. 12.00",
+   "generic_name": "CARVEDILOL TABLET",
+   "brand_name": null,
+   "dosage_form": "12.5 MG.",
+   "unit_price": 12.0
+  },
+  {
+   "id": 1254,
+   "name": "COTRIMOXAZOLE 240 /60 ML.",
+   "generic_name": "COTRIMOXAZOLE",
+   "brand_name": null,
+   "dosage_form": "240 /60 ML.",
+   "unit_price": 80.0
+  },
+  {
+   "id": 1255,
+   "name": "COTRIMOXAZOLE 480 / 60 ML.",
+   "generic_name": "COTRIMOXAZOLE",
+   "brand_name": null,
+   "dosage_form": "480 / 60 ML.",
+   "unit_price": 100.0
+  },
+  {
+   "id": 1256,
+   "name": "CILOSTAZOL TABLET 100 MG.",
+   "generic_name": "CILOSTAZOL TABLET",
+   "brand_name": null,
+   "dosage_form": "100 MG.",
+   "unit_price": 25.0
+  },
+  {
+   "id": 1257,
+   "name": "CITICOLINE TAB.500 MG.",
+   "generic_name": "CITICOLINE TAB.",
+   "brand_name": null,
+   "dosage_form": "500 MG.",
+   "unit_price": 52.0
+  },
+  {
+   "id": 1258,
+   "name": "CEFACLOR DROPS 20 ML.",
+   "generic_name": "CEFACLOR DROPS",
+   "brand_name": null,
+   "dosage_form": "20 ML.",
+   "unit_price": 180.0
+  },
+  {
+   "id": 1259,
+   "name": "CEFACLOR 125/60 ML.",
+   "generic_name": "CEFACLOR",
+   "brand_name": null,
+   "dosage_form": "125/60 ML.",
+   "unit_price": 180.0
+  },
+  {
+   "id": 1260,
+   "name": "CEFACLOR 250/60 ML.",
+   "generic_name": "CEFACLOR",
+   "brand_name": null,
+   "dosage_form": "250/60 ML.",
+   "unit_price": 300.0
+  },
+  {
+   "id": 1261,
+   "name": "CEFIXIME CAPSUL 200 MG.",
+   "generic_name": "CEFIXIME CAPSULE",
+   "brand_name": null,
+   "dosage_form": "200 MG.",
+   "unit_price": 35.0
+  },
+  {
+   "id": 1262,
+   "name": "CEFIXIME CAPSULE 400 MG.",
+   "generic_name": "CEFIXIME CAPSULE",
+   "brand_name": null,
+   "dosage_form": "400 MG.",
+   "unit_price": 55.0
+  },
+  {
+   "id": 1263,
+   "name": "CEFIXIME DROPS 20 ML.",
+   "generic_name": "CEFIXIME DROPS",
+   "brand_name": null,
+   "dosage_form": "20 ML.",
+   "unit_price": 180.0
+  },
+  {
+   "id": 1264,
+   "name": "CEFIXIME 100/60ML.",
+   "generic_name": "CEFIXIME",
+   "brand_name": null,
+   "dosage_form": "100/60ML.",
+   "unit_price": 350.0
+  },
+  {
+   "id": 1265,
+   "name": "CEFUROXIME 250/60 ML.",
+   "generic_name": "CEFUROXIME",
+   "brand_name": null,
+   "dosage_form": "250/60 ML.",
+   "unit_price": 350.0
+  },
+  {
+   "id": 1266,
+   "name": "CLARITHROMYCIN 125/60 ML.",
+   "generic_name": "CLARITHROMYCIN",
+   "brand_name": null,
+   "dosage_form": "125/60 ML.",
+   "unit_price": 300.0
+  },
+  {
+   "id": 1267,
+   "name": "CLARITHROMYCIN 250/60 ML.",
+   "generic_name": "CLARITHROMYCIN",
+   "brand_name": null,
+   "dosage_form": "250/60 ML.",
+   "unit_price": 390.0
+  },
+  {
+   "id": 1268,
+   "name": "CLOPIDOGREL 75 MG.",
+   "generic_name": "CLOPIDOGREL",
+   "brand_name": null,
+   "dosage_form": "75 MG.",
+   "unit_price": 15.0
+  },
+  {
+   "id": 1269,
+   "name": "CLONIDINE TABLET 75 MG.",
+   "generic_name": "CLONIDINE TABLET",
+   "brand_name": null,
+   "dosage_form": "75 MG.",
+   "unit_price": 20.0
+  },
+  {
+   "id": 1270,
+   "name": "CLONIDINE ( CATAPRES ) 75 MG.",
+   "generic_name": "CLONIDINE",
+   "brand_name": "CATAPRES",
+   "dosage_form": "75 MG.",
+   "unit_price": 45.0
+  },
+  {
+   "id": 1271,
+   "name": "CETIRIZINE TABLET 10 MG.",
+   "generic_name": "CETIRIZINE TABLET",
+   "brand_name": null,
+   "dosage_form": "10 MG.",
+   "unit_price": 4.0
+  },
+  {
+   "id": 1272,
+   "name": "CETIRIZINE 15 ML.",
+   "generic_name": "CETIRIZINE",
+   "brand_name": null,
+   "dosage_form": "15 ML.",
+   "unit_price": 90.0
+  },
+  {
+   "id": 1273,
+   "name": "CETIRIZINE 60 ML.",
+   "generic_name": "CETIRIZINE",
+   "brand_name": null,
+   "dosage_form": "60 ML.",
+   "unit_price": 90.0
+  },
+  {
+   "id": 1274,
+   "name": "CETIRIZINE ( ALLERKID 10 )",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALLERKID",
+   "dosage_form": "10",
+   "unit_price": 204.0
+  },
+  {
+   "id": 1275,
+   "name": "CETIRIZINE ( ALLERKID 30 )",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALLERKID",
+   "dosage_form": "30",
+   "unit_price": 187.0
+  },
+  {
+   "id": 1276,
+   "name": "CETIRIZINE ( ALLERKID 60 )",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALLERKID",
+   "dosage_form": "60",
+   "unit_price": 324.0
+  },
+  {
+   "id": 1277,
+   "name": "CETIRIZINE ( ALNIX ) 10 MG.",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALNIX",
+   "dosage_form": "10 MG.",
+   "unit_price": 34.0
+  },
+  {
+   "id": 1278,
+   "name": "CETIRIZINE ( ALNIX PLUS )",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALNIX PLUS",
+   "dosage_form": null,
+   "unit_price": 28.0
+  },
+  {
+   "id": 1279,
+   "name": "CETIRIZINE ( ALNIX 10 )",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALNIX",
+   "dosage_form": "10",
+   "unit_price": 216.0
+  },
+  {
+   "id": 1280,
+   "name": "CETIRIZINE ( ALNIX 30 )",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALNIX",
+   "dosage_form": "30",
+   "unit_price": 188.0
+  },
+  {
+   "id": 1281,
+   "name": "CETIRIZINE ( ALNIX 60 )",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALNIX",
+   "dosage_form": "60",
+   "unit_price": 309.0
+  },
+  {
+   "id": 1282,
+   "name": "CETIRIZINE ( ALNIX PLUS 60 )",
+   "generic_name": "CETIRIZINE",
+   "brand_name": "ALNIX PLUS 60",
+   "dosage_form": null,
+   "unit_price": 303.0
+  },
+  {
+   "id": 1283,
+   "name": "ACETYLCYSTEINE",
+   "generic_name": "ACETYLCYSTEINE",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 65.0
+  },
+  {
+   "id": 1284,
+   "name": "PARACETAMOL",
+   "generic_name": "PARACETAMOL",
+   "brand_name": null,
+   "dosage_form": null,
+   "unit_price": 80.0
+  }
+ ]
+}

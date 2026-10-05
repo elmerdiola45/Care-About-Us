@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 
 import '../../common/services/app_config.dart';
 import '../../common/session.dart';
+import '../models/prescription_scan_result.dart' show OcrLine;
 
 /// Talks to OUR OWN Laravel backend's `/api/ocr/gemini-scan` endpoint —
 /// this client NEVER calls Gemini directly and NEVER holds a Gemini API
@@ -15,6 +16,9 @@ import '../../common/session.dart';
 class GeminiOcrResult {
   final bool success;
   final String rawText;
+
+  /// Per-line transcription with section/legibility from the backend.
+  final List<OcrLine> lines;
   final String? error;
 
   /// True when the failure looks like Gemini's rate limit / quota being
@@ -25,6 +29,7 @@ class GeminiOcrResult {
   const GeminiOcrResult({
     required this.success,
     this.rawText = '',
+    this.lines = const [],
     this.error,
     this.isQuotaExceeded = false,
   });
@@ -101,7 +106,11 @@ class GeminiOcrService {
         );
       }
 
-      return GeminiOcrResult(success: true, rawText: rawText);
+      return GeminiOcrResult(
+        success: true,
+        rawText: rawText,
+        lines: OcrLine.listFrom(data['lines']),
+      );
     } catch (e) {
       return GeminiOcrResult(
         success: false,

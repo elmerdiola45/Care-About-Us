@@ -97,4 +97,50 @@ void main() {
       },
     );
   });
+
+  group('phantom medicines from letters read as numbers', () {
+    test('"Taguig" is not read as a 1g dosage', () {
+      final result = PrescriptionParserService.parse(
+        'Address: 12 Upper Bicutan, Taguig City\n'
+        'Amoxicillin 500mg #21\n',
+      );
+
+      expect(result.medicines, hasLength(1));
+      expect(result.medicines.single.name.toLowerCase(), contains('amoxicillin'));
+    });
+
+    test('letter-for-digit strengths are still corrected', () {
+      final result = PrescriptionParserService.parse('Amoxicillin 5OOmg #21\n');
+
+      expect(result.medicines.single.dosage, '500mg');
+    });
+
+    test('a strength glued to the name is still read', () {
+      final result = PrescriptionParserService.parse('Amoxicillin500mg #21\n');
+
+      expect(result.medicines.single.dosage, '500mg');
+    });
+  });
+
+  group('unlabeled Sig lines', () {
+    test('a number-led instruction line attaches to the previous drug', () {
+      final result = PrescriptionParserService.parse(
+        'Amoxicillin 500mg #21\n'
+        '1 cap 3x a day x 7 days\n'
+        'Cetirizine 10mg #14\n',
+      );
+
+      expect(result.medicines, hasLength(2));
+      expect(result.medicines.first.frequency, '3x daily');
+    });
+
+    test('a "Take ..." instruction line is not a medicine', () {
+      final result = PrescriptionParserService.parse(
+        'Amoxicillin 500mg #21\n'
+        'Take 1 cap 30 mins before breakfast\n',
+      );
+
+      expect(result.medicines, hasLength(1));
+    });
+  });
 }

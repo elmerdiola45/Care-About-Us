@@ -1,0 +1,56 @@
+[
+  {
+    "id": "I01_sample_image_gemini_nolabels",
+    "source": "sample_image",
+    "note": "Live gemini-3.8-flash output for the generated sample_rx.jpg, before the label-prefix prompt change.",
+    "raw_text": "Juan Dela Cruz\n34 Sex: M\n09/29/2026\nAmoxicillin 500mg cap #21\nSig: 1 cap 3x a day x 7 days\nCetirizine 10mg tab #10\nSig: 1 tab at bedtime\nDr. Maria Santos\nLic. No. 0123456 PTR No. 7654321",
+    "expected": [
+      {
+        "name": "Amoxicillin",
+        "dosage": "500mg",
+        "quantity": "21"
+      },
+      {
+        "name": "Cetirizine",
+        "dosage": "10mg",
+        "quantity": "10"
+      }
+    ]
+  },
+  {
+    "id": "I02_sample_image_groq_misread",
+    "source": "sample_image",
+    "note": "Live qwen3.8-27b output; misread Amoxicillin as Amaxicillin while marking it clear.",
+    "raw_text": "Juan Dela Cruz\n34\nM\n09/29/2026\nAmaxicillin 500mg cap #21\nSig: 1 cap 3x a day x 7 days\nCetirizine 10mg tab #10\nSig: 1 tab at bedtime\nDr. Maria Santos\nLic. No. 0123456  PTR No. 7654321",
+    "expected": [
+      {
+        "name": "Amoxicillin",
+        "dosage": "500mg",
+        "quantity": "21"
+      },
+      {
+        "name": "Cetirizine",
+        "dosage": "10mg",
+        "quantity": "10"
+      }
+    ]
+  },
+  {
+    "id": "I03_sample_image_groq_labels",
+    "source": "sample_image",
+    "note": "Live qwen3.8-27b output after the label-prefix prompt change.",
+    "raw_text": "Patient: Juan Dela Cruz\nAge: 34\nSex: M\nDate: 09/29/2026\nRx\nAmoxicillin 500mg cap #21\nSig: 1 cap 3x a day x 7 days\nCetirizine 10mg tab #10\nSig: 1 tab at bedtime\nDr. Maria Santos\nLic. No. 0123456\nPTR No. 7654321",
+    "expected": [
+      {
+        "name": "Amoxicillin",
+        "dosage": "500mg",
+        "quantity": "21"
+      },
+      {
+        "name": "Cetirizine",
+        "dosage": "10mg",
+        "quantity": "10"
+      }
+    ]
+  }
+]
