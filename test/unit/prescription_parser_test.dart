@@ -130,7 +130,7 @@ void main() {
 
     test('how-often and when are both kept', () {
       expect(parseOne('1 tab 2x a day after meals').frequency,
-          '2x daily, after meals');
+          'twice daily, after meals');
       expect(parseOne('1 tab OD at bedtime').frequency,
           'once daily, at bedtime');
     });
@@ -159,6 +159,84 @@ void main() {
       expect(
         PrescriptionParserService.parse('Jose P. Rizal, M.D.\n').doctorName,
         'Jose P. Rizal',
+      );
+    });
+  });
+
+  group('patterns from real prescription photos', () {
+    test('"S ..." and "give ..." lines are Sig text, not medicines', () {
+      final result = PrescriptionParserService.parse(
+        'Cetirizine 10 mg tab #10\n'
+        'S 1 tab 1x a day at bedtime\n'
+        'Procaterol 5mcg/1ml\n'
+        'give 4ml twice a day x 7days\n',
+      );
+
+      expect(result.medicines, hasLength(2));
+      expect(result.medicines.first.frequency, 'once daily, at bedtime');
+      expect(result.medicines.last.duration, '7 days');
+    });
+
+    test('brand and quantity on the next lines attach to the drug', () {
+      final result = PrescriptionParserService.parse(
+        '1 Telmisartan 40mg\n'
+        'tabs # 10\n'
+        '1 tab daily\n'
+        'Co Amoxiclav 625\n'
+        '(Augmentin 625)\n'
+        '#14\n',
+      );
+
+      expect(result.medicines, hasLength(2));
+      expect(result.medicines[0].quantity, '10');
+      expect(result.medicines[0].frequency, 'once daily');
+      expect(result.medicines[1].brand, 'Augmentin');
+      expect(result.medicines[1].quantity, '14');
+    });
+
+    test('morning-noon-night schedule', () {
+      final result = PrescriptionParserService.parse(
+        'Ambroxol 30mg tab # 21\nSig: 1 tablet 3x a day\n1-1-1\n'
+        'Losartan 50mg #30\nS 1 - 0 - 1\n',
+      );
+
+      expect(result.medicines[1].frequency, 'twice daily');
+    });
+
+    test('a Sig line does not swallow a misspelled next drug', () {
+      final result = PrescriptionParserService.parse(
+        'Cetirizine 10 mg tab #10\n'
+        'S 1 tab 1x a day at bedtime\n'
+        '3 Guiafenasin + PPA + Paracetamol\n'
+        '(Mucoruss) cap # 20\n',
+      );
+
+      expect(result.medicines, hasLength(2));
+      expect(result.medicines.last.name, 'Guaifenesin');
+      expect(result.medicines.last.quantity, '20');
+    });
+
+    test('doctor names with particles and RN, MD', () {
+      expect(
+        PrescriptionParserService.parse(
+          'Maria Clara de la Cruz, MD\n',
+        ).doctorName,
+        'Maria Clara de la Cruz',
+      );
+      expect(
+        PrescriptionParserService.parse(
+          'JUAN PAOLO J. SANTOS, RN, MD\n',
+        ).doctorName,
+        'JUAN PAOLO J. SANTOS',
+      );
+    });
+
+    test("\"Patient's Name:\" label", () {
+      expect(
+        PrescriptionParserService.parse(
+          "Patient's Name: Juan Dela Cruz\nAmoxicillin 500mg #21\n",
+        ).patientName,
+        'Juan Dela Cruz',
       );
     });
   });

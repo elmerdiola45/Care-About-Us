@@ -2361,12 +2361,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       r'^(dra?\.?|doctor|attending\s+physician|prescribing\s+physician|physician)(?![A-Za-z])[:\.\s]*',
       caseSensitive: false,
     );
-    // "Jose P. Rizal, M.D." — a doctor's name identified by the MD title.
-    final doctorMdSuffixRe = RegExp(
-      r'^([A-Z][A-Za-z.\-]*(?:\s+[A-Z][A-Za-z.\-]*){1,4}),?\s*M\.?\s?D\.?$',
-    );
+    // "Patient's Name:" used to match as just "Patient", leaving
+    // "'s Name: Mark ..." as the patient's name.
     final patientLabelRe = RegExp(
-      r'^(patient|pangalan|name)(?![A-Za-z])[:\.\s]*',
+      r"^(patient'?s?\s*name|name\s+of\s+patient|patient|pangalan|name)(?![A-Za-z])[:\.\s]*",
       caseSensitive: false,
     );
     final diagnosisLabelRe = RegExp(
@@ -2605,11 +2603,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         _lastConsumedLines.add(i);
         continue;
       }
-      final mdMatch = doctorMdSuffixRe.firstMatch(line);
-      if (mdMatch != null) {
-        if (doctor.isEmpty) {
-          doctor = mdMatch.group(1)!.trim();
-        }
+      // "Jose P. Rizal, M.D.", "Maria Clara de la Cruz, MD".
+      final mdName = PrescriptionParserService.doctorFromMdLine(line);
+      if (mdName != null) {
+        if (doctor.isEmpty) doctor = mdName;
         _lastConsumedLines.add(i);
         continue;
       }

@@ -64,9 +64,11 @@ class GeminiOcrService {
       }
 
       final streamedResponse = await request.send().timeout(
-        // Kept in the same ballpark as Groq/OCR.space so a stuck Gemini
-        // call fails over to Groq (and then OCR.space) about as quickly.
-        const Duration(seconds: 15),
+        // The backend tries backup Gemini models when the primary one is
+        // busy or over quota, within a 26s budget — this must stay above
+        // that so the client never abandons a scan the backend is still
+        // completing.
+        const Duration(seconds: 30),
         onTimeout: () =>
             throw TimeoutException('Gemini OCR request timed out.'),
       );

@@ -105,7 +105,20 @@ class PrescriptionOcrService {
         engineUsed: 'groq+parser',
         drugDictionary: groqDictResults[0] as List<String>,
         corrections: groqDictResults[1] as Map<String, String>,
-        ocrLines: groqResult.lines,
+        // On real prescriptions Groq invented whole drug names (e.g.
+        // "Omeprazole" for a clearly written "Amlodipine") while rating
+        // them "clear". Its legibility can't be trusted, so every line it
+        // reads is treated as at best "partial" — which makes every
+        // medicine from it a "Check" row the pharmacist must confirm
+        // against the photo before saving.
+        ocrLines: [
+          for (final l in groqResult.lines)
+            OcrLine(
+              text: l.text,
+              section: l.section,
+              legibility: l.legibility == 'clear' ? 'partial' : l.legibility,
+            ),
+        ],
       );
 
       if (!PrescriptionResultScorer.isWeak(groqParsed)) {

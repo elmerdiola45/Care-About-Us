@@ -104,7 +104,7 @@
     "raw_text": "Salbutamol 2mg tab #15\nSig: 1 tab 3x a day\nGuaifenesin 100mg/5ml syrup 60ml\nSig: 5ml 3x a day\nDr. Jose Cruz, MD\nLic No. 0098765  PTR No. 1122334  S2 No. 55667\nClinic: Rm 204 Medical Arts Bldg, 8AM-12NN",
     "expected": [
       { "name": "Salbutamol", "dosage": "2mg", "quantity": "15" },
-      { "name": "Guaifenesin", "dosage": "100mg" }
+      { "name": "Guaifenesin", "dosage": "100/60ml" }
     ]
   }
 ]
