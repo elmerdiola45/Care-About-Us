@@ -212,7 +212,9 @@ void main() {
       );
 
       expect(result.medicines, hasLength(2));
-      expect(result.medicines.last.name, 'Guaifenesin');
+      // Kept as the combination product it is, not reduced to one part.
+      expect(result.medicines.last.name, startsWith('Guaifenesin + '));
+      expect(result.medicines.last.name, endsWith(' + Paracetamol'));
       expect(result.medicines.last.quantity, '20');
     });
 

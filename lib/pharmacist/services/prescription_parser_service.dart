@@ -812,6 +812,14 @@ class PrescriptionParserService {
       // CorrectionMemoryService for what populates this map.
       final correctionHit = corrections[nameCandidate.trim().toLowerCase()];
 
+      // "Sitagliptin/Metformin", "FeSO4 + Folic acid": a combination
+      // product. Matched only against combination entries in the catalog
+      // — matched word by word it resolved to just "Sitagliptin", a
+      // different (single-drug) product.
+      final combo = correctionHit == null
+          ? _combination(nameCandidate, drugDictionary)
+          : null;
+
       // Skip the expensive fuzzy-match pass entirely for lines that are
       // obviously not a drug name (too few letters — pure symbol/digit
       // noise) and don't already have a correction-memory hit. This is
@@ -819,6 +827,8 @@ class PrescriptionParserService {
       ({String? name, double score}) match;
       if (correctionHit != null) {
         match = (name: correctionHit, score: 1.0);
+      } else if (combo != null) {
+        match = (name: combo.catalogName, score: combo.score);
       } else if (_hasEnoughLettersToBeAName(nameCandidate)) {
         match = _fuzzyMatchDrug(nameCandidate, drugDictionary);
       } else {
@@ -850,7 +860,10 @@ class PrescriptionParserService {
       // PriceLookupService/the review screen already know how to
       // surface as a "not in this pharmacy's medicine list" warning —
       // visible and correctable instead of missing.
-      if (dosageMatch == null && match.name == null && quantityMatch == null) {
+      if (dosageMatch == null &&
+          match.name == null &&
+          quantityMatch == null &&
+          combo == null) {
         continue;
       }
 
@@ -937,7 +950,7 @@ class PrescriptionParserService {
         // resolved to the same type, or one/both didn't match at all)
         // — safe default is main line = generic, secondary = brand,
         // same as the established convention.
-        name = match.name ?? _cleanName(nameCandidate);
+        name = match.name ?? combo?.label ?? _cleanName(nameCandidate);
         if (brandMatch.name != null) {
           brand = brandMatch.name!;
         }
@@ -950,7 +963,7 @@ class PrescriptionParserService {
           ? (_liquidStrength(line, dosageMatch) ??
                 '${_fixDigitConfusions(dosageMatch.group(1)!)}'
                     '${dosageMatch.group(2)!.toLowerCase()}')
-          : '';
+          : (combo?.strength ?? '');
 
       // Cross-check the dosage against this medicine's known variants
       // (fuzzy-distance: snaps to the numerically nearest same-unit
@@ -1034,6 +1047,84 @@ class PrescriptionParserService {
     }
 
     return medicines;
+  }
+
+  /// Recognizes a combination product in [text] ("Sitagliptin/Metformin
+  /// 100/1,000", "Guiafenasin + PPA + Paracetamol", "FeSO4 + Folic acid
+  /// # 30"). Returns the readable [label] built from the resolved
+  /// component names, the catalog combination entry it matches (or null
+  /// when the catalog has none), and its "a/b" [strength] if written
+  /// without units. Null when [text] names a single drug.
+  static ({String label, String? catalogName, double score, String strength})?
+  _combination(String text, List<String> drugDictionary) {
+    // The name ends where the first standalone number or "#" starts
+    // ("... 100/1,000 # 180"); "FeSO4" keeps its digit.
+    final cut = RegExp(r'(?:^|\s)[#\d]').firstMatch(text);
+    final namePart = cut == null ? text : text.substring(0, cut.start);
+    final afterName = cut == null ? '' : text.substring(cut.start);
+
+    final parts = namePart
+        .split(RegExp(r'\s*(?:\+|/|&|\band\b)\s*', caseSensitive: false))
+        .map((p) => p.trim())
+        .where((p) => p.replaceAll(RegExp(r'[^A-Za-z]'), '').length >= 2)
+        .toList();
+    if (parts.length < 2) return null;
+
+    final resolved = <String>[];
+    for (final part in parts) {
+      final key = part.toLowerCase().replaceAll(RegExp(r'[^a-z0-9 ]'), '');
+      final abbreviation = DrugAbbreviations.resolve(key, drugDictionary);
+      final single = abbreviation == null
+          ? _fuzzyMatchDrug(part, drugDictionary).name
+          : null;
+      final name = abbreviation ?? single;
+      resolved.add(
+        (name != null && !name.contains('+')) ? name : _cleanName(part),
+      );
+    }
+    final label = resolved
+        .map((p) => p.split(' ').map(_capitalize).join(' '))
+        .join(' + ');
+
+    // Best catalog combination with the same number of components, each
+    // matching closely (or by the catalog's abbreviation, "salbu+guaife").
+    String? catalogName;
+    var bestScore = 0.0;
+    final wanted = resolved.map((p) => p.toLowerCase().trim()).toList();
+    for (final entry in drugDictionary.where((d) => d.contains('+'))) {
+      final entryParts = entry.split('+').map((p) => p.trim()).toList();
+      if (entryParts.length != wanted.length) continue;
+      var worst = 1.0;
+      for (final w in wanted) {
+        var bestPart = 0.0;
+        for (final e in entryParts) {
+          final s = (e.length >= 4 && w.startsWith(e))
+              ? 0.95
+              : _similarity(w, e);
+          if (s > bestPart) bestPart = s;
+        }
+        if (bestPart < worst) worst = bestPart;
+      }
+      if (worst >= 0.8 && worst > bestScore) {
+        bestScore = worst;
+        catalogName = entry.split(' ').map(_capitalize).join(' ');
+      }
+    }
+
+    final ratio = RegExp(
+      r'^\s*(\d[\d,]*(?:\.\d+)?)\s*/\s*(\d[\d,]*(?:\.\d+)?)\b',
+    ).firstMatch(afterName);
+    final strength = ratio == null
+        ? ''
+        : '${ratio.group(1)!.replaceAll(',', '')}/'
+              '${ratio.group(2)!.replaceAll(',', '')}';
+
+    return (
+      label: label,
+      catalogName: catalogName,
+      score: bestScore,
+      strength: strength,
+    );
   }
 
   static final RegExp _formOrPackWord = RegExp(
@@ -1525,6 +1616,7 @@ class PrescriptionParserService {
 
     String? best;
     String bestTarget = '';
+    String bestWindow = '';
     double bestScore = 0.0;
 
     // SPEED-FIRST (post-audit): a score this high means we've already
@@ -1576,6 +1668,7 @@ class PrescriptionParserService {
             bestScore = score;
             best = drug;
             bestTarget = target;
+            bestWindow = window;
             if (bestScore >= earlyExitScore) break outer;
           }
         }
@@ -1619,6 +1712,15 @@ class PrescriptionParserService {
       // corroboration (dosage/brand cross-check), not nudging this number
       // back up, which would just reintroduce cases like this one.
       final threshold = bestTarget.length <= 5 ? 0.78 : 0.60;
+      // A different drug of the same class is not a misread of this one:
+      // "Empagliflozin" scored 0.85 against the catalog's "Dapagliflozin"
+      // and was silently swapped for it. Such a name is left unmatched
+      // (shown as not in the catalog) instead.
+      if (bestScore >= threshold &&
+          bestScore < 1.0 &&
+          _isOtherDrugOfSameClass(bestWindow, bestTarget)) {
+        return (name: null, score: bestScore);
+      }
       if (bestScore >= threshold) {
         return (
           name: best.split(' ').map(_capitalize).join(' '),
@@ -1661,6 +1763,33 @@ class PrescriptionParserService {
     }
 
     return (name: null, score: bestScore);
+  }
+
+  /// Name endings shared by every drug of a class — two names ending the
+  /// same way are different drugs when what comes before differs.
+  static const List<String> _drugClassStems = [
+    'gliflozin', 'gliptin', 'sartan', 'dipine', 'statin', 'prazole',
+    'tidine', 'floxacin', 'cycline', 'mycin', 'cillin', 'olol', 'pril',
+    'azole', 'lukast', 'tadine', 'triptan', 'setron', 'parin', 'oxetine',
+    'azepam', 'zolam', 'profen', 'coxib', 'fenac', 'glinide', 'ciclovir',
+    'clovir', 'methasone', 'nisolone', 'terol', 'tropium', 'semide',
+    'thiazide', 'gabalin', 'pentin', 'dronate', 'vastatin', 'cetirizine',
+  ];
+
+  /// True when [read] and [catalog] are two different drugs of one class
+  /// ("empagliflozin" vs "dapagliflozin", "amlodipine" vs "felodipine"):
+  /// same class ending, but the part before it differs by 2+ letters —
+  /// more than a handwriting misread of the same name.
+  static bool _isOtherDrugOfSameClass(String read, String catalog) {
+    final a = read.trim().split(RegExp(r'\s+')).first;
+    final b = catalog.trim().split(RegExp(r'\s+')).first;
+    for (final stem in _drugClassStems) {
+      if (!a.endsWith(stem) || !b.endsWith(stem)) continue;
+      final prefixA = a.substring(0, a.length - stem.length);
+      final prefixB = b.substring(0, b.length - stem.length);
+      if (_levenshtein(prefixA, prefixB) >= 2) return true;
+    }
+    return false;
   }
 
   static final RegExp _catalogFormSuffix = RegExp(

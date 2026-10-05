@@ -8,6 +8,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pharmacy_management_system/pharmacist/services/medicine_dictionary_service.dart';
+import 'package:pharmacy_management_system/pharmacist/services/prescription_parser_service.dart';
 import 'package:pharmacy_management_system/pharmacist/services/price_lookup_service.dart';
 
 MedicineVariant v(
@@ -44,6 +45,56 @@ void seed(
 
 void main() {
   tearDown(MedicineDictionaryService.invalidateCache);
+
+  group('never substitute a different product', () {
+    const dictionary = [
+      'dapagliflozin',
+      'sitagliptin',
+      'sitagliptin + metformin',
+      'metformin',
+      'losartan',
+    ];
+
+    test('Empagliflozin is not swapped for Dapagliflozin', () {
+      final m = PrescriptionParserService.parse(
+        'Empagliflozin (Jardiance) 25mg\nRx # 180\n',
+        drugDictionary: dictionary,
+      ).medicines.single;
+
+      expect(m.name, 'Empagliflozin');
+      expect(m.matchConfidence, 0.0);
+    });
+
+    test('a combination resolves to the catalog combination, not a part', () {
+      final m = PrescriptionParserService.parse(
+        'Sitagliptin/Metformin (Janumet XR) 100/1,000 # 180\n',
+        drugDictionary: dictionary,
+      ).medicines.single;
+
+      expect(m.name.toLowerCase(), 'sitagliptin + metformin');
+      expect(m.dosage, '100/1000');
+      expect(m.quantity, '180');
+    });
+
+    test('a combination not in the catalog stays a combination', () {
+      final m = PrescriptionParserService.parse(
+        'FeSO4 + Folic acid # 30\n',
+        drugDictionary: const ['ferrous sulfate', 'folic acid'],
+      ).medicines.single;
+
+      expect(m.name, 'Ferrous Sulfate + Folic Acid');
+      expect(m.matchConfidence, 0.0);
+    });
+
+    test('a misread of the same drug is still corrected', () {
+      final m = PrescriptionParserService.parse(
+        'Dapaglifozin 10mg #30\n',
+        drugDictionary: dictionary,
+      ).medicines.single;
+
+      expect(m.name, 'Dapagliflozin');
+    });
+  });
 
   test('a syrup strength never resolves to the capsule of the same mg', () {
     seed({
