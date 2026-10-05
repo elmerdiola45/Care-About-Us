@@ -7,6 +7,7 @@
 // use drug names already in the built-in PNF-EML fallback dictionary.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pharmacy_management_system/pharmacist/models/prescription_scan_result.dart';
 import 'package:pharmacy_management_system/pharmacist/services/prescription_parser_service.dart';
 
 void main() {
@@ -119,6 +120,64 @@ void main() {
       final result = PrescriptionParserService.parse('Amoxicillin500mg #21\n');
 
       expect(result.medicines.single.dosage, '500mg');
+    });
+  });
+
+  group('Sig frequency and duration', () {
+    PrescriptionMedicine parseOne(String sig) => PrescriptionParserService.parse(
+      'Metformin 500mg tab #60\nSig: $sig\n',
+    ).medicines.single;
+
+    test('how-often and when are both kept', () {
+      expect(parseOne('1 tab 2x a day after meals').frequency,
+          '2x daily, after meals');
+      expect(parseOne('1 tab OD at bedtime').frequency,
+          'once daily, at bedtime');
+    });
+
+    test('"every N hrs" is read as a frequency', () {
+      expect(parseOne('1 tab every 4 hrs PRN').frequency,
+          'every 4 hours, as needed');
+    });
+
+    test('duration written as x N days, Nd or weeks', () {
+      expect(parseOne('1 tab TID x 7 days').duration, '7 days');
+      expect(parseOne('1 tab TID x7d').duration, '7 days');
+      expect(parseOne('1 tab BID for 2 weeks').duration, '14 days');
+    });
+  });
+
+  group('doctor name formats', () {
+    test('"Dra." prefix', () {
+      expect(
+        PrescriptionParserService.parse('Dra. Liza Mendoza\n').doctorName,
+        'Dra. Liza Mendoza',
+      );
+    });
+
+    test('name followed by M.D.', () {
+      expect(
+        PrescriptionParserService.parse('Jose P. Rizal, M.D.\n').doctorName,
+        'Jose P. Rizal',
+      );
+    });
+  });
+
+  group('liquid strengths', () {
+    test('mg/5ml with a bottle size uses the catalog style', () {
+      final m = PrescriptionParserService.parse(
+        'Amoxicillin 250mg/5ml susp 60ml #1 bottle\n',
+      ).medicines.single;
+
+      expect(m.dosage, '250/60ml');
+    });
+
+    test('mg/5ml without a bottle size keeps the concentration', () {
+      final m = PrescriptionParserService.parse(
+        'Cetirizine 5mg/5ml syrup #1 bottle\n',
+      ).medicines.single;
+
+      expect(m.dosage, '5mg/5ml');
     });
   });
 

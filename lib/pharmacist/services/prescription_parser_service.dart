@@ -395,12 +395,21 @@ class PrescriptionParserService {
     final labeled = _extractLabeled(lines, ['doctor', 'physician']);
     if (labeled != null) return labeled;
 
+    // "Dr. Maria Santos", "Dra. Liza Mendoza"
     final drPattern = RegExp(
-      r'\bDr\.?\s+[A-Z][a-zA-Z.\-]*(?:\s+[A-Z][a-zA-Z.\-]*){0,3}',
+      r'\bDra?\.?\s+[A-Z][a-zA-Z.\-]*(?:\s+[A-Z][a-zA-Z.\-]*){0,3}',
     );
     for (final line in lines) {
       final match = drPattern.firstMatch(line);
       if (match != null) return match.group(0)!.trim();
+    }
+    // "Jose P. Rizal, M.D." — a name followed by the MD title.
+    final mdPattern = RegExp(
+      r'^([A-Z][a-zA-Z.\-]*(?:\s+[A-Z][a-zA-Z.\-]*){1,4}),?\s*M\.?\s?D\.?$',
+    );
+    for (final line in lines) {
+      final match = mdPattern.firstMatch(line.trim());
+      if (match != null) return match.group(1)!.trim();
     }
     return null;
   }
@@ -875,8 +884,9 @@ class PrescriptionParserService {
       if (name.isEmpty) continue;
 
       String dosage = dosageMatch != null
-          ? '${_fixDigitConfusions(dosageMatch.group(1)!)}'
-                '${dosageMatch.group(2)!.toLowerCase()}'
+          ? (_liquidStrength(line, dosageMatch) ??
+                '${_fixDigitConfusions(dosageMatch.group(1)!)}'
+                    '${dosageMatch.group(2)!.toLowerCase()}')
           : '';
 
       // Cross-check the dosage against this medicine's known variants
@@ -960,6 +970,35 @@ class PrescriptionParserService {
     }
 
     return medicines;
+  }
+
+  /// For a liquid written as a concentration ("250mg/5ml susp 60ml"),
+  /// returns the strength in the catalog's own `mg/bottle-ml` style
+  /// ("250/60ml"), or `<mg>mg/<per>ml` ("5mg/5ml") when no bottle size is
+  /// written.
+  /// Returns null for a plain strength ("500mg").
+  ///
+  /// Without this, "250mg/5ml" was cut down to "250mg" and the syrup was
+  /// matched and priced as the 250 mg CAPSULE — a different product.
+  static String? _liquidStrength(String line, RegExpMatch dosageMatch) {
+    if (dosageMatch.group(2)!.toLowerCase() != 'mg') return null;
+    final per = RegExp(
+      r'^\s*/\s*(\d+(?:\.\d+)?)\s*ml\b',
+      caseSensitive: false,
+    ).firstMatch(line.substring(dosageMatch.end));
+    if (per == null) return null;
+
+    final strength = _fixDigitConfusions(dosageMatch.group(1)!);
+    final afterPer = line.substring(dosageMatch.end + per.end);
+    // The bottle size: a later "<n> ml" larger than the per-dose volume.
+    for (final m in RegExp(
+      r'(\d+(?:\.\d+)?)\s*ml\b',
+      caseSensitive: false,
+    ).allMatches(afterPer)) {
+      final ml = double.parse(m.group(1)!);
+      if (ml >= 15) return '$strength/${m.group(1)}ml';
+    }
+    return '${strength}mg/${per.group(1)}ml';
   }
 
   /// Applies the frequency/duration found in [sigText] to the most
@@ -1104,37 +1143,56 @@ class PrescriptionParserService {
   }
   */
 
+  /// Frequency-map values that say WHEN to take a dose rather than how
+  /// often. They are reported alongside the how-often part instead of
+  /// replacing it: "1 tab 2x a day after meals" used to come out as just
+  /// "after meals" because that map entry happened to match first.
+  static const Set<String> _timingQualifiers = {
+    'at bedtime',
+    'before meals',
+    'after meals',
+  };
+
   static String _findFrequency(String line) {
     final lower = line.toLowerCase();
 
     String base = '';
+    final timing = <String>[];
     for (final entry in _frequencyMap.entries) {
       final pattern = RegExp(r'\b' + RegExp.escape(entry.key) + r'\b');
-      if (pattern.hasMatch(lower)) {
+      if (!pattern.hasMatch(lower)) continue;
+      if (_timingQualifiers.contains(entry.value)) {
+        if (!timing.contains(entry.value)) timing.add(entry.value);
+      } else if (base.isEmpty) {
         base = entry.value;
-        break;
       }
     }
     if (base.isEmpty) {
-      final xTimesMatch = RegExp(r'(\d)\s*x\s*a?\s*day').firstMatch(lower);
+      // "3x a day", "3x/day", "3 x daily", "3 times a day"
+      final xTimesMatch = RegExp(
+        r'(\d)\s*(?:x|times)\s*(?:a|/|per)?\s*(?:day|daily)',
+      ).firstMatch(lower);
       if (xTimesMatch != null) {
         base = '${xTimesMatch.group(1)}x daily';
       }
     }
     if (base.isEmpty) {
-      final qHourMatch = RegExp(r'\bq\s*(\d+)\s*h\b').firstMatch(lower);
-      if (qHourMatch != null) {
-        final n = qHourMatch.group(1);
+      // "q6h", "q 6h", "every 6 hrs", "every 6 hours"
+      final everyHours = RegExp(
+        r'\b(?:q\s*(\d+)\s*h|every\s*(\d+)\s*(?:hours?|hrs?|h))\b',
+      ).firstMatch(lower);
+      if (everyHours != null) {
+        final n = everyHours.group(1) ?? everyHours.group(2);
         base = 'every $n hour${n == '1' ? '' : 's'}';
       }
     }
 
-    final asNeeded = _findAsNeeded(lower);
-
-    if (base.isNotEmpty && asNeeded) return '$base, as needed';
-    if (base.isNotEmpty) return base;
-    if (asNeeded) return 'as needed';
-    return '';
+    final parts = [
+      if (base.isNotEmpty) base,
+      ...timing,
+      if (_findAsNeeded(lower)) 'as needed',
+    ];
+    return parts.join(', ');
   }
 
   static bool _findAsNeeded(String lower) {
@@ -1192,10 +1250,21 @@ class PrescriptionParserService {
   static String _findDuration(String sigText) {
     final lower = sigText.toLowerCase();
 
-    final digitMatch = RegExp(r'for\s+(\d+)\s*days?').firstMatch(lower);
+    String days(int n) => '$n day${n == 1 ? '' : 's'}';
+
+    // "for 7 days", "x 7 days", "x7d", "× 7 days", "7 days", "7d"
+    final digitMatch = RegExp(
+      r'(?:\bfor\s*|\bx\s*|×\s*|\b)(\d+)\s*(?:days?|d)\b',
+    ).firstMatch(lower);
     if (digitMatch != null) {
-      final n = digitMatch.group(1)!;
-      return '$n day${n == '1' ? '' : 's'}';
+      return days(int.parse(digitMatch.group(1)!));
+    }
+    // "for 2 weeks", "x 2 wks"
+    final weekMatch = RegExp(
+      r'\b(\d+)\s*(?:weeks?|wks?)\b',
+    ).firstMatch(lower);
+    if (weekMatch != null) {
+      return days(int.parse(weekMatch.group(1)!) * 7);
     }
 
     final tokens = lower.split(RegExp(r'\s+'));

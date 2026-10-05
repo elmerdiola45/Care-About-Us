@@ -45,6 +45,30 @@ void seed(
 void main() {
   tearDown(MedicineDictionaryService.invalidateCache);
 
+  test('a syrup strength never resolves to the capsule of the same mg', () {
+    seed({
+      'amoxicillin': (
+        generic: 'Amoxicillin',
+        skus: [
+          v(1185, 'AMOXICILLIN 250 MG.', null, '250 MG.', 5.0),
+          v(654, 'AMOXICILLIN 250/60ML.', null, '250/60ML.', 60.0),
+          v(657, 'AMOXICILLIN ( HIMOX 250/60 )', 'HIMOX', '250/60', 190.0),
+        ],
+      ),
+    });
+
+    final himox = PriceLookupService.lookup(
+      'Amoxicillin',
+      dosage: '250/60ml',
+      brand: 'Himox',
+    );
+    expect(himox.productId, 657);
+    expect(himox.unitPrice, 190.0);
+
+    final generic = PriceLookupService.lookup('Amoxicillin', dosage: '250/60ml');
+    expect(generic.variant?.id, isNot(1185));
+  });
+
   // Standard healthy catalog: Amoxicillin with two brands at 500, Thmiox
   // also at 250.
   void seedHealthy() => seed({

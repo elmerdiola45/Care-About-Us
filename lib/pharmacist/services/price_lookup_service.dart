@@ -603,6 +603,28 @@ class PriceLookupService {
       return (matches: exact, isExact: true, dosageComparisonAttempted: true);
     }
 
+    // Liquids: "250/60ml" (from the parser) against the catalog's
+    // "250/60", "250/60ML." — the same strength and bottle size written
+    // with or without units. Never compared against plain strengths, so
+    // a syrup can't resolve to a capsule of the same mg.
+    final targetRatio = _ratioStrength(dosage);
+    if (targetRatio != null) {
+      final sameRatio = variants
+          .where(
+            (v) =>
+                v.dosageForm != null &&
+                _ratioStrength(v.dosageForm!) == targetRatio,
+          )
+          .toList();
+      return (
+        matches: sameRatio,
+        isExact: true,
+        dosageComparisonAttempted: variants.any(
+          (v) => v.dosageForm != null && _ratioStrength(v.dosageForm!) != null,
+        ),
+      );
+    }
+
     final target = _plainStrength(dosage);
     if (target == null) {
       // Ratio/suspension form or unparseable text — nothing sensible
@@ -769,6 +791,21 @@ class PriceLookupService {
       prevRow = currRow;
     }
     return prevRow[b.length];
+  }
+
+  /// Parses a liquid strength written as `<mg>/<ml>` — "250/60",
+  /// "250/60ML.", "250mg/60ml", "250 / 60 ML" — into a canonical "250/60"
+  /// key, or null when [raw] isn't that shape.
+  static String? _ratioStrength(String raw) {
+    final m = RegExp(
+      r'^(\d+(?:\.\d+)?)\s*(?:mg)?\s*/\s*(\d+(?:\.\d+)?)\s*(?:ml)?\.?$',
+    ).firstMatch(raw.trim().toLowerCase());
+    if (m == null) return null;
+    String n(String s) => double.parse(s).toString().replaceFirst(
+      RegExp(r'\.0$'),
+      '',
+    );
+    return '${n(m.group(1)!)}/${n(m.group(2)!)}';
   }
 
   /// Parses a plain "<number><unit>" strength like "500mg", "500 MG.",

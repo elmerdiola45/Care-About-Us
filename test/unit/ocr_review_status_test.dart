@@ -66,6 +66,47 @@ void main() {
     });
   });
 
+  testWidgets('header fields: License/PTR on one line, named date, M.D.', (
+    tester,
+  ) async {
+    _seedCatalog();
+    tester.view.physicalSize = const Size(500, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    const text = 'Patient: Juan Dela Cruz\n'
+        'Age: 34\n'
+        'Sex: M\n'
+        'Date: Oct 5, 2026\n'
+        'Amoxicillin 500mg cap #21\n'
+        'Jose P. Rizal, M.D.\n'
+        'Lic. No. 0123456  PTR No. 7654321  S2 No. 55667';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OcrReviewScreen(
+          imageBytes: Uint8List.fromList(
+            img.encodePng(img.Image(width: 4, height: 4)),
+          ),
+          pharmacyId: 'PHARM-001',
+          scanResult: PrescriptionParserService.parse(text),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final values = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .map((t) => t.controller?.text)
+        .toList();
+    expect(values, containsAll(<String>[
+      'Jose P. Rizal',
+      'Oct 5, 2026',
+      '0123456',
+      '7654321',
+      '55667',
+    ]));
+  });
+
   testWidgets('check rows show Read as and must be confirmed to save', (
     tester,
   ) async {

@@ -2358,8 +2358,12 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     final lines = normalizedText.split('\n').map((l) => l.trim()).toList();
 
     final doctorLabelRe = RegExp(
-      r'^(dr\.?|doctor|attending\s+physician|prescribing\s+physician|physician)(?![A-Za-z])[:\.\s]*',
+      r'^(dra?\.?|doctor|attending\s+physician|prescribing\s+physician|physician)(?![A-Za-z])[:\.\s]*',
       caseSensitive: false,
+    );
+    // "Jose P. Rizal, M.D." — a doctor's name identified by the MD title.
+    final doctorMdSuffixRe = RegExp(
+      r'^([A-Z][A-Za-z.\-]*(?:\s+[A-Z][A-Za-z.\-]*){1,4}),?\s*M\.?\s?D\.?$',
     );
     final patientLabelRe = RegExp(
       r'^(patient|pangalan|name)(?![A-Za-z])[:\.\s]*',
@@ -2396,7 +2400,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       caseSensitive: false,
     );
 
-    final doctorNameOnlyRe = RegExp(r'^dr\.?\s+[A-Za-z]', caseSensitive: false);
+    final doctorNameOnlyRe = RegExp(
+      r'^dra?\.?\s+[A-Za-z]',
+      caseSensitive: false,
+    );
 
     final topNameRe = RegExp(r'^[A-Z]\.?[a-z]*\s+[A-Z]');
 
@@ -2414,24 +2421,18 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       final line = lines[i];
       if (line.isEmpty) continue;
 
-      if (licenseLabelRe.hasMatch(line)) {
-        if (licenseNo.isEmpty) {
-          licenseNo = line.replaceFirst(licenseLabelRe, '').trim();
-        }
-        _lastConsumedLines.add(i);
-        continue;
-      }
-      if (ptrLabelRe.hasMatch(line)) {
-        if (ptNo.isEmpty) {
-          ptNo = line.replaceFirst(ptrLabelRe, '').trim();
-        }
-        _lastConsumedLines.add(i);
-        continue;
-      }
-      if (s2LabelRe.hasMatch(line)) {
-        if (s2.isEmpty) {
-          s2 = line.replaceFirst(s2LabelRe, '').trim();
-        }
+      // License, PTR and S2 numbers are often written on ONE line
+      // ("Lic. No. 0123456  PTR No. 7654321  S2 No. 55667"). Taking
+      // "everything after the first label" put the PTR number inside the
+      // License field and left PTR empty, so each number is pulled out
+      // by its own label instead.
+      if (licenseLabelRe.hasMatch(line) ||
+          ptrLabelRe.hasMatch(line) ||
+          s2LabelRe.hasMatch(line)) {
+        final ids = _labeledIdNumbers(line);
+        if (licenseNo.isEmpty) licenseNo = ids.license;
+        if (ptNo.isEmpty) ptNo = ids.ptr;
+        if (s2.isEmpty) s2 = ids.s2;
         _lastConsumedLines.add(i);
         continue;
       }
@@ -2604,6 +2605,14 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         _lastConsumedLines.add(i);
         continue;
       }
+      final mdMatch = doctorMdSuffixRe.firstMatch(line);
+      if (mdMatch != null) {
+        if (doctor.isEmpty) {
+          doctor = mdMatch.group(1)!.trim();
+        }
+        _lastConsumedLines.add(i);
+        continue;
+      }
     }
 
     if (doctor.isEmpty) {
@@ -2626,11 +2635,27 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     }
 
     String date = '';
+    // A labeled "Date:" line is the prescription date as written — trust
+    // it over pattern-guessing, which only knew numeric formats and
+    // reduced "Date: Oct 5, 2026" to just "2026".
+    final labeledDate = RegExp(
+      r'^\s*date\s*[:.]?\s*(.*\d.*)$',
+      caseSensitive: false,
+      multiLine: true,
+    ).firstMatch(normalizedText);
     final isoDateMatch = RegExp(
       r'(19\d\d|20\d\d)[-/]\d{1,2}[-/]\d{1,2}',
     ).firstMatch(normalizedText);
-    if (isoDateMatch != null) {
+    final namedMonthDate = RegExp(
+      r'\b(?:\d{1,2}\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(?:\d{1,2},?\s+)?(?:19|20)\d\d\b',
+      caseSensitive: false,
+    ).firstMatch(normalizedText);
+    if (labeledDate != null) {
+      date = labeledDate.group(1)!.trim();
+    } else if (isoDateMatch != null) {
       date = isoDateMatch.group(0) ?? '';
+    } else if (namedMonthDate != null) {
+      date = namedMonthDate.group(0) ?? '';
     } else {
       final shortDateMatch = RegExp(
         r'\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b',
@@ -2663,6 +2688,29 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       address: address,
       age: age,
       gender: gender,
+    );
+  }
+
+  /// Pulls License, PTR and S2 numbers out of [line] by their own labels,
+  /// so several on one line each land in the right field. Each value is
+  /// the token right after its label; empty when that label is absent.
+  static ({String license, String ptr, String s2}) _labeledIdNumbers(
+    String line,
+  ) {
+    String after(String labelPattern) {
+      final m = RegExp(
+        '(?:^|[^A-Za-z])(?:$labelPattern)\\s*[:#.]?\\s*([A-Za-z0-9][A-Za-z0-9\\-]*)',
+        caseSensitive: false,
+      ).firstMatch(line);
+      return m?.group(1) ?? '';
+    }
+
+    return (
+      license: after(
+        r'license\s*no\.?|lic\.?\s*no\.?|reg\.?\s*no\.?|license|lic\.?',
+      ),
+      ptr: after(r'ptr\s*no\.?|pt\s*no\.?|pt#|ptr'),
+      s2: after(r's-?2\s*(?:no\.?)?'),
     );
   }
 
