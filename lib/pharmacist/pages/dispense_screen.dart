@@ -1826,7 +1826,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
     MedicineItem? matched;
     try {
       matched = _selectedEntry?.prescription.medicines.firstWhere(
-        (m) => m.name == log.productName,
+        (m) =>
+            m.name.trim().toLowerCase() ==
+            log.productName.trim().toLowerCase(),
       );
     } on StateError {
       matched = null;

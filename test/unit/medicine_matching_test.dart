@@ -46,6 +46,37 @@ void seed(
 void main() {
   tearDown(MedicineDictionaryService.invalidateCache);
 
+  test('catalog matching ignores letter case of name and brand', () {
+    seed({
+      'amoxicillin': (
+        generic: 'AMOXICILLIN',
+        skus: [
+          v(1186, 'AMOXICILLIN 500 MG.', null, '500 MG.', 5.0),
+          v(1187, 'AMOXICILLIN ( Himox ) 500 MG.', 'Himox', '500 MG.', 20.0),
+        ],
+      ),
+    });
+
+    for (final name in ['AMOXICILLIN', 'Amoxicillin', 'amoxicillin']) {
+      for (final brand in ['HIMOX', 'Himox', 'himox']) {
+        final r = PriceLookupService.lookup(name, dosage: '500MG', brand: brand);
+        expect(r.productId, 1187, reason: '$name / $brand');
+      }
+    }
+
+    for (final text in [
+      'AMOXICILLIN 500MG CAP #21',
+      'amoxicillin 500mg cap #21',
+    ]) {
+      final m = PrescriptionParserService.parse(
+        text,
+        drugDictionary: const ['amoxicillin'],
+      ).medicines.single;
+      expect(m.name.toLowerCase(), 'amoxicillin', reason: text);
+      expect(m.matchConfidence, 1.0, reason: text);
+    }
+  });
+
   group('never substitute a different product', () {
     const dictionary = [
       'dapagliflozin',
