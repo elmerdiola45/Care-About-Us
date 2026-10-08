@@ -233,6 +233,21 @@ void main() {
       );
     });
 
+    test('the doctor line added by the backend wins over a scribble', () {
+      // The backend appends "Doctor: ..." from the name it found anywhere
+      // on the page (letterhead, stamp, under the signature).
+      expect(
+        PrescriptionParserService.parse(
+          'Patient: Juan Dela Cruz\n'
+          'Amoxicillin 500mg #21\n'
+          'Doctor [illegible]\n'
+          'Lic. No 12345\n'
+          'Doctor: JUAN P. SANTOS\n',
+        ).doctorName,
+        'JUAN P. SANTOS',
+      );
+    });
+
     test("\"Patient's Name:\" label", () {
       expect(
         PrescriptionParserService.parse(
