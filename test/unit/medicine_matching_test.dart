@@ -77,6 +77,38 @@ void main() {
     }
   });
 
+  test('strength without a unit is taken only when the catalog has it', () {
+    seed({
+      'levocetirizine': (
+        generic: 'LEVOCETIRIZINE',
+        skus: [v(844, 'LEVOCETIRIZINE 5 MG.', null, '5 MG.', 15.0)],
+      ),
+    });
+
+    final m = PrescriptionParserService.parse(
+      'Levocetirizine 5\ntab 10\n1 tablet once a day\n',
+      drugDictionary: const ['levocetirizine'],
+    ).medicines.single;
+    expect(m.dosage, '5mg');
+    expect(m.quantity, '10');
+
+    final notStocked = PrescriptionParserService.parse(
+      'Levocetirizine 7\n',
+      drugDictionary: const ['levocetirizine'],
+    ).medicines.single;
+    expect(notStocked.dosage, '');
+  });
+
+  test('pack words on the next line attach to the drug above', () {
+    final result = PrescriptionParserService.parse(
+      'Enoxaparin 40mg\n(Clexane) prefilled syringe # 10\n1 inj daily\n',
+      drugDictionary: const ['enoxaparin'],
+    );
+    expect(result.medicines, hasLength(1));
+    expect(result.medicines.single.brand, 'Clexane');
+    expect(result.medicines.single.quantity, '10');
+  });
+
   group('never substitute a different product', () {
     const dictionary = [
       'dapagliflozin',

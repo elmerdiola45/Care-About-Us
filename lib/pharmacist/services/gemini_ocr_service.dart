@@ -19,6 +19,10 @@ class GeminiOcrResult {
 
   /// Per-line transcription with section/legibility from the backend.
   final List<OcrLine> lines;
+
+  /// True when a backup Gemini model did the reading because the primary
+  /// one was busy or over quota.
+  final bool fromFallbackModel;
   final String? error;
 
   /// True when the failure looks like Gemini's rate limit / quota being
@@ -30,6 +34,7 @@ class GeminiOcrResult {
     required this.success,
     this.rawText = '',
     this.lines = const [],
+    this.fromFallbackModel = false,
     this.error,
     this.isQuotaExceeded = false,
   });
@@ -112,6 +117,7 @@ class GeminiOcrService {
         success: true,
         rawText: rawText,
         lines: OcrLine.listFrom(data['lines']),
+        fromFallbackModel: data['fallback_model'] == true,
       );
     } catch (e) {
       return GeminiOcrResult(

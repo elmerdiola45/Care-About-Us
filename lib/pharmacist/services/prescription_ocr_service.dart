@@ -13,6 +13,17 @@ import '../models/prescription_scan_result.dart';
 export '../models/prescription_scan_result.dart';
 
 class PrescriptionOcrService {
+  /// [lines] with "clear" downgraded to "partial", so every medicine read
+  /// from them is a "Check" row the pharmacist must confirm.
+  static List<OcrLine> _unverified(List<OcrLine> lines) => [
+    for (final l in lines)
+      OcrLine(
+        text: l.text,
+        section: l.section,
+        legibility: l.legibility == 'clear' ? 'partial' : l.legibility,
+      ),
+  ];
+
   /// [imageBytes] goes to the vision models (Gemini/Groq) and should be a
   /// resized COLOR photo. [ocrSpaceImage], if given, produces the smaller
   /// image OCR.space gets instead (its free tier caps uploads at ~1 MB);
@@ -60,10 +71,17 @@ class PrescriptionOcrService {
       final geminiDictResults = await dictionaryFuture;
       final geminiParsed = PrescriptionParserService.parse(
         geminiResult.rawText,
-        engineUsed: 'gemini+parser',
+        engineUsed: geminiResult.fromFallbackModel
+            ? 'gemini(backup model)+parser'
+            : 'gemini+parser',
         drugDictionary: geminiDictResults[0] as List<String>,
         corrections: geminiDictResults[1] as Map<String, String>,
-        ocrLines: geminiResult.lines,
+        // A backup Gemini model (used when the primary is busy or over
+        // quota) misread more on real prescriptions — e.g. "Fenofibrate"
+        // as "Fondaparinux" — so its reads always need confirmation.
+        ocrLines: geminiResult.fromFallbackModel
+            ? _unverified(geminiResult.lines)
+            : geminiResult.lines,
       );
 
       if (!PrescriptionResultScorer.isWeak(geminiParsed)) {
@@ -111,14 +129,7 @@ class PrescriptionOcrService {
         // reads is treated as at best "partial" — which makes every
         // medicine from it a "Check" row the pharmacist must confirm
         // against the photo before saving.
-        ocrLines: [
-          for (final l in groqResult.lines)
-            OcrLine(
-              text: l.text,
-              section: l.section,
-              legibility: l.legibility == 'clear' ? 'partial' : l.legibility,
-            ),
-        ],
+        ocrLines: _unverified(groqResult.lines),
       );
 
       if (!PrescriptionResultScorer.isWeak(groqParsed)) {

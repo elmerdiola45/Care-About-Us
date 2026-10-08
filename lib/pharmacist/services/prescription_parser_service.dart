@@ -965,6 +965,10 @@ class PrescriptionParserService {
                 '${_fixDigitConfusions(dosageMatch.group(1)!)}'
                     '${dosageMatch.group(2)!.toLowerCase()}')
           : (combo?.strength ?? '');
+      if (dosage.isEmpty && match.name != null && combo == null) {
+        // "Levocetirizine 5", "Co Amoxyclav 625": strength without a unit.
+        dosage = _bareStrength(line, name);
+      }
 
       // Cross-check the dosage against this medicine's known variants
       // (fuzzy-distance: snaps to the numerically nearest same-unit
@@ -1126,7 +1130,9 @@ class PrescriptionParserService {
 
   static final RegExp _formOrPackWord = RegExp(
     r'\b(?:tabs?|tablets?|caps?|capsules?|bottles?|bots?|pcs?|pieces?|'
-    r'sachets?|amps?|vials?)\b\.?',
+    r'sachets?|amps?|ampules?|vials?|pre-?filled|syringes?|tubes?|boxe?s?|'
+    r'packs?|strips?|blisters?|nebules?|inhalers?|drops?|drp|sprays?|'
+    r'syrups?|syp|susp|suspension|creams?|ointments?|inj|injections?)\b\.?',
     caseSensitive: false,
   );
 
@@ -1160,6 +1166,7 @@ class PrescriptionParserService {
         .replaceAll(RegExp(r'#\s*\(?\s*[IVXLC]{1,8}\b'), ' ')
         .replaceAll(RegExp(r'#\s*\(?\s*\d+\s*\)?'), ' ')
         .replaceAll(_quantityPattern, ' ')
+        .replaceAll(RegExp(r'\d+'), ' ')
         .replaceAll(_formOrPackWord, ' ')
         .replaceAll(RegExp(r'\b[fr]s\b.*$', caseSensitive: false), ' ')
         .replaceAll(RegExp(r'[^A-Za-z]'), '');
@@ -1193,6 +1200,35 @@ class PrescriptionParserService {
         sourceLegibility: legibility,
       ),
     );
+  }
+
+  /// A strength written without its unit ("Levocetirizine 5", "Co
+  /// Amoxyclav 625"), as "5mg"/"625mg" — but only when the catalog stocks
+  /// exactly that strength of [name]; otherwise ''. Quantities ("#14",
+  /// "30's", "tab 10") and brand parentheses are ignored.
+  static String _bareStrength(String line, String name) {
+    final cleaned = line
+        .replaceAll(RegExp(r'#\s*\(?\s*\d+\s*\)?'), ' ')
+        .replaceAll(RegExp(r"\b\d+\s*['’]s\b"), ' ')
+        .replaceAll(
+          RegExp(
+            r'\b(?:tabs?|tablets?|caps?|capsules?|sachets?)\.?\s+\d+',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(RegExp(r'\([^)]*\)'), ' ');
+    final m = RegExp(
+      r'(?<![\d.#/])(\d+(?:\.\d+)?)(?![\d.]|\s*(?:x\b|/|-|%|mg|mcg|ml|iu|g\b|times))',
+      caseSensitive: false,
+    ).firstMatch(cleaned);
+    if (m == null) return '';
+    final candidate = '${m.group(1)}mg';
+    if (!PriceLookupService.hasVariantAtDosage(name, candidate)) return '';
+    if (!PriceLookupService.resolveDosageLabel(name, candidate).isExact) {
+      return '';
+    }
+    return candidate;
   }
 
   /// For a liquid written as a concentration ("250mg/5ml susp 60ml"),
@@ -1294,6 +1330,14 @@ class PrescriptionParserService {
 
     final apostrophe = RegExp(r"\b(\d+)\s*['’]s\b").firstMatch(line);
     if (apostrophe != null) return apostrophe.group(1)!;
+
+    // The form word before the count: "tab 10", "caps 30".
+    final formFirst = RegExp(
+      r'\b(?:tabs?|tablets?|caps?|capsules?|sachets?)\.?\s+(\d{1,4})\b'
+      r'(?!\s*(?:mg|mcg|g|ml|iu|%|x\b|/|-|times|tabs?|caps?))',
+      caseSensitive: false,
+    ).firstMatch(line);
+    if (formFirst != null) return formFirst.group(1)!;
 
     final counted = _quantityPattern.firstMatch(line);
     if (counted != null) {
