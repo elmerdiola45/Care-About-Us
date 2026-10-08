@@ -258,6 +258,78 @@ void main() {
     });
   });
 
+  group('quantity', () {
+    PrescriptionMedicine one(String text) =>
+        PrescriptionParserService.parse(text).medicines.single;
+
+    test('a "#" quantity wins over the dose on the same line', () {
+      expect(one('Losartan 50mg 1 tab OD #30\n').quantity, '30');
+    });
+
+    test('Roman numerals and parenthesized counts', () {
+      expect(one('Amoxicillin 500mg cap #XXI\n').quantity, '21');
+      expect(one('Cetirizine 10mg tab # (10)\n').quantity, '10');
+      expect(one('Ambroxol 30mg tab Qty: 15\n').quantity, '15');
+    });
+
+    test('License/PTR "No." lines are not quantities', () {
+      final result = PrescriptionParserService.parse(
+        'Amoxicillin 500mg #21\nLic. No. 0123456\nPTR No. 7654321\n',
+      );
+      expect(result.medicines, hasLength(1));
+    });
+
+    test('a dose before a frequency is not a quantity', () {
+      final m = one('Losartan 50mg 1 tab twice a day\n');
+      expect(m.quantity, '');
+      expect(m.quantityEstimated, isTrue);
+    });
+
+    test('a written quantity is not marked as estimated', () {
+      expect(one('Amoxicillin 500mg #21\n').quantityEstimated, isFalse);
+    });
+
+    test('missing quantity is estimated from the Sig', () {
+      final cefuroxime = one(
+        'Cefuroxime 500mg #\nSig 1 tab every 12hrs / 7days\n',
+      );
+      expect(cefuroxime.quantity, '14');
+      expect(cefuroxime.quantityBasis, contains('1 tab × 2/day × 7 days'));
+
+      expect(
+        one('Montelukast 5mg tab\ntake 1 tablet once a day x 14days\n').quantity,
+        '14',
+      );
+      expect(
+        one('Escitalopram 10mg tab\nSig. take 1/2 tab once a day x 30 days\n')
+            .quantity,
+        '15',
+      );
+    });
+
+    test('a syrup is counted in bottles', () {
+      final m = one(
+        'Amoxicillin 250mg/5ml susp 60ml\nSig: 5ml 3x a day x 7 days\n',
+      );
+      expect(m.quantity, '2'); // 105 ml in 60 ml bottles
+      expect(m.quantityBasis, contains('105 ml'));
+    });
+
+    test('a syrup without a bottle size defaults to 1 and says so', () {
+      final m = one(
+        'Cetirizine 5mg/5ml syrup\nSig: 2.5ml once a day x 7 days\n',
+      );
+      expect(m.quantity, '1');
+      expect(m.quantityBasis, contains('bottle size not written'));
+    });
+
+    test('no quantity and no Sig to estimate from', () {
+      final m = one('Losartan 50mg\n');
+      expect(m.quantity, '');
+      expect(m.quantityBasis, contains('not written'));
+    });
+  });
+
   group('liquid strengths', () {
     test('mg/5ml with a bottle size uses the catalog style', () {
       final m = PrescriptionParserService.parse(

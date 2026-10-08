@@ -46,6 +46,17 @@ class PrescriptionMedicine {
   /// OCR.space results, which carry no per-line rating).
   final String sourceLegibility;
 
+  /// The Sig/instruction text attached to this medicine, as read.
+  final String sigText;
+
+  /// Empty when [quantity] was written on the prescription. Otherwise a
+  /// short explanation of where it came from — an estimate from the Sig
+  /// ("1 tab × 2/day × 7 days = 14") or that it wasn't written at all —
+  /// so the review screen can ask the pharmacist to confirm it.
+  final String quantityBasis;
+
+  bool get quantityEstimated => quantityBasis.isNotEmpty;
+
   const PrescriptionMedicine({
     required this.name,
     required this.dosage,
@@ -57,7 +68,33 @@ class PrescriptionMedicine {
     this.matchConfidence = 0.0,
     this.sourceText = '',
     this.sourceLegibility = '',
+    this.sigText = '',
+    this.quantityBasis = '',
   });
+
+  PrescriptionMedicine copyWith({
+    String? quantity,
+    String? frequency,
+    String? brand,
+    String? duration,
+    String? sourceText,
+    String? sourceLegibility,
+    String? sigText,
+    String? quantityBasis,
+  }) => PrescriptionMedicine(
+    name: name,
+    dosage: dosage,
+    quantity: quantity ?? this.quantity,
+    frequency: frequency ?? this.frequency,
+    brand: brand ?? this.brand,
+    dosageForm: dosageForm,
+    duration: duration ?? this.duration,
+    matchConfidence: matchConfidence,
+    sourceText: sourceText ?? this.sourceText,
+    sourceLegibility: sourceLegibility ?? this.sourceLegibility,
+    sigText: sigText ?? this.sigText,
+    quantityBasis: quantityBasis ?? this.quantityBasis,
+  );
 
   factory PrescriptionMedicine.fromJson(Map<String, dynamic> json) {
     return PrescriptionMedicine(
@@ -74,6 +111,8 @@ class PrescriptionMedicine {
       matchConfidence: (json['matchConfidence'] as num?)?.toDouble() ?? 0.0,
       sourceText: json['sourceText']?.toString() ?? '',
       sourceLegibility: json['sourceLegibility']?.toString() ?? '',
+      sigText: json['sigText']?.toString() ?? '',
+      quantityBasis: json['quantityBasis']?.toString() ?? '',
     );
   }
 }

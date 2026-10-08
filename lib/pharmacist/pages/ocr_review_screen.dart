@@ -370,6 +370,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           matchConfidence: m.matchConfidence,
           sourceText: m.sourceText,
           sourceLegibility: m.sourceLegibility,
+          quantityBasis: m.quantityBasis,
         );
       }).toList();
     } else {
@@ -2062,10 +2063,15 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             : m.dosageNotStocked
             ? 'Strength not listed — tap Edit'
             : 'Select brand — tap Edit',
-      _ReviewStatus.check =>
-        m.aiUnsureOfHandwriting
-            ? 'AI was unsure reading this line — check it against the photo'
-            : 'Not an exact match — check it against the photo',
+      _ReviewStatus.check => [
+        if (m.quantityBasis.isNotEmpty) m.quantityBasis,
+        if (m.aiUnsureOfHandwriting)
+          'AI was unsure reading this line — check it against the photo'
+        else if (m.quantityBasis.isEmpty ||
+            m.matchConfidence < _MatchedMedicine.confidentMatch ||
+            !m.unitPriceIsExact)
+          'Not an exact match — check it against the photo',
+      ].join('\n'),
       _ReviewStatus.verified => null,
     };
 
@@ -3265,6 +3271,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       sourceText: widget.medicine.sourceText,
       sourceLegibility: widget.medicine.sourceLegibility,
       reviewConfirmed: widget.medicine.reviewConfirmed,
+      quantityBasis: widget.medicine.quantityBasis,
     );
 
     // Pharmacist picked a brand from the picker (or the prescription
@@ -3961,6 +3968,11 @@ class _MatchedMedicine {
   /// photo. Required before saving for every row in [_ReviewStatus.check].
   final bool reviewConfirmed;
 
+  /// Why [quantity] wasn't simply read off the prescription (estimated
+  /// from the Sig, or not written) — see PrescriptionMedicine. Empty once
+  /// the quantity was written, edited, or confirmed.
+  final String quantityBasis;
+
   _MatchedMedicine({
     int? id,
     required this.medicineLabel,
@@ -3984,6 +3996,7 @@ class _MatchedMedicine {
     this.sourceText = '',
     this.sourceLegibility = '',
     this.reviewConfirmed = false,
+    this.quantityBasis = '',
   }) : id = id ?? ++_idSeq,
        originalOcrLabel = originalOcrLabel ?? medicineLabel;
 
@@ -4037,6 +4050,10 @@ class _MatchedMedicine {
       sourceText: sourceText,
       sourceLegibility: sourceLegibility,
       reviewConfirmed: reviewConfirmed ?? this.reviewConfirmed,
+      // Typing a quantity replaces the estimate with the pharmacist's own.
+      quantityBasis: (quantity != null && quantity != this.quantity)
+          ? ''
+          : quantityBasis,
     );
   }
 
@@ -4066,7 +4083,8 @@ class _MatchedMedicine {
         matchConfidence < confidentMatch ||
         isFallbackMatch ||
         !unitPriceIsExact ||
-        aiUnsureOfHandwriting;
+        aiUnsureOfHandwriting ||
+        quantityBasis.isNotEmpty;
     return uncertain ? _ReviewStatus.check : _ReviewStatus.verified;
   }
 }

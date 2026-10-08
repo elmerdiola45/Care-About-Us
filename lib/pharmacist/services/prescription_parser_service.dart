@@ -863,6 +863,7 @@ class PrescriptionParserService {
       if (dosageMatch == null &&
           match.name == null &&
           quantityMatch == null &&
+          _findQuantity(line).isEmpty &&
           combo == null) {
         continue;
       }
@@ -1007,11 +1008,7 @@ class PrescriptionParserService {
       final parsedMedicine = PrescriptionMedicine(
         name: name,
         dosage: dosage,
-        quantity: quantityMatch != null
-            ? _fixDigitConfusions(
-                quantityMatch.group(1) ?? quantityMatch.group(2) ?? '',
-              )
-            : '',
+        quantity: _findQuantity(line),
         frequency: frequency,
         brand: brand,
         dosageForm: dosageForm,
@@ -1046,7 +1043,7 @@ class PrescriptionParserService {
       lastMedicineLine = i;
     }
 
-    return medicines;
+    return medicines.map(_withQuantityEstimate).toList();
   }
 
   /// Recognizes a combination product in [text] ("Sitagliptin/Metformin
@@ -1157,12 +1154,11 @@ class PrescriptionParserService {
       rest = rest.substring(paren.end);
     }
 
-    final q = _quantityPattern.firstMatch(rest);
-    final quantity = q == null
-        ? ''
-        : _fixDigitConfusions(q.group(1) ?? q.group(2) ?? '');
+    final quantity = _findQuantity(rest);
 
     final leftover = rest
+        .replaceAll(RegExp(r'#\s*\(?\s*[IVXLC]{1,8}\b'), ' ')
+        .replaceAll(RegExp(r'#\s*\(?\s*\d+\s*\)?'), ' ')
         .replaceAll(_quantityPattern, ' ')
         .replaceAll(_formOrPackWord, ' ')
         .replaceAll(RegExp(r'\b[fr]s\b.*$', caseSensitive: false), ' ')
@@ -1190,15 +1186,9 @@ class PrescriptionParserService {
             const [0, 1],
           );
     medicines.add(
-      PrescriptionMedicine(
-        name: prev.name,
-        dosage: prev.dosage,
+      prev.copyWith(
         quantity: prev.quantity.isEmpty ? quantity : prev.quantity,
-        frequency: prev.frequency,
         brand: prev.brand.isEmpty ? brand : prev.brand,
-        dosageForm: prev.dosageForm,
-        duration: prev.duration,
-        matchConfidence: prev.matchConfidence,
         sourceText: '${prev.sourceText}  /  $sourceLine',
         sourceLegibility: legibility,
       ),
@@ -1235,8 +1225,9 @@ class PrescriptionParserService {
   }
 
   /// Applies the frequency/duration found in [sigText] to the most
-  /// recently parsed medicine. No-op when there is no previous medicine
-  /// or the text carries neither.
+  /// recently parsed medicine, and keeps the text itself (used to work
+  /// out the dose per intake for a quantity estimate). No-op when there is
+  /// no previous medicine.
   static void _attachSigToLast(
     List<PrescriptionMedicine> medicines,
     String sigText,
@@ -1244,21 +1235,201 @@ class PrescriptionParserService {
     if (medicines.isEmpty) return;
     final sigFrequency = _findFrequency(sigText);
     final sigDuration = _findDuration(sigText);
-    if (sigFrequency.isEmpty && sigDuration.isEmpty) return;
     final prev = medicines.removeLast();
     medicines.add(
-      PrescriptionMedicine(
-        name: prev.name,
-        dosage: prev.dosage,
-        quantity: prev.quantity,
+      prev.copyWith(
         frequency: sigFrequency.isNotEmpty ? sigFrequency : prev.frequency,
-        brand: prev.brand,
-        dosageForm: prev.dosageForm,
         duration: sigDuration.isNotEmpty ? sigDuration : prev.duration,
-        matchConfidence: prev.matchConfidence,
-        sourceText: prev.sourceText,
-        sourceLegibility: prev.sourceLegibility,
+        sigText: prev.sigText.isEmpty
+            ? sigText.trim()
+            : '${prev.sigText} ${sigText.trim()}',
       ),
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Quantity
+  // ---------------------------------------------------------------------
+
+  static const Map<String, int> _romanValues = {
+    'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100,
+  };
+
+  /// Value of an uppercase Roman numeral ("XIV" -> 14), or null.
+  static int? _romanToInt(String s) {
+    if (s.isEmpty || !RegExp(r'^[IVXLC]+$').hasMatch(s)) return null;
+    var total = 0;
+    for (var i = 0; i < s.length; i++) {
+      final v = _romanValues[s[i]]!;
+      final next = i + 1 < s.length ? _romanValues[s[i + 1]]! : 0;
+      total += v < next ? -v : v;
+    }
+    return total > 0 && total <= 500 ? total : null;
+  }
+
+  /// The quantity to dispense as written on [line], or '' when none is.
+  ///
+  /// A "#" quantity wins over a "30 tabs" style count anywhere on the line
+  /// — "Losartan 50mg 1 tab OD #30" used to read as 1 (the dose). Also
+  /// reads "# (10)", "#XXX" (Roman numerals), "Qty: 30", "Disp: 30" and
+  /// "30's". A small count right before a frequency ("1 tab twice a
+  /// day") is a dose, not a quantity.
+  static String _findQuantity(String line) {
+    final hash = RegExp(
+      '#\\s*\\(?\\s*([$_digitLikeChars]*\\d[$_digitLikeChars]*)\\s*\\)?',
+    ).firstMatch(line);
+    if (hash != null) return _fixDigitConfusions(hash.group(1)!);
+
+    final roman = RegExp(r'#\s*\(?\s*([IVXLC]{1,8})\b').firstMatch(line);
+    final romanValue = roman == null ? null : _romanToInt(roman.group(1)!);
+    if (romanValue != null) return '$romanValue';
+
+    // Not a bare "No." — that is the License/PTR/SSS/Tel label on the
+    // doctor's lines ("Lic. No. 0123456").
+    final labeled = RegExp(
+      r'\b(?:qty\.?|quantity|disp\.?|dispense)\s*:?\s*(\d+)\b',
+      caseSensitive: false,
+    ).firstMatch(line);
+    if (labeled != null) return labeled.group(1)!;
+
+    final apostrophe = RegExp(r"\b(\d+)\s*['’]s\b").firstMatch(line);
+    if (apostrophe != null) return apostrophe.group(1)!;
+
+    final counted = _quantityPattern.firstMatch(line);
+    if (counted != null) {
+      final value = _fixDigitConfusions(
+        counted.group(1) ?? counted.group(2) ?? '',
+      );
+      final n = int.tryParse(value) ?? 0;
+      final isDose =
+          n <= 4 && _findFrequency(line.substring(counted.end)).isNotEmpty;
+      if (!isDose) return value;
+    }
+    return '';
+  }
+
+  /// One intake from Sig text: "1 tab", "1/2 tab", "½ tab", "2 caps",
+  /// "5ml", "1 tsp" (5 ml). Null when no dose is written.
+  static ({double amount, String unit})? _dosePerIntake(String sig) {
+    final m = RegExp(
+      r'(\d+(?:\.\d+)?(?:\s*/\s*\d+)?|½|¼)\s*'
+      r'(tabs?|tablets?|caps?|capsules?|sachets?|ml|cc|tsps?|teaspoons?|'
+      r'tbsps?|tablespoons?|puffs?|drops?|gtts?)\b',
+      caseSensitive: false,
+    ).firstMatch(sig);
+    if (m == null) return null;
+
+    final raw = m.group(1)!.replaceAll(' ', '');
+    double? amount;
+    if (raw == '½') {
+      amount = 0.5;
+    } else if (raw == '¼') {
+      amount = 0.25;
+    } else if (raw.contains('/')) {
+      final p = raw.split('/');
+      final d = double.tryParse(p[1]) ?? 0;
+      amount = d == 0 ? null : (double.tryParse(p[0]) ?? 0) / d;
+    } else {
+      amount = double.tryParse(raw);
+    }
+    if (amount == null || amount <= 0) return null;
+
+    final u = m.group(2)!.toLowerCase();
+    if (u.startsWith('tab')) return (amount: amount, unit: 'tab');
+    if (u.startsWith('cap')) return (amount: amount, unit: 'cap');
+    if (u.startsWith('sachet')) return (amount: amount, unit: 'sachet');
+    if (u == 'ml' || u == 'cc') return (amount: amount, unit: 'ml');
+    if (u.startsWith('tsp') || u.startsWith('teaspoon')) {
+      return (amount: amount * 5, unit: 'ml');
+    }
+    if (u.startsWith('tbsp') || u.startsWith('tablespoon')) {
+      return (amount: amount * 15, unit: 'ml');
+    }
+    return (amount: amount, unit: 'device'); // puffs / drops
+  }
+
+  /// Doses per day from a parsed frequency ("twice daily, after meals",
+  /// "3x daily", "every 8 hours"), or null when it doesn't say.
+  static int? _timesPerDay(String frequency) {
+    final f = frequency.toLowerCase();
+    if (f.startsWith('once daily')) return 1;
+    if (f.startsWith('twice daily')) return 2;
+    final times = RegExp(r'^(\d+)x daily').firstMatch(f);
+    if (times != null) return int.parse(times.group(1)!);
+    final every = RegExp(r'^every (\d+) hours?').firstMatch(f);
+    if (every != null) {
+      final h = int.parse(every.group(1)!);
+      return h > 0 && h <= 24 ? (24 / h).floor() : null;
+    }
+    if (f == 'at bedtime') return 1;
+    return null;
+  }
+
+  /// Public wrapper for the review screen and tests.
+  static String quantityFrom(String line) => _findQuantity(line);
+
+  static String _fmt(double v) =>
+      v == v.roundToDouble() ? '${v.toInt()}' : '$v';
+
+  /// For a medicine with no written quantity, estimates one from its Sig
+  /// (dose × doses per day × days) and records how, in quantityBasis. A
+  /// liquid is counted in bottles when the bottle size is known from the
+  /// strength ("250/60ml" -> 60 ml bottles). When nothing can be worked
+  /// out the quantity stays empty and quantityBasis says it wasn't
+  /// written. Either way the review screen asks for confirmation.
+  static PrescriptionMedicine _withQuantityEstimate(PrescriptionMedicine m) {
+    if (m.quantity.isNotEmpty) return m;
+
+    const notWritten = 'Quantity not written — enter it from the prescription';
+    final dose = _dosePerIntake(m.sigText);
+    final perDay = _timesPerDay(m.frequency);
+    final days = int.tryParse(
+      RegExp(r'^(\d+) day').firstMatch(m.duration)?.group(1) ?? '',
+    );
+    if (dose == null) return m.copyWith(quantityBasis: notWritten);
+
+    if (dose.unit == 'device') {
+      return m.copyWith(
+        quantity: '1',
+        quantityBasis: 'Quantity not written — assumed 1 (spray/drops)',
+      );
+    }
+    if (perDay == null || days == null) {
+      return m.copyWith(quantityBasis: notWritten);
+    }
+
+    final total = dose.amount * perDay * days;
+    final schedule =
+        '${_fmt(dose.amount)} ${dose.unit} × $perDay/day × $days days';
+
+    if (dose.unit == 'ml') {
+      final bottle = double.tryParse(
+        RegExp(r'^\d+(?:\.\d+)?/(\d+(?:\.\d+)?)ml$')
+                .firstMatch(m.dosage)
+                ?.group(1) ??
+            '',
+      );
+      if (bottle == null || bottle <= 0) {
+        return m.copyWith(
+          quantity: '1',
+          quantityBasis:
+              'Estimated from Sig: $schedule = ${_fmt(total)} ml; '
+              'bottle size not written — check',
+        );
+      }
+      final bottles = (total / bottle).ceil();
+      return m.copyWith(
+        quantity: '$bottles',
+        quantityBasis:
+            'Estimated from Sig: $schedule = ${_fmt(total)} ml '
+            '→ $bottles × ${_fmt(bottle)} ml bottle${bottles == 1 ? '' : 's'}',
+      );
+    }
+
+    final count = total.ceil();
+    return m.copyWith(
+      quantity: '$count',
+      quantityBasis: 'Estimated from Sig: $schedule = $count',
     );
   }
 
