@@ -4,6 +4,83 @@
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
     "raw_text": "Date: 9/18/2020\n1 Fluticasone nasal spray #1\nS 2 puffs both nostrils 3x\na day\n2 Cetirizine 10 mg tab #10\nS 1 tab 1x a day at bedtime\n3 Guiafenasin + PPA + Paracetamol\n(Mucoruss) cap # 20\nS 1 cap 3x a day for\n7 days\nDr. Maria Santos\nReg. No. 12345\nSSS No. 12-1234567-1\nTIN No. 123-123-123\nPTR No. MLA-1234567",
+    "lines": [
+      {
+        "text": "Date: 9/18/2020",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 Fluticasone nasal spray #1",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "S 2 puffs both nostrils 3x",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "a day",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "2 Cetirizine 10 mg tab #10",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "S 1 tab 1x a day at bedtime",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "3 Guiafenasin + PPA + Paracetamol",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "(Mucoruss) cap # 20",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "S 1 cap 3x a day for",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "7 days",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "Reg. No. 12345",
+        "section": "doctor",
+        "legibility": "partial"
+      },
+      {
+        "text": "SSS No. 12-1234567-1",
+        "section": "doctor",
+        "legibility": "partial"
+      },
+      {
+        "text": "TIN No. 123-123-123",
+        "section": "doctor",
+        "legibility": "partial"
+      },
+      {
+        "text": "PTR No. MLA-1234567",
+        "section": "doctor",
+        "legibility": "partial"
+      }
+    ],
     "expected": [
       {
         "name": "Fluticasone",
@@ -28,7 +105,84 @@
     "id": "P02_photo_797099674",
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
-    "raw_text": "Patient: Juan Dela Cruz\nAge: 49\nSex: M\nAddress: Sample City\nDate: 3-30-2024\nEmpagliflozin (Jardiance) 25mg\nRx # 100 / 45\n( 1 - 0 - 0\nSitagliptin/Metformin (Janumet XR) 100/1,000 # 100\nS 0 - 0 - 1\nLosartan K 50mg\nRx # 100\nS 1 - 0 - 1\nLic. No.: 12345\nPTR No.: 123456",
+    "raw_text": "Patient: Juan Dela Cruz\nAge: 49\nSex: M\nPatient: Juan Dela Cruz\nDate: 3-30-2024\nEmpagliflozin (Jardiance) 25mg\nRx # 100 / 45\n( 1 - 0 - 0\nSitagliptin/Metformin (Janumet XR) 100/1,000 # 100\nS 0 - 0 - 1\nLosartan K 50mg\nRx # 100\nS 1 - 0 - 1\nLic. No.: 12345\nPTR No.: 123456",
+    "lines": [
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Age: 49",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sex: M",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Date: 3-30-2024",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Empagliflozin (Jardiance) 25mg",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Rx # 100 / 45",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "( 1 - 0 - 0",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sitagliptin/Metformin (Janumet XR) 100/1,000 # 100",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "S 0 - 0 - 1",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Losartan K 50mg",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Rx # 100",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "S 1 - 0 - 1",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Lic. No.: 12345",
+        "section": "doctor",
+        "legibility": "partial"
+      },
+      {
+        "text": "PTR No.: 123456",
+        "section": "doctor",
+        "legibility": "partial"
+      }
+    ],
     "expected": [
       {
         "name": "Empagliflozin",
@@ -55,6 +209,68 @@
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
     "raw_text": "DATE: 3/8/2024\nPatient: Juan Dela Cruz\nAge: 4\nSex: M\nCefuroxime 250mg/5ml\ngive 4ml q 12h x 7days\nProcaterol 5mcg/1ml\n(Meptin/Breeze)\ngive 4ml twice a day x 7days\nMontelukast 5mg tab\ntake 1 tablet once a day x 14days\nDr. Maria Santos",
+    "lines": [
+      {
+        "text": "DATE: 3/8/2024",
+        "section": "other",
+        "legibility": "clear"
+      },
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Age: 4",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sex: M",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Cefuroxime 250mg/5ml",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "give 4ml q 12h x 7days",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Procaterol 5mcg/1ml",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "(Meptin/Breeze)",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "give 4ml twice a day x 7days",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Montelukast 5mg tab",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "take 1 tablet once a day x 14days",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "unclear"
+      }
+    ],
     "expected": [
       {
         "name": "Cefuroxime"
@@ -76,6 +292,88 @@
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
     "raw_text": "Patient: Juan Dela Cruz\nDate: 1-3-26\n(1) Amoxicillin 100mg /ml drp #1\ngive 1.3ml 3x a day\nFS 1-3-25\nevery 8 hrs\nfor 1wk\n(2) Syr. Salbutamol syr #1\ngive 1ml 3x a day\nevery 8hrs\nfor 5day\nFS 1-3-26\nJan 4\nTuesday 930am\nDr. Maria Santos\nLic. No. : 123456",
+    "lines": [
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Date: 1-3-26",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "(1) Amoxicillin 100mg /ml drp #1",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "give 1.3ml 3x a day",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "FS 1-3-25",
+        "section": "other",
+        "legibility": "partial"
+      },
+      {
+        "text": "every 8 hrs",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "for 1wk",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "(2) Syr. Salbutamol syr #1",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "give 1ml 3x a day",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "every 8hrs",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "for 5day",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "FS 1-3-26",
+        "section": "other",
+        "legibility": "partial"
+      },
+      {
+        "text": "Jan 4",
+        "section": "other",
+        "legibility": "clear"
+      },
+      {
+        "text": "Tuesday 930am",
+        "section": "other",
+        "legibility": "partial"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "unclear"
+      },
+      {
+        "text": "Lic. No. : 123456",
+        "section": "doctor",
+        "legibility": "partial"
+      }
+    ],
     "expected": [
       {
         "name": "Amoxicillin",
@@ -92,6 +390,83 @@
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
     "raw_text": "Patient: Juan Dela Cruz\nAge: 30\nSex: F\nDate: 8/15/25\nCEFUROXIME 500mg #\nSig 1 tab every 12hrs / 7days\nFeSO4 + Folic acid # 30\nSig 1 tab once a day\nMULTIVITAMINS # 30\nSig 1 tab once a day\nMefenamic acid 500mg\nSig 1 cap every 8hrs\nMaria Santos, MD\nLic. No 123456\nDr. Maria Santos",
+    "lines": [
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Age: 30",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sex: F",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Date: 8/15/25",
+        "section": "other",
+        "legibility": "clear"
+      },
+      {
+        "text": "CEFUROXIME 500mg #",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sig 1 tab every 12hrs / 7days",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "FeSO4 + Folic acid # 30",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sig 1 tab once a day",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "MULTIVITAMINS # 30",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sig 1 tab once a day",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Mefenamic acid 500mg",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sig 1 cap every 8hrs",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Maria Santos, MD",
+        "section": "doctor",
+        "legibility": "partial"
+      },
+      {
+        "text": "Lic. No 123456",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "clear"
+      }
+    ],
     "expected": [
       {
         "name": "Cefuroxime",
@@ -124,6 +499,73 @@
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
     "raw_text": "Date: 7/15/20\nPatient: Juan Dela Cruz\nAge: 56\nSex: M\nLosartan 100mg tab #100\n1x/day\n-3 (97) OLIS 7/18\nAmlodipine 10mg tab #100\n1x/day\n-3 (97) OLIS 7/18\nDapagliflozin 10mg tab #100\n1x/day\nDr. Maria Santos",
+    "lines": [
+      {
+        "text": "Date: 7/15/20",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Age: 56",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sex: M",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Losartan 100mg tab #100",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1x/day",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "-3 (97) OLIS 7/18",
+        "section": "other",
+        "legibility": "clear"
+      },
+      {
+        "text": "Amlodipine 10mg tab #100",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1x/day",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "-3 (97) OLIS 7/18",
+        "section": "other",
+        "legibility": "clear"
+      },
+      {
+        "text": "Dapagliflozin 10mg tab #100",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1x/day",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "partial"
+      }
+    ],
     "expected": [
       {
         "name": "Losartan",
@@ -147,6 +589,98 @@
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
     "raw_text": "Date: 9/28/2020\n① NaCl nasal spray #1\nSig 2 puffs both nostrils\n3x a day\n② Co-amoxiclav 625mg/cap\n# 14\nSig 1 cap 2x a day\n# 59/25/m\nfor 7 days after meals\n③ Cetirizine 10mg/tab # 10\nSig 1 tab 1x a day\nat bedtime\nFollow-up on: Oct 5, 2020 (9am)\nDr. Maria Santos\nReg No 12345\nSSS No 123456789-1\nTIN No. 123-123-123\nPTR No. MLA1234567",
+    "lines": [
+      {
+        "text": "Date: 9/28/2020",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "① NaCl nasal spray #1",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sig 2 puffs both nostrils",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "3x a day",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "② Co-amoxiclav 625mg/cap",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "# 14",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sig 1 cap 2x a day",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "# 59/25/m",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "for 7 days after meals",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "③ Cetirizine 10mg/tab # 10",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sig 1 tab 1x a day",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "at bedtime",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "Follow-up on: Oct 5, 2020 (9am)",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "Reg No 12345",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "SSS No 123456789-1",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "TIN No. 123-123-123",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "PTR No. MLA1234567",
+        "section": "doctor",
+        "legibility": "clear"
+      }
+    ],
     "expected": [
       {
         "name": "Sodium Chloride",
@@ -172,6 +706,78 @@
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
     "raw_text": "Patient: Juan Dela Cruz\nAge: 22\nDate: 6/17/21\nCo-Amoxiclav 625mg\n#14 FS 6/17\nS. take 1 tab 2x a day\nfor 7 days\nmefenamic Acid 500mg\n#6 FS 6/17\nS. take 1 cap every 6-8hrs. by St\nfor pain or as\nneeded\nDr. Maria Santos\nLic. No 12345",
+    "lines": [
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Age: 22",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Date: 6/17/21",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Co-Amoxiclav 625mg",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "#14 FS 6/17",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "S. take 1 tab 2x a day",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "for 7 days",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "mefenamic Acid 500mg",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "#6 FS 6/17",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "S. take 1 cap every 6-8hrs. by St",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "for pain or as",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "needed",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "unclear"
+      },
+      {
+        "text": "Lic. No 12345",
+        "section": "doctor",
+        "legibility": "clear"
+      }
+    ],
     "expected": [
       {
         "name": "Co-Amoxiclav",
@@ -189,7 +795,139 @@
     "id": "P09_photo_801008269",
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
-    "raw_text": "Patient: Juan Dela Cruz\nAge 34\nAddress: Sample City\nDate \"\n1 Telmisartan 40mg\ntabs # 10\n1 tab daily\n2 Carvedilol 6.25mg\ntabs # 10\n1 tab daily\n3 Spironolactone 25mg # 10\n1 tab daily\n4 Trimetazidine 35mg\ntabs # 20\n1 tab 2x daily\n5 Clopidogrel 75mg\ntabs # 10\n1 tab daily\n6 Atorvastatin 20mg\ntabs # 10\n1 tab daily\n7 Fenofibrate 160mg\n( Lipanthyl ) caps # 10\n1 cap daily at bedtime\nLic. No. 12345\nPTR No. 1234567",
+    "raw_text": "Patient: Juan Dela Cruz\nAge 34\nPatient: Juan Dela Cruz\nDate \"\n1 Telmisartan 40mg\ntabs # 10\n1 tab daily\n2 Carvedilol 6.25mg\ntabs # 10\n1 tab daily\n3 Spironolactone 25mg # 10\n1 tab daily\n4 Trimetazidine 35mg\ntabs # 20\n1 tab 2x daily\n5 Clopidogrel 75mg\ntabs # 10\n1 tab daily\n6 Atorvastatin 20mg\ntabs # 10\n1 tab daily\n7 Fenofibrate 160mg\n( Lipanthyl ) caps # 10\n1 cap daily at bedtime\nLic. No. 12345\nPTR No. 1234567",
+    "lines": [
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Age 34",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Date \"",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "1 Telmisartan 40mg",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "tabs # 10",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab daily",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "2 Carvedilol 6.25mg",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "tabs # 10",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab daily",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "3 Spironolactone 25mg # 10",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab daily",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "4 Trimetazidine 35mg",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "tabs # 20",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab 2x daily",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "5 Clopidogrel 75mg",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "tabs # 10",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab daily",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "6 Atorvastatin 20mg",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "tabs # 10",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab daily",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "7 Fenofibrate 160mg",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "( Lipanthyl ) caps # 10",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 cap daily at bedtime",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Lic. No. 12345",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "PTR No. 1234567",
+        "section": "doctor",
+        "legibility": "partial"
+      }
+    ],
     "expected": [
       {
         "name": "Telmisartan",
@@ -234,7 +972,104 @@
     "id": "P10_photo_804442940",
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
-    "raw_text": "Patient: Juan Dela Cruz\nDate: 8/18/24\nAddress: Sample City\nAge: 67\nSex: M\n1. LOSARTAN 50MG / TAB # 60\nSig. TAKE 1 TAB ONCE A DAY\n2. PREGABALIN 150MG / TAB # 120\nSig. TAKE 1 TAB 2X A DAY\n3. DOXOPHYLLINE 200MG TAB # 120\nSig. TAKE 1 TAB 2X A DAY\n4. MULTIVITAMINS 100ML BOTTLE # 2 BOT\nSig. TAKE 10 ML ONCE A DAY\n5. ESCITALOPRAM 10MG / TAB # 60\nSig. TAKE 1/2 TAB ONCE A DAY\nBEFORE BEDTIME\nDr. Maria Santos\nMaria Santos, MD\nLicense No. 1234567",
+    "raw_text": "Patient: Juan Dela Cruz\nDate: 8/18/24\nPatient: Juan Dela Cruz\nAge: 67\nSex: M\n1. LOSARTAN 50MG / TAB # 60\nSig. TAKE 1 TAB ONCE A DAY\n2. PREGABALIN 150MG / TAB # 120\nSig. TAKE 1 TAB 2X A DAY\n3. DOXOPHYLLINE 200MG TAB # 120\nSig. TAKE 1 TAB 2X A DAY\n4. MULTIVITAMINS 100ML BOTTLE # 2 BOT\nSig. TAKE 10 ML ONCE A DAY\n5. ESCITALOPRAM 10MG / TAB # 60\nSig. TAKE 1/2 TAB ONCE A DAY\nBEFORE BEDTIME\nDr. Maria Santos\nMaria Santos, MD\nLicense No. 1234567",
+    "lines": [
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Date: 8/18/24",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Age: 67",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sex: M",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "1. LOSARTAN 50MG / TAB # 60",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sig. TAKE 1 TAB ONCE A DAY",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "2. PREGABALIN 150MG / TAB # 120",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sig. TAKE 1 TAB 2X A DAY",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "3. DOXOPHYLLINE 200MG TAB # 120",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sig. TAKE 1 TAB 2X A DAY",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "4. MULTIVITAMINS 100ML BOTTLE # 2 BOT",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sig. TAKE 10 ML ONCE A DAY",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "5. ESCITALOPRAM 10MG / TAB # 60",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sig. TAKE 1/2 TAB ONCE A DAY",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "BEFORE BEDTIME",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "partial"
+      },
+      {
+        "text": "Maria Santos, MD",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "License No. 1234567",
+        "section": "doctor",
+        "legibility": "clear"
+      }
+    ],
     "expected": [
       {
         "name": "Losartan",
@@ -270,7 +1105,124 @@
     "id": "P11_photo_804954940",
     "source": "real",
     "note": "Live Gemini transcription of a real prescription photo; patient details replaced. Expected = what is written on the photo.",
-    "raw_text": "Patient: Juan Dela Cruz\nDate: 7-23-2024\nAddress: Sample City\nAge: 39\nRx\nAntibiotic\nCo Amoxiclav 625\n(Augmentin 625)\n#14\nSig: 1 tablet 2x a day for\n1-0-1 7 days\nphlegm\nAmbroxol 30mg tab # 21\n(Bioxol or Zibroxol)\nSig: 1 tablet 3x a day\n1-1-1\nfor Allergy\nLevocetirizine 5mg\n# 10\n1 tablet once a day\n0-0-1\nPTR No. 12345678\nLIC. No. 12345",
+    "raw_text": "Patient: Juan Dela Cruz\nDate: 7-23-2024\nPatient: Juan Dela Cruz\nAge: 39\nRx\nAntibiotic\nCo Amoxiclav 625\n(Augmentin 625)\n#14\nSig: 1 tablet 2x a day for\n1-0-1 7 days\nphlegm\nAmbroxol 30mg tab # 21\n(Bioxol or Zibroxol)\nSig: 1 tablet 3x a day\n1-1-1\nfor Allergy\nLevocetirizine 5mg\n# 10\n1 tablet once a day\n0-0-1\nPTR No. 12345678\nLIC. No. 12345",
+    "lines": [
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Date: 7-23-2024",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Age: 39",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Rx",
+        "section": "other",
+        "legibility": "clear"
+      },
+      {
+        "text": "Antibiotic",
+        "section": "other",
+        "legibility": "clear"
+      },
+      {
+        "text": "Co Amoxiclav 625",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "(Augmentin 625)",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "#14",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sig: 1 tablet 2x a day for",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "1-0-1 7 days",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "phlegm",
+        "section": "other",
+        "legibility": "partial"
+      },
+      {
+        "text": "Ambroxol 30mg tab # 21",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "(Bioxol or Zibroxol)",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sig: 1 tablet 3x a day",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "1-1-1",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "for Allergy",
+        "section": "other",
+        "legibility": "clear"
+      },
+      {
+        "text": "Levocetirizine 5mg",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "# 10",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "1 tablet once a day",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "0-0-1",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "PTR No. 12345678",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "LIC. No. 12345",
+        "section": "doctor",
+        "legibility": "clear"
+      }
+    ],
     "expected": [
       {
         "name": "Co-Amoxiclav",

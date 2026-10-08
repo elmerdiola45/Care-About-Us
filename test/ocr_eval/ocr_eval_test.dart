@@ -49,14 +49,19 @@ class _Case {
   final String id;
   final String source;
   final String rawText;
+
+  /// The vision model's per-line output (section/legibility), when the
+  /// case was captured with it — passed to the parser like the app does.
+  final List<OcrLine> lines;
   final List<_Expected> expected;
 
-  _Case(this.id, this.source, this.rawText, this.expected);
+  _Case(this.id, this.source, this.rawText, this.lines, this.expected);
 
   factory _Case.fromJson(Map<String, dynamic> j) => _Case(
     j['id'] as String,
     j['source']?.toString() ?? 'unknown',
     j['raw_text'] as String,
+    OcrLine.listFrom(j['lines']),
     (j['expected'] as List)
         .map((e) => _Expected.fromJson(e as Map<String, dynamic>))
         .toList(),
@@ -183,6 +188,7 @@ void main() {
           c.rawText,
           engineUsed: 'eval',
           drugDictionary: dictionary,
+          ocrLines: c.lines,
         ),
         zoneSpecification: ZoneSpecification(print: (_, _, _, _) {}),
       );

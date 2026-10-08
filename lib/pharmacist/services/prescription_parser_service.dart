@@ -233,6 +233,8 @@ class PrescriptionParserService {
       drugDictionary ?? _knownDrugs,
       corrections ?? const {},
       _legibilityPerLine(lines, ocrLines),
+      _alignedOcrLines(lines, ocrLines)?.map((l) => l.section).toList() ??
+          const [],
     );
     // ignore: avoid_print
     print(
@@ -552,12 +554,20 @@ class PrescriptionParserService {
   static List<String> _legibilityPerLine(
     List<String> lines,
     List<OcrLine> ocrLines,
+  ) =>
+      _alignedOcrLines(lines, ocrLines)?.map((l) => l.legibility).toList() ??
+      const [];
+
+  /// [ocrLines] when they line up one-to-one with [lines], else null.
+  static List<OcrLine>? _alignedOcrLines(
+    List<String> lines,
+    List<OcrLine> ocrLines,
   ) {
-    if (ocrLines.length != lines.length) return const [];
+    if (ocrLines.length != lines.length) return null;
     for (var i = 0; i < lines.length; i++) {
-      if (ocrLines[i].text.trim() != lines[i]) return const [];
+      if (ocrLines[i].text.trim() != lines[i]) return null;
     }
-    return ocrLines.map((l) => l.legibility).toList();
+    return ocrLines;
   }
 
   static const List<String> _legibilityOrder = ['clear', 'partial', 'unclear'];
@@ -580,6 +590,7 @@ class PrescriptionParserService {
     List<String> drugDictionary,
     Map<String, String> corrections,
     List<String> legibility,
+    List<String> sections,
   ) {
     final medicines = <PrescriptionMedicine>[];
     // Index of the last line that belonged to the most recent medicine,
@@ -591,6 +602,19 @@ class PrescriptionParserService {
       if (medicines.length >= _maxMedicinesFound) break;
 
       final rawLine = lines[i];
+
+      // The vision model tags each line with what it is. Patient and
+      // doctor lines are never medicines; a line it tagged "other" (a
+      // side note such as "for Allergy", read as "Co-Allergy" and then
+      // fuzzy-matched to the brand "Co-Aleva") is only considered when it
+      // carries a strength or "#" quantity, in case the tag was wrong.
+      final section = i < sections.length ? sections[i] : '';
+      if (section == 'patient' || section == 'doctor') continue;
+      if (section == 'other' &&
+          !_dosagePattern.hasMatch(rawLine) &&
+          !rawLine.contains('#')) {
+        continue;
+      }
 
       // The brand and/or quantity of a drug written on the line(s) right
       // after it: "(Augmentin 625)", "#14", "tabs # 10", "Rx # 100",
@@ -664,6 +688,13 @@ class PrescriptionParserService {
               next.contains('#')) {
             break;
           }
+          // The vision model tagged it as a medicine line, or it carries
+          // its own quantity ("Diosmin + H - 30"): a new drug, not more
+          // dosing text.
+          if ((j < sections.length && sections[j] == 'medicine') ||
+              _findQuantity(next).isNotEmpty) {
+            break;
+          }
           final probeName = next
               .replaceAll(_quantityPattern, ' ')
               .replaceAll(_dosagePattern, ' ')
@@ -711,9 +742,23 @@ class PrescriptionParserService {
       // Item numbering: "1 Telmisartan", "(2) Amoxicillin", "③ Cetirizine".
       // Removed only after the instruction check above, so "1 tab daily"
       // still reads as dosing text rather than a drug called "tab daily".
+      //
+      // Also removed: when-to-take words written in Tagalog before the
+      // drug ("gabi (1) Atorvastatin", "umaga tanghali gabi (1) x
+      // Betahistine") and check marks. The name match only looks at the
+      // first words of the line, so these turned real drugs into phantom
+      // items like "Umaga X Clopidogrel". The timing itself is kept as
+      // the frequency (see _findFrequency).
+      final timingPrefix = _tagalogTimingPrefix.firstMatch(line);
+      final tagalogTiming = timingPrefix?.group(0) ?? '';
+      if (timingPrefix != null) line = line.substring(timingPrefix.end);
       line = line
           .replaceFirst(
-            RegExp(r'^(?:\(\d{1,2}\)|\d{1,2}(?=\s+[A-Za-z]{3})|[①-⑳])\s*'),
+            RegExp(
+              r'^(?:(?:\(\d{1,2}\)|\d{1,2}(?=\s+[A-Za-z]{3})|[①-⑳])\s*)?'
+              r'(?:[x✓✔]\s+)?',
+              caseSensitive: false,
+            ),
             '',
           )
           .trim();
@@ -795,7 +840,7 @@ class PrescriptionParserService {
 
       final dosageMatch = _dosagePattern.firstMatch(line);
       final quantityMatch = _quantityPattern.firstMatch(line);
-      final frequency = _findFrequency(line);
+      final frequency = _findFrequency('$tagalogTiming $line');
       final dosageFormMatch = _dosageFormPattern.firstMatch(line);
       final dosageForm = dosageFormMatch != null
           ? _normalizeDosageForm(dosageFormMatch.group(1)!)
@@ -1066,10 +1111,17 @@ class PrescriptionParserService {
 
     final parts = namePart
         .split(RegExp(r'\s*(?:\+|/|&|\band\b)\s*', caseSensitive: false))
-        .map((p) => p.trim())
-        .where((p) => p.replaceAll(RegExp(r'[^A-Za-z]'), '').length >= 2)
+        // Trailing dashes/punctuation before a quantity ("H - 30").
+        .map((p) => p.trim().replaceAll(RegExp(r'[\s\-–—.,:;]+$'), '').trim())
+        .where((p) => p.replaceAll(RegExp(r'[^A-Za-z]'), '').isNotEmpty)
         .toList();
     if (parts.length < 2) return null;
+    // At least one component must be a real name, not just initials.
+    if (!parts.any(
+      (p) => p.replaceAll(RegExp(r'[^A-Za-z]'), '').length >= 4,
+    )) {
+      return null;
+    }
 
     final resolved = <String>[];
     for (final part in parts) {
@@ -1099,9 +1151,14 @@ class PrescriptionParserService {
       for (final w in wanted) {
         var bestPart = 0.0;
         for (final e in entryParts) {
-          final s = (e.length >= 4 && w.startsWith(e))
-              ? 0.95
-              : _similarity(w, e);
+          final double s;
+          if (e.length >= 4 && w.startsWith(e)) {
+            s = 0.95; // catalog abbreviation: "salbu" for "salbutamol"
+          } else if (w.length <= 2 && e.startsWith(w)) {
+            s = 0.85; // prescription initial: "H" for "hesperidin"
+          } else {
+            s = _similarity(w, e);
+          }
           if (s > bestPart) bestPart = s;
         }
         if (bestPart < worst) worst = bestPart;
@@ -1330,6 +1387,21 @@ class PrescriptionParserService {
 
     final apostrophe = RegExp(r"\b(\d+)\s*['’]s\b").firstMatch(line);
     if (apostrophe != null) return apostrophe.group(1)!;
+
+    // Count after a dash at the end of the drug line: "Sambong - 60",
+    // "Diosmin + H - 30".
+    // Not a "1 - 0 - 1" dosing schedule, and a name must come before it.
+    final dashed = RegExp(r'\s[-–—]\s*(\d{1,4})\s*$').firstMatch(line);
+    if (dashed != null &&
+        int.parse(dashed.group(1)!) > 0 &&
+        !RegExp(r'\d\s*[-–—]\s*\d\s*[-–—]\s*\d').hasMatch(line) &&
+        line
+                .substring(0, dashed.start)
+                .replaceAll(RegExp(r'[^A-Za-z]'), '')
+                .length >=
+            3) {
+      return dashed.group(1)!;
+    }
 
     // The form word before the count: "tab 10", "caps 30".
     final formFirst = RegExp(
@@ -1669,6 +1741,25 @@ class PrescriptionParserService {
         if (doses > 0) base = _timesDaily(doses);
       }
     }
+    if (base.isEmpty) {
+      // Tagalog times of day: "umaga" (morning), "tanghali" (noon),
+      // "hapon" (afternoon), "gabi" (night) — one dose each.
+      final times = {
+        for (final m in RegExp(
+          r'\b(umaga|tanghali|hapon|gabi)\b',
+        ).allMatches(lower))
+          m.group(1),
+      };
+      if (times.isNotEmpty) {
+        base = _timesDaily(times.length);
+      } else if (RegExp(r'\bbago\s+matulog\b').hasMatch(lower)) {
+        base = 'once daily';
+      }
+    }
+    if (RegExp(r'\bbago\s+matulog\b').hasMatch(lower) &&
+        !timing.contains('at bedtime')) {
+      timing.add('at bedtime');
+    }
     if (base.isEmpty &&
         RegExp(r'\b(?:daily|a\s*day|per\s*day|/\s*day)\b').hasMatch(lower)) {
       // "1 tab daily", "1 tab a day"
@@ -1682,6 +1773,13 @@ class PrescriptionParserService {
     ];
     return parts.join(', ');
   }
+
+  /// Leading Tagalog when-to-take words: "umaga", "tanghali", "hapon",
+  /// "gabi", "sa gabi"/"sagabi", "bago matulog" (any combination).
+  static final RegExp _tagalogTimingPrefix = RegExp(
+    r'^(?:(?:sa\s*)?(?:umaga|tanghali|hapon|gabi)\b[\s,/&-]*|bago\s+matulog\b[\s,]*)+',
+    caseSensitive: false,
+  );
 
   static String _timesDaily(int n) => switch (n) {
     1 => 'once daily',
@@ -1934,6 +2032,20 @@ class PrescriptionParserService {
       if (bestScore >= threshold &&
           bestScore < 1.0 &&
           _isOtherDrugOfSameClass(bestWindow, bestTarget)) {
+        return (name: null, score: bestScore);
+      }
+      // A weak match that doesn't even start with the same letter is
+      // usually a different drug with a similar ending — "Betahistine"
+      // scored 0.73 against "Ebastine", "Trimetazidine" against
+      // "Rimantadine" — not a misread. Real misreads in the test photos
+      // ("Bioguc" for Biogesic, "Guiafenasin", "Cetirizne") all kept the
+      // first letter; strong matches (0.80+, e.g. "Timox" for Himox) are
+      // still accepted either way.
+      if (bestScore >= threshold &&
+          bestScore < 0.8 &&
+          bestWindow.isNotEmpty &&
+          bestTarget.isNotEmpty &&
+          bestWindow[0] != bestTarget[0]) {
         return (name: null, score: bestScore);
       }
       if (bestScore >= threshold) {

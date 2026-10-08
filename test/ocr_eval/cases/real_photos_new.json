@@ -1,0 +1,253 @@
+[
+  {
+    "id": "Q01_photo_834248497",
+    "source": "real",
+    "note": "Live gemini-3.8-flash transcription of a real prescription photo; patient/doctor details replaced.",
+    "raw_text": "Patient: Juan Dela Cruz\nPatient: Juan Dela Cruz\nAge: 63\nSex: M\nDate: 7/23/40\ngabi (1) Atorvastatin 40, tab #60 -10\n1 tab OD - L\numaga (1) x Clopidogrel 75, tab #60 -10\n1 tab OD - L\numaga tanghali gabi (1) x Betahistine 16, tab #30 [illegible]\n3x a day 1 tab 3x - L\numaga (1) x Losartan 50, tab #100 -5\n1 tab OD - L\numaga gabi (1) x Gliclazide 30, tab #60 -10\n1 tab OD - L\nB coplex umaga (1) B1 B6 B12 tab #20 -5\n1 tab OD - L\nsagabi (1) Pregabalin 75, tab #20 -4\n1 tab OD bago matulog\nDr. Maria Santos\nDr. Maria Santos",
+    "lines": [
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Age: 63",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sex: M",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Date: 7/23/40",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "gabi (1) Atorvastatin 40, tab #60 -10",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab OD - L",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "umaga (1) x Clopidogrel 75, tab #60 -10",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab OD - L",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "umaga tanghali gabi (1) x Betahistine 16, tab #30 [illegible]",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "3x a day 1 tab 3x - L",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "umaga (1) x Losartan 50, tab #100 -5",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab OD - L",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "umaga gabi (1) x Gliclazide 30, tab #60 -10",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab OD - L",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "B coplex umaga (1) B1 B6 B12 tab #20 -5",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab OD - L",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "sagabi (1) Pregabalin 75, tab #20 -4",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "1 tab OD bago matulog",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "unclear"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "unclear"
+      }
+    ],
+    "expected": [
+      {
+        "name": "Atorvastatin",
+        "quantity": "60"
+      },
+      {
+        "name": "Clopidogrel",
+        "quantity": "60"
+      },
+      {
+        "name": "Betahistine"
+      },
+      {
+        "name": "Losartan",
+        "quantity": "100"
+      },
+      {
+        "name": "Gliclazide",
+        "quantity": "60"
+      },
+      {
+        "name": "B-Complex",
+        "aliases": [
+          "B Complex",
+          "Vitamin B Complex",
+          "Neurobion"
+        ]
+      },
+      {
+        "name": "Pregabalin"
+      }
+    ]
+  },
+  {
+    "id": "Q02_photo_836083782",
+    "source": "real",
+    "note": "Live gemini-3.5-flash transcription of a real prescription photo; patient/doctor details replaced.",
+    "raw_text": "Patient: Juan Dela Cruz\nDate: 10-7-24\nPatient: Juan Dela Cruz\nAge: 68\nRx\nRuwative - 60\nSig. 2 cap daily\nSambong - 60\nSig. 1 tab daily.\nDiosmin + H - 30\n(daflon) 500mg\nSig. 1 tab daily out\nDr. Maria Santos\nLic No. 12345\nPTR No. 123\nDr. Maria Santos",
+    "lines": [
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Date: 10-7-24",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Patient: Juan Dela Cruz",
+        "section": "patient",
+        "legibility": "partial"
+      },
+      {
+        "text": "Age: 68",
+        "section": "patient",
+        "legibility": "clear"
+      },
+      {
+        "text": "Rx",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Ruwative - 60",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "Sig. 2 cap daily",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sambong - 60",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sig. 1 tab daily.",
+        "section": "instruction",
+        "legibility": "clear"
+      },
+      {
+        "text": "Diosmin + H - 30",
+        "section": "medicine",
+        "legibility": "partial"
+      },
+      {
+        "text": "(daflon) 500mg",
+        "section": "medicine",
+        "legibility": "clear"
+      },
+      {
+        "text": "Sig. 1 tab daily out",
+        "section": "instruction",
+        "legibility": "partial"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "Lic No. 12345",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "PTR No. 123",
+        "section": "doctor",
+        "legibility": "clear"
+      },
+      {
+        "text": "Dr. Maria Santos",
+        "section": "doctor",
+        "legibility": "partial"
+      }
+    ],
+    "expected": [
+      {
+        "name": "Rowatinex",
+        "quantity": "60"
+      },
+      {
+        "name": "Sambong",
+        "quantity": "60"
+      },
+      {
+        "name": "Diosmin + Hesperidin",
+        "aliases": [
+          "Diosmin+Hesperidin",
+          "Daflon"
+        ],
+        "quantity": "30"
+      }
+    ]
+  }
+]

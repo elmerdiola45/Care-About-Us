@@ -258,6 +258,54 @@ void main() {
     });
   });
 
+  group('more real layouts', () {
+    test('Tagalog time-of-day words before the drug', () {
+      final result = PrescriptionParserService.parse(
+        'gabi (1) Atorvastatin 40mg tab #60 -10\n'
+        '1 tab OD\n'
+        'umaga tanghali gabi (1) x Betahistine 16mg tab #30\n',
+      );
+      expect(result.medicines.map((m) => m.name), [
+        'Atorvastatin',
+        'Betahistine',
+      ]);
+      expect(result.medicines.first.quantity, '60');
+      expect(result.medicines.last.frequency, '3x daily');
+    });
+
+    test('quantity after a dash, but never from a 1-0-1 schedule', () {
+      final result = PrescriptionParserService.parse(
+        'Sambong tab - 60\nSig. 1 tab daily\nLosartan 50mg\n1 - 0 - 1\n',
+      );
+      expect(result.medicines.first.quantity, '60');
+      expect(result.medicines, hasLength(2));
+    });
+
+    test('a line the AI tagged "other" is not a medicine', () {
+      final result = PrescriptionParserService.parse(
+        'Levocetirizine 5mg #10\nCo-Allergy\n',
+        ocrLines: const [
+          OcrLine(text: 'Levocetirizine 5mg #10', section: 'medicine'),
+          OcrLine(text: 'Co-Allergy', section: 'other'),
+        ],
+      );
+      expect(result.medicines, hasLength(1));
+    });
+
+    test('a Sig line stops at a line the AI tagged as a medicine', () {
+      final result = PrescriptionParserService.parse(
+        'Sambong tab - 60\nSig. 1 tab daily.\nDiosmin + H - 30\n',
+        ocrLines: const [
+          OcrLine(text: 'Sambong tab - 60', section: 'medicine'),
+          OcrLine(text: 'Sig. 1 tab daily.', section: 'instruction'),
+          OcrLine(text: 'Diosmin + H - 30', section: 'medicine'),
+        ],
+      );
+      expect(result.medicines, hasLength(2));
+      expect(result.medicines.last.quantity, '30');
+    });
+  });
+
   group('quantity', () {
     PrescriptionMedicine one(String text) =>
         PrescriptionParserService.parse(text).medicines.single;

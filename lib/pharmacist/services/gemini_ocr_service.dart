@@ -69,11 +69,11 @@ class GeminiOcrService {
       }
 
       final streamedResponse = await request.send().timeout(
-        // The backend tries backup Gemini models when the primary one is
-        // busy or over quota, within a 26s budget — this must stay above
-        // that so the client never abandons a scan the backend is still
-        // completing.
-        const Duration(seconds: 30),
+        // The backend waits up to 25s for the primary Gemini model (its
+        // response time swings widely under load) and then tries backup
+        // models, within a 50s budget — this must stay above that so the
+        // client never abandons a scan the backend is still completing.
+        const Duration(seconds: 55),
         onTimeout: () =>
             throw TimeoutException('Gemini OCR request timed out.'),
       );

@@ -259,9 +259,9 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
           if (!mounted) return;
           setState(() => _processingStage = stage);
         },
-        // Gemini alone may take up to 30s when its backup models are
-        // used, followed by Groq/OCR.space if that still fails.
-      ).timeout(const Duration(seconds: 75));
+        // Gemini alone may take up to 55s when it is slow or its backup
+        // models are used, followed by Groq/OCR.space if that still fails.
+      ).timeout(const Duration(seconds: 100));
     } on TimeoutException {
       if (!mounted) return;
       setState(() {
