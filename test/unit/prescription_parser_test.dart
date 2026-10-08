@@ -292,6 +292,20 @@ void main() {
       expect(result.medicines, hasLength(1));
     });
 
+    test('an instruction line with a "#" is Sig plus quantity', () {
+      final result = PrescriptionParserService.parse(
+        'Losartan 100mg Tab\n1x1 day #30\nAmlodipine 10mg tab\n1x1 day #30\n',
+        ocrLines: const [
+          OcrLine(text: 'Losartan 100mg Tab', section: 'medicine'),
+          OcrLine(text: '1x1 day #30', section: 'instruction'),
+          OcrLine(text: 'Amlodipine 10mg tab', section: 'medicine'),
+          OcrLine(text: '1x1 day #30', section: 'instruction'),
+        ],
+      );
+      expect(result.medicines.map((m) => m.name), ['Losartan', 'Amlodipine']);
+      expect(result.medicines.map((m) => m.quantity), ['30', '30']);
+    });
+
     test('a Sig line stops at a line the AI tagged as a medicine', () {
       final result = PrescriptionParserService.parse(
         'Sambong tab - 60\nSig. 1 tab daily.\nDiosmin + H - 30\n',

@@ -615,6 +615,25 @@ class PrescriptionParserService {
           !rawLine.contains('#')) {
         continue;
       }
+      // A line the model tagged as an instruction is Sig text for the drug
+      // above — even when the doctor squeezed the quantity onto it
+      // ("1x1 day #30" had become a phantom "X Day #30" medicine). Its "#"
+      // count fills in that drug's quantity if it had none. Only skipped
+      // when the line plainly names a catalog drug with a strength.
+      if (section == 'instruction' && medicines.isNotEmpty) {
+        final namesDrug =
+            _dosagePattern.hasMatch(rawLine) &&
+            (_fuzzyMatchDrug(rawLine, drugDictionary).score >= 0.85);
+        if (!namesDrug) {
+          _attachSigToLast(medicines, rawLine);
+          final q = rawLine.contains('#') ? _findQuantity(rawLine) : '';
+          if (q.isNotEmpty && medicines.last.quantity.isEmpty) {
+            medicines.add(medicines.removeLast().copyWith(quantity: q));
+          }
+          lastMedicineLine = i;
+          continue;
+        }
+      }
 
       // The brand and/or quantity of a drug written on the line(s) right
       // after it: "(Augmentin 625)", "#14", "tabs # 10", "Rx # 100",
