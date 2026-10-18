@@ -140,10 +140,11 @@ class DispensingSummaryScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                   onPressed: () {
-                     Navigator.of(context).pop();
-                     Navigator.of(context).pop();
-                   },
+                  // Close only this screen and report "done". The caller
+                  // decides whether to close itself too — popping twice here
+                  // removed the whole dashboard (white screen) when the
+                  // Dispense screen was a tab rather than a pushed page.
+                  onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: SummaryColors.green,
                     foregroundColor: Colors.white,

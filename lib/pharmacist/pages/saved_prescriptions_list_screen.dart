@@ -5,7 +5,6 @@
 // specific to that saved prescription, with a Print option.
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -55,6 +54,9 @@ class SavedPrescriptionsListScreen extends StatefulWidget {
 class _SavedPrescriptionsListScreenState
     extends State<SavedPrescriptionsListScreen> {
   String? _expandedOcrCode;
+  // Portal-QR generation state for the inline panel, keyed by ocrCode.
+  String? _qrGeneratingOcr;
+  final Map<String, String> _qrErrors = {};
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -802,43 +804,88 @@ class _SavedPrescriptionsListScreenState
     );
   }
 
-  String _inlineQrPayload(PrescriptionEntry entry) {
-    // Gate on backendVerifyUrl, not entry.qrToken (token_id) — the
-    // backend only ever verifies the real secret via its hash, so a URL
-    // built from token_id alone is now rejected outright rather than
-    // just being weaker. backendVerifyUrl is only ever populated with a
-    // real, working verify URL (see updateQrToken() / saved_prescriptions_
-    // store.dart); when it's absent, fall back to showing the local
-    // payload rather than encoding a QR that can never verify.
-    final verifyUrl = entry.backendVerifyUrl;
-    if (verifyUrl == null || verifyUrl.isEmpty) {
-      return jsonEncode({
-        'rxNumber': entry.ocrCode,
-        'patientName': entry.prescription.patientName,
-        'patientAge': entry.prescription.patientAge,
-        'patientSex': entry.prescription.patientGender,
-        'doctor': entry.prescription.doctorName,
-        'date': entry.prescription.dateTime.toIso8601String(),
-        'medicines': entry.prescription.medicines
-            .map(
-              (m) => {
-                'name': m.name,
-                'strength': m.dosage,
-                'prescribedQuantity': m.quantity,
-                'stock': m.quantity * 3,
-                'unitPrice': 12.50,
-              },
-            )
-            .toList(),
-      });
-    }
-
-    return verifyUrl;
+  Widget _buildQrUnavailablePanel(PrescriptionEntry entry) {
+    final generating = _qrGeneratingOcr == entry.ocrCode;
+    final error = _qrErrors[entry.ocrCode];
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: SavedListColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: SavedListColors.border),
+      ),
+      child: Column(
+        children: [
+          if (generating) ...[
+            const SizedBox(height: 8),
+            const CircularProgressIndicator(color: SavedListColors.teal),
+            const SizedBox(height: 14),
+            const Text(
+              'Creating portal QR link...',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+            ),
+            const SizedBox(height: 8),
+          ] else ...[
+            const Icon(
+              Icons.link_off_rounded,
+              size: 40,
+              color: Color(0xFFDC2626),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Portal QR for ${entry.ocrCode} is not available',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 14.5,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              error ??
+                  'The QR link could not be created. Check that the '
+                      'backend is running, then try again.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => setState(() => _expandedOcrCode = null),
+                    child: const Text('Close'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _generateBackendQrToken(entry),
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Try again'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _buildInlineQrPanel({required PrescriptionEntry entry}) {
-    final qrData = _inlineQrPayload(entry);
     final p = entry.prescription;
+    final link = entry.backendVerifyUrl;
+    // Only a real verify URL opens the patient portal when scanned with a
+    // phone camera. Without one, show why and offer a retry instead of the
+    // old local-JSON QR, which looked valid (and printed) but could never
+    // open anything.
+    if (link == null || link.isEmpty) {
+      return _buildQrUnavailablePanel(entry);
+    }
+    final qrData = link;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -856,6 +903,14 @@ class _SavedPrescriptionsListScreenState
               size: 180,
               backgroundColor: Colors.white,
             ),
+          ),
+          const SizedBox(height: 8),
+          // The exact link the QR opens — lets staff confirm it points at
+          // a reachable address (not 127.0.0.1) or type it on a phone.
+          SelectableText(
+            qrData,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 12),
           Text(
@@ -1095,7 +1150,7 @@ class _SavedPrescriptionsListScreenState
     // only ever stores the token's hash, never the raw secret — see the
     // comment in saved_prescriptions_store.dart's fetchFromBackend). The
     // old status-only check meant those entries never got a fresh token
-    // and _inlineQrPayload() fell back to a dead local-JSON QR forever.
+    // and the panel fell back to a dead local-JSON QR forever.
     // The backend has no problem minting a second token for an
     // already-generated prescription (QrTokenController@generate has no
     // such guard — it just supersedes the prescription's token pointer),
@@ -1125,6 +1180,12 @@ class _SavedPrescriptionsListScreenState
   }
 
   Future<void> _generateBackendQrToken(PrescriptionEntry entry) async {
+    if (mounted) {
+      setState(() {
+        _qrGeneratingOcr = entry.ocrCode;
+        _qrErrors.remove(entry.ocrCode);
+      });
+    }
     try {
       // QrTokenController@generate only flips the prescription's status to
       // 'qr_generated' when it receives a prescription_id. If this entry
@@ -1196,22 +1257,19 @@ class _SavedPrescriptionsListScreenState
         );
       }
     } on LaravelApiException catch (e) {
+      _qrErrors[entry.ocrCode] = 'Backend refused the QR request: ${e.message}';
+    } catch (e) {
+      // Previously swallowed silently, leaving a dead local-JSON QR on
+      // screen. Surface it so staff know the QR can't open the portal.
+      _qrErrors[entry.ocrCode] =
+          'Could not reach the backend: '
+          '${e.toString().replaceFirst('Exception: ', '')}';
+    } finally {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Backend QR failed: ${e.message}. Using local QR.'),
-          ),
-        );
+        setState(() {
+          if (_qrGeneratingOcr == entry.ocrCode) _qrGeneratingOcr = null;
+        });
       }
-      SavedPrescriptionsStore.instance.updateStatus(
-        entry.ocrCode,
-        QrStatus.qrGenerated,
-      );
-    } catch (_) {
-      SavedPrescriptionsStore.instance.updateStatus(
-        entry.ocrCode,
-        QrStatus.qrGenerated,
-      );
     }
   }
 
