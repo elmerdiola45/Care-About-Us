@@ -342,6 +342,22 @@ class AdminApiService {
     throw Exception(data['message']?.toString() ?? 'Failed to reject request');
   }
 
+  /// Removes a decided (non-pending) request from the Requests list. The
+  /// backend keeps the row for audit; it just stops listing it.
+  Future<void> deleteCrossPharmacyRequest(String requestId) async {
+    final response = await http
+        .delete(
+          Uri.parse('$_baseUrl/admin/cross-pharmacy-requests/$requestId'),
+          headers: _headers,
+        )
+        .timeout(_timeout);
+
+    if (response.statusCode == 200) return;
+
+    final data = safeMap(jsonDecode(response.body)) ?? {};
+    throw Exception(data['message']?.toString() ?? 'Failed to delete request');
+  }
+
   Future<ScanRecordsResponse> fetchScanRecords({
     String type = 'all',
     String date = 'today',
