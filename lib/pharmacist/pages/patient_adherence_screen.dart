@@ -140,9 +140,7 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
   /// so _loadRecords() can run every patient concurrently via Future.wait.
   /// Logic is unchanged from the original loop body — only the surrounding
   /// concurrency changed.
-  Future<
-    ({_PharmacistAdherenceRecord record, bool adherenceOk, String? error})
-  >
+  Future<({_PharmacistAdherenceRecord record, bool adherenceOk, String? error})>
   _loadOneRecord(LaravelApiService api, Map<String, dynamic> patient) async {
     final patientId = patient['patient_id']?.toString() ?? '';
     AdherenceStatus adherence;
@@ -207,9 +205,7 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
         lastFill.millisecondsSinceEpoch == 0 &&
         patientId.isNotEmpty) {
       try {
-        final historyJson = await api.fetchPatientDispensingHistory(
-          patientId,
-        );
+        final historyJson = await api.fetchPatientDispensingHistory(patientId);
         for (final e in historyJson) {
           final item = AdherenceHistoryItem.fromJson(e);
           if (item.medicineName.isNotEmpty &&
@@ -280,68 +276,81 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          _buildFilterChips(),
-          const SizedBox(height: 8),
-          Expanded(
-            child: ResponsiveCenter.dashboard(
-              padding: EdgeInsets.zero,
-              child: _isLoading
-                  ? const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(color: AppColors.teal),
-                          SizedBox(height: 16),
-                          Text(
-                            'Loading prescriptions...',
-                            style: TextStyle(color: AppColors.textSecondary),
+      // Search, filters and list share one centered column so they line up
+      // on wide screens (the search bar used to span the whole window).
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: Column(
+            children: [
+              _buildSearchBar(),
+              _buildFilterChips(),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ResponsiveCenter.dashboard(
+                  padding: EdgeInsets.zero,
+                  child: _isLoading
+                      ? const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(color: AppColors.teal),
+                              SizedBox(height: 16),
+                              Text(
+                                'Loading prescriptions...',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    )
-                  : _errorMessage != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              size: 44,
-                              color: AppColors.danger,
+                        )
+                      : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  size: 44,
+                                  color: AppColors.danger,
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(
+                                    color: AppColors.danger,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 10),
+                                ElevatedButton.icon(
+                                  onPressed: _loadRecords,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Retry'),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 10),
-                            Text(
-                              _errorMessage!,
-                              style: const TextStyle(color: AppColors.danger),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 10),
-                            ElevatedButton.icon(
-                              onPressed: _loadRecords,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Retry'),
-                            ),
-                          ],
+                          ),
+                        )
+                      : _filtered.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                          itemCount: _filtered.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) =>
+                              _buildPrescriptionCard(_filtered[index]),
                         ),
-                      ),
-                    )
-                  : _filtered.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                      itemCount: _filtered.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) =>
-                          _buildPrescriptionCard(_filtered[index]),
-                    ),
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -572,7 +581,9 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
                       // `critical` covers both `pending` and `no_data` (see
                       // tierFor / admin reference) — distinguish by raw status.
                       AdherenceTier.critical =>
-                        record.adherence.status == 'no_data' ? 'No Data' : 'Pending',
+                        record.adherence.status == 'no_data'
+                            ? 'No Data'
+                            : 'Pending',
                       AdherenceTier.overDispensing => 'Overdispensing',
                       AdherenceTier.fullyDispensed => 'Fully Dispensed',
                     },

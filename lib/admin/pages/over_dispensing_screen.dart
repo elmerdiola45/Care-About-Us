@@ -95,7 +95,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                "Couldn't reach the backend",
+                "Couldn't load this prescription",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -105,7 +105,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _error ?? '',
+                (_error ?? '').replaceFirst('Exception: ', ''),
                 style: TextStyle(fontSize: 12, color: AppColors.textFaint),
                 textAlign: TextAlign.center,
               ),
@@ -312,91 +312,96 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
 class _RedHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Red band stays full-bleed; its contents line up with the 1100px body.
     return Container(
       width: double.infinity,
       color: AppColors.danger,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                tooltip: 'Back',
-              ),
-            ],
-          ),
-          Center(
-            child: Column(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1060),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.cancel,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'TRANSACTION BLOCKED',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Over-Dispensing Detected',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                  ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  tooltip: 'Back',
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.shield_outlined,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Controlled Substance — Schedule III (RA 9165)',
-                    style: const TextStyle(
+            Center(
+              child: Column(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.cancel,
                       color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      size: 30,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  const Text(
+                    'TRANSACTION BLOCKED',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Over-Dispensing Detected',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.shield_outlined,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Controlled Substance — Schedule III (RA 9165)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

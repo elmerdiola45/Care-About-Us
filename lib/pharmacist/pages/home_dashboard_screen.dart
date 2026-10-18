@@ -7,6 +7,7 @@ import '../../common/services/dashboard_repository.dart';
 import '../../common/session.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/utils/ph_time.dart';
+import '../../common/widgets/adaptive_nav_scaffold.dart';
 import '../../common/widgets/bottom_nav_bar.dart';
 import '../../common/widgets/responsive_center.dart';
 import '../data/saved_prescriptions_store.dart';
@@ -195,9 +196,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     // poll respects it.
     final recentFuture =
         _safeCall<void>(
-          () => SavedPrescriptionsStore.instance.fetchFromBackend(
-            force: !silent,
-          ),
+          () =>
+              SavedPrescriptionsStore.instance.fetchFromBackend(force: !silent),
         ).then((_) {
           if (!mounted) return;
           setState(() => _recentLoading = false);
@@ -230,10 +230,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   String? get _resolvedName {
     final fromProfile = _staffProfile?.name.trim() ?? '';
     if (fromProfile.isNotEmpty) return fromProfile;
-    final fromSession = (widget.staffName.isNotEmpty
-            ? widget.staffName
-            : (AppSession.instance.staffName ?? ''))
-        .trim();
+    final fromSession =
+        (widget.staffName.isNotEmpty
+                ? widget.staffName
+                : (AppSession.instance.staffName ?? ''))
+            .trim();
     return fromSession.isNotEmpty ? fromSession : null;
   }
 
@@ -270,8 +271,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.waving_hand_outlined,
-                  size: 16, color: AppColors.teal),
+              const Icon(
+                Icons.waving_hand_outlined,
+                size: 16,
+                color: AppColors.teal,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -346,35 +350,37 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: IndexedStack(
-          index: _navIndex,
-          children: [
-            _buildHomeTab(),
-            // Built (and its camera started) only while this tab is
-            // actually selected; switching away disposes it and stops
-            // the camera. Swapping in a lightweight placeholder for the
-            // other indices means the widget type changes and the old
-            // scanner state — and its MobileScannerController — is torn
-            // down, rather than sitting active off-screen forever.
-            _navIndex == 1
-                ? const FunctionalQrScannerScreen(showBackButton: false)
-                : const SizedBox.shrink(),
-            _visitedTabs.contains(2)
-                ? const SavedPrescriptionsListScreen()
-                : const SizedBox.shrink(),
-            _visitedTabs.contains(3)
-                ? const DispenseScreen()
-                : const SizedBox.shrink(),
-            _visitedTabs.contains(4)
-                ? const PatientAdherenceScreen()
-                : const SizedBox.shrink(),
-          ],
-        ),
+    return AdaptiveNavScaffold(
+      items: BottomNavBar.pharmacistItems,
+      currentIndex: _navIndex,
+      onTap: (i) => setState(() {
+        _navIndex = i;
+        _visitedTabs.add(i);
+      }),
+      body: IndexedStack(
+        index: _navIndex,
+        children: [
+          _buildHomeTab(),
+          // Built (and its camera started) only while this tab is
+          // actually selected; switching away disposes it and stops
+          // the camera. Swapping in a lightweight placeholder for the
+          // other indices means the widget type changes and the old
+          // scanner state — and its MobileScannerController — is torn
+          // down, rather than sitting active off-screen forever.
+          _navIndex == 1
+              ? const FunctionalQrScannerScreen(showBackButton: false)
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(2)
+              ? const SavedPrescriptionsListScreen()
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(3)
+              ? const DispenseScreen()
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(4)
+              ? const PatientAdherenceScreen()
+              : const SizedBox.shrink(),
+        ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -1073,17 +1079,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavBar(
-      currentIndex: _navIndex,
-      onTap: (i) => setState(() {
-        _navIndex = i;
-        _visitedTabs.add(i);
-      }),
-      items: BottomNavBar.pharmacistItems,
     );
   }
 }

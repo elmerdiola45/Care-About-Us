@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'common/session.dart';
 import 'common/app_route_observer.dart';
+import 'common/theme/app_theme.dart';
 import 'pharmacist/pages/home_dashboard_screen.dart';
 import 'admin/pages/admin_dashboard_page.dart';
 
@@ -35,9 +36,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Care About Us Pharmacy',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0F766E)),
-      ),
+      theme: buildAppTheme(),
       home: const AuthGate(),
       debugShowCheckedModeBanner: false,
       navigatorObservers: [appRouteObserver],

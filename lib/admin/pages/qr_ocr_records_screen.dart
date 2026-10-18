@@ -109,138 +109,144 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
         scrolledUnderElevation: 0,
         title: const Text('QR & OCR Records'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Home pharmacy scans only',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'Search patient, RX number, staff...',
-                hintStyle: const TextStyle(
-                  color: AppColors.textFaint,
-                  fontSize: 13,
-                ),
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: AppColors.textFaint,
-                  size: 20,
-                ),
-                filled: true,
-                fillColor: AppColors.surface,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Home pharmacy scans only',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _FilterPill(
-                          label: 'All',
-                          selected: _filter == _Filter.all,
-                          onTap: () {
-                            setState(() => _filter = _Filter.all);
-                            _load();
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterPill(
-                          label: 'QR Scans',
-                          selected: _filter == _Filter.qr,
-                          onTap: () {
-                            setState(() => _filter = _Filter.qr);
-                            _load();
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterPill(
-                          label: 'OCR Scans',
-                          selected: _filter == _Filter.ocr,
-                          onTap: () {
-                            setState(() => _filter = _Filter.ocr);
-                            _load();
-                          },
-                        ),
-                      ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Search patient, RX number, staff...',
+                    hintStyle: const TextStyle(
+                      color: AppColors.textFaint,
+                      fontSize: 13,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppColors.textFaint,
+                      size: 20,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                _DateDropdown(
-                  label: _dateFilterLabel(),
-                  onTap: _showDateFilter,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                if (_records != null && _filter == _Filter.all)
-                  Flexible(
-                    child: Wrap(
-                      spacing: 14,
-                      runSpacing: 4,
-                      children: [
-                        _LegendDot(
-                          color: AppColors.teal,
-                          label: '${_records!.qrCount} QR scans',
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _FilterPill(
+                              label: 'All',
+                              selected: _filter == _Filter.all,
+                              onTap: () {
+                                setState(() => _filter = _Filter.all);
+                                _load();
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            _FilterPill(
+                              label: 'QR Scans',
+                              selected: _filter == _Filter.qr,
+                              onTap: () {
+                                setState(() => _filter = _Filter.qr);
+                                _load();
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            _FilterPill(
+                              label: 'OCR Scans',
+                              selected: _filter == _Filter.ocr,
+                              onTap: () {
+                                setState(() => _filter = _Filter.ocr);
+                                _load();
+                              },
+                            ),
+                          ],
                         ),
-                        _LegendDot(
-                          color: AppColors.warning,
-                          label: '${_records!.ocrCount} OCR saves',
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                const SizedBox(width: 8),
-                if (_records != null)
-                  _FlaggedToggle(
-                    flaggedOnly: _flaggedOnly,
-                    onChanged: (v) {
-                      setState(() => _flaggedOnly = v);
-                      _load();
-                    },
-                  ),
-              ],
-            ),
+                    const SizedBox(width: 8),
+                    _DateDropdown(
+                      label: _dateFilterLabel(),
+                      onTap: _showDateFilter,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    if (_records != null && _filter == _Filter.all)
+                      Flexible(
+                        child: Wrap(
+                          spacing: 14,
+                          runSpacing: 4,
+                          children: [
+                            _LegendDot(
+                              color: AppColors.teal,
+                              label: '${_records!.qrCount} QR scans',
+                            ),
+                            _LegendDot(
+                              color: AppColors.warning,
+                              label: '${_records!.ocrCount} OCR saves',
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    if (_records != null)
+                      _FlaggedToggle(
+                        flaggedOnly: _flaggedOnly,
+                        onChanged: (v) {
+                          setState(() => _flaggedOnly = v);
+                          _load();
+                        },
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(child: _buildBody()),
+            ],
           ),
-          const SizedBox(height: 12),
-          Expanded(child: _buildBody()),
-        ],
+        ),
       ),
     );
   }
@@ -259,7 +265,11 @@ class _QrOcrRecordsScreenState extends State<QrOcrRecordsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: AppColors.danger,
+              ),
               const SizedBox(height: 16),
               const Text(
                 "Couldn't reach the backend",
@@ -549,8 +559,11 @@ class _RecordTile extends StatelessWidget {
           ? () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) =>
-                      OverDispensingScreen(prescriptionId: record.refNumber),
+                  // refNumber is the printed RX number; the prescription
+                  // endpoint looks records up by their internal ID.
+                  builder: (_) => OverDispensingScreen(
+                    prescriptionId: record.prescriptionId ?? record.refNumber,
+                  ),
                 ),
               );
             }
@@ -653,7 +666,9 @@ class _RecordTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: isBlocked ? FontWeight.w700 : FontWeight.w400,
-                      color: isBlocked ? AppColors.danger : AppColors.textPrimary,
+                      color: isBlocked
+                          ? AppColors.danger
+                          : AppColors.textPrimary,
                     ),
                   ),
                 ),

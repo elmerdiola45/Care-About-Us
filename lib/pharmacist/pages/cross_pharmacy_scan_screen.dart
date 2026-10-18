@@ -224,7 +224,9 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Column(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
@@ -284,6 +286,7 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
                       const SizedBox(height: 20),
                       _immediateRecordBanner(),
                     ],
+                    ),
                   ),
                 ),
               ),

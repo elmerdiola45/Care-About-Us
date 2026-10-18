@@ -1145,11 +1145,22 @@ class _DispenseScreenState extends State<DispenseScreen> {
         dispensingStatus: newStatus,
       );
 
-      await Navigator.of(context).push(
+      final done = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (_) => DispensingSummaryScreen(transaction: transaction),
         ),
       );
+
+      // Opened as its own page (deep link from Saved Rx / QR scanner):
+      // "Done" returns to wherever the user came from. As the Dispense tab
+      // there is nothing to pop, so just go back to the list.
+      if (done == true &&
+          mounted &&
+          widget.initialOcrCode != null &&
+          Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+        return;
+      }
 
       if (mounted) {
         setState(() {
@@ -1278,31 +1289,18 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 ),
               )
             : _selectedOcrCode != null && selectedEntry != null
-            ? SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  children: [
-                    _buildPatientCard(selectedEntry),
-                    if (_isBlockedByStock) ...[
-                      const SizedBox(height: 18),
-                      _buildMedicineNotAvailableCard(),
+            ? _buildDetailLayout(selectedEntry)
+            : Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 820),
+                  child: Column(
+                    children: [
+                      _buildSearchBar(),
+                      Expanded(child: _buildEntryList(entries)),
                     ],
-                    const SizedBox(height: 18),
-                    _sectionLabel('DISPENSING HISTORY'),
-                    const SizedBox(height: 8),
-                    _buildBackendHistoryCard(),
-                    const SizedBox(height: 18),
-                    _sectionLabel('DISPENSE NOW'),
-                    const SizedBox(height: 8),
-                    _buildMedicinesList(selectedEntry),
-                  ],
+                  ),
                 ),
-              )
-            : Column(
-                children: [
-                  _buildSearchBar(),
-                  Expanded(child: _buildEntryList(entries)),
-                ],
               ),
       ),
       bottomNavigationBar: _buildBottomBar(),
@@ -1310,6 +1308,62 @@ class _DispenseScreenState extends State<DispenseScreen> {
   }
 
   // ---------- SEARCH BAR ----------
+  /// Selected-prescription view. Phones and tablets get the original single
+  /// column (centered and capped so cards don't stretch across a browser
+  /// window); wide screens put the patient + history on the left and the
+  /// "Dispense now" list on the right so both are visible without scrolling.
+  Widget _buildDetailLayout(PrescriptionEntry entry) {
+    final summary = <Widget>[
+      _buildPatientCard(entry),
+      if (_isBlockedByStock) ...[
+        const SizedBox(height: 18),
+        _buildMedicineNotAvailableCard(),
+      ],
+      const SizedBox(height: 18),
+      _sectionLabel('DISPENSING HISTORY'),
+      const SizedBox(height: 8),
+      _buildBackendHistoryCard(),
+    ];
+    final dispense = <Widget>[
+      _sectionLabel('DISPENSE NOW'),
+      const SizedBox(height: 8),
+      _buildMedicinesList(entry),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final twoColumn = constraints.maxWidth >= 1000;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: twoColumn ? 1280 : 820),
+              child: twoColumn
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: Column(children: summary)),
+                          Expanded(child: Column(children: dispense)),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        ...summary,
+                        const SizedBox(height: 18),
+                        ...dispense,
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -1368,8 +1422,11 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
   // ---------- SECTION LABEL ----------
   Widget _sectionLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8, top: 4),
+    // Left-aligned with the 16px-margin cards below it (the parent Column
+    // centers its children by default, which floated these labels mid-row).
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.fromLTRB(20, 4, 16, 8),
       child: Text(
         text,
         style: const TextStyle(
@@ -1827,8 +1884,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
     try {
       matched = _selectedEntry?.prescription.medicines.firstWhere(
         (m) =>
-            m.name.trim().toLowerCase() ==
-            log.productName.trim().toLowerCase(),
+            m.name.trim().toLowerCase() == log.productName.trim().toLowerCase(),
       );
     } on StateError {
       matched = null;

@@ -192,118 +192,278 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            if (constraints.maxWidth >= 960) {
+              return _buildDesktopLayout();
+            }
             final isWide = constraints.maxWidth >= 600;
-            return SingleChildScrollView(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: isWide ? 480 : double.infinity,
+            final content = Column(
+              children: [
+                _buildHeader(isWide),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    isWide ? 32 : 24,
+                    28,
+                    isWide ? 32 : 24,
+                    20,
                   ),
-                  child: Column(
-                    children: [
-                      _buildHeader(isWide),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          isWide ? 32 : 24,
-                          28,
-                          isWide ? 32 : 24,
-                          20,
-                        ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildRoleToggle(),
-                              const SizedBox(height: 24),
-                              _buildFieldLabel('EMAIL ADDRESS'),
-                              const SizedBox(height: 8),
-                              _buildEmailField(),
-                              const SizedBox(height: 18),
-                              _buildFieldLabel('PASSWORD'),
-                              const SizedBox(height: 8),
-                              _buildPasswordField(),
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: _showForgotPasswordDialog,
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: const Size(0, 0),
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  child: const Text(
-                                    'Forgot Password?',
-                                    style: TextStyle(
-                                      color: AppColors.teal,
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 22),
-                              _buildSignInButton(isWide),
-                              if (_errorMessage != null) ...[
-                                const SizedBox(height: 14),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                    horizontal: 14,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.redAccent.withValues(
-                                      alpha: 0.08,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.redAccent.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.error_outline,
-                                        color: Colors.redAccent,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          _errorMessage!,
-                                          style: const TextStyle(
-                                            color: Colors.redAccent,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 20),
-                              const Divider(
-                                height: 1,
-                                color: Color(0xFFE5E7EB),
-                              ),
-                              const SizedBox(height: 16),
-                              // _buildFooter(),
-                            ],
+                  child: _buildForm(isWide),
+                ),
+              ],
+            );
+            if (!isWide) {
+              return SingleChildScrollView(child: content);
+            }
+            // Tablets: the same stacked layout, as a floating card on a
+            // tinted background instead of a phone-width strip on white.
+            return ColoredBox(
+              color: AppColors.bg,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 32,
+                            offset: const Offset(0, 12),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                      child: content,
+                    ),
                   ),
                 ),
               ),
             );
           },
         ),
+      ),
+    );
+  }
+
+  /// Desktop: brand panel on the left, sign-in form on the right.
+  Widget _buildDesktopLayout() {
+    const features = [
+      (Icons.qr_code_scanner_rounded, 'QR & OCR prescription scanning'),
+      (Icons.gpp_good_outlined, 'Over-dispensing alerts across branches'),
+      (Icons.groups_outlined, 'Patient adherence tracking'),
+    ];
+    return Row(
+      children: [
+        Expanded(
+          flex: 5,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.loginGradientDark, AppColors.teal],
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 56),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.shield_outlined,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Text(
+                      'Care About Us Pharmacy',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                const Text(
+                  'Safe, accurate dispensing\nfor every prescription.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 36,
+                    height: 1.2,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Scan prescriptions, track patient adherence and catch '
+                  'over-dispensing across branches in one place.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 15.5,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                for (final (icon, label) in features)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(icon, color: Colors.white, size: 19),
+                        ),
+                        const SizedBox(width: 14),
+                        Flexible(
+                          child: Text(
+                            label,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const Spacer(),
+                _buildCompliancePill(),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 4,
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Welcome back',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Sign in to your pharmacy account to continue.',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    _buildForm(true),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForm(bool isWide) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildRoleToggle(),
+          const SizedBox(height: 24),
+          _buildFieldLabel('EMAIL ADDRESS'),
+          const SizedBox(height: 8),
+          _buildEmailField(),
+          const SizedBox(height: 18),
+          _buildFieldLabel('PASSWORD'),
+          const SizedBox(height: 8),
+          _buildPasswordField(),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _showForgotPasswordDialog,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'Forgot Password?',
+                style: TextStyle(
+                  color: AppColors.teal,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 22),
+          _buildSignInButton(isWide),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.redAccent.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.redAccent,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          const SizedBox(height: 16),
+          // _buildFooter(),
+        ],
       ),
     );
   }
@@ -349,34 +509,39 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          _buildCompliancePill(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompliancePill() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
+            width: 7,
+            height: 7,
+            decoration: const BoxDecoration(
+              color: AppColors.accentGreen,
+              shape: BoxShape.circle,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: AppColors.accentGreen,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: const Text(
-                    'RA 10918 Pharmacy Act Compliant',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(width: 8),
+          const Flexible(
+            child: Text(
+              'RA 10918 Pharmacy Act Compliant',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

@@ -43,3 +43,23 @@ class ResponsiveCenter extends StatelessWidget {
     );
   }
 }
+
+/// Padding for a full-width scroll view (`ListView`, `SingleChildScrollView`)
+/// that keeps its content in a centered column at most [maxWidth] wide.
+///
+/// Prefer this over wrapping the scroll view in [ResponsiveCenter] when the
+/// scroll view is the page root: the scrollable stays full-width, so the
+/// mouse wheel, trackpad and scrollbar work anywhere across a wide window
+/// rather than only over the narrow center column.
+EdgeInsets centeredContentPadding(
+  double availableWidth, {
+  double maxWidth = 1100,
+  double minHorizontal = 20,
+  double top = 0,
+  double bottom = 0,
+}) {
+  final side = availableWidth > maxWidth + minHorizontal * 2
+      ? (availableWidth - maxWidth) / 2
+      : minHorizontal;
+  return EdgeInsets.fromLTRB(side, top, side, bottom);
+}
