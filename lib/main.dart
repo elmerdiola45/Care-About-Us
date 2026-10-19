@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'login_screen.dart';
+import 'common/services/app_config.dart';
 import 'common/session.dart';
 import 'common/app_route_observer.dart';
 import 'common/theme/app_theme.dart';
@@ -61,7 +63,34 @@ class _AuthGateState extends State<AuthGate> {
   @override
   void initState() {
     super.initState();
-    _restoreFuture = AppSession.instance.restore();
+    _restoreFuture = _restoreAndCheck();
+  }
+
+  /// Login tokens expire on the backend (config/sanctum.php), so a stored
+  /// one may already be dead. Ask /me once: a 401 means "expired", so drop
+  /// to the login screen instead of opening a dashboard where every call
+  /// fails. Any other outcome — including no connection or a cold Render
+  /// start timing out — keeps the session, so being offline never logs
+  /// anyone out.
+  Future<bool> _restoreAndCheck() async {
+    final restored = await AppSession.instance.restore();
+    if (!restored) return false;
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${AppConfig.baseUrl}/me'),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ${AppSession.instance.token}',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 401) return false;
+    } catch (_) {
+      // Unreachable server — keep the session (see above).
+    }
+    return true;
   }
 
   @override

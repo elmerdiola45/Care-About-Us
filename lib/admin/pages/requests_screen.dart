@@ -226,11 +226,14 @@ class RequestsScreenState extends State<RequestsScreen> {
     if (!mounted) return;
     setState(() {
       final idx = _requests.indexWhere((r) => r.requestId == updated.requestId);
-      if (idx != -1) {
-        _requests[idx] = updated;
-      } else {
-        _requests = [..._requests, updated];
-      }
+      // Builds a new list instead of writing into _requests in place, which
+      // throws if the list from the API/poll is unmodifiable.
+      _requests = idx != -1
+          ? [
+              for (var i = 0; i < _requests.length; i++)
+                i == idx ? updated : _requests[i],
+            ]
+          : [..._requests, updated];
     });
   }
 
@@ -593,6 +596,9 @@ class _RequestCardState extends State<_RequestCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request approved and applied.')),
       );
+      // The card keeps its State across the status change (same key),
+      // so clear the spinner or the next button (e.g. Delete) stays stuck.
+      setState(() => _acting = false);
       if (updated != null) {
         widget.onUpdated(updated);
       } else {
@@ -640,6 +646,9 @@ class _RequestCardState extends State<_RequestCard> {
           content: Text('Request flagged as an over-dispense risk.'),
         ),
       );
+      // The card keeps its State across the status change (same key),
+      // so clear the spinner or the next button (e.g. Delete) stays stuck.
+      setState(() => _acting = false);
       if (updated != null) {
         widget.onUpdated(updated);
       } else {
@@ -723,6 +732,9 @@ class _RequestCardState extends State<_RequestCard> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Request rejected.')));
+      // The card keeps its State across the status change (same key),
+      // so clear the spinner or the next button (e.g. Delete) stays stuck.
+      setState(() => _acting = false);
       if (updated != null) {
         widget.onUpdated(updated);
       } else {

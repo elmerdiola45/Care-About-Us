@@ -44,14 +44,27 @@ class _PatientAdherenceScreenState extends State<PatientAdherenceScreen> {
       final patients = await api.fetchPatients();
       debugPrint('Pharmacist adherence: fetched ${patients.length} patients');
 
-      // Was a sequential await-per-patient loop — one of the two N+1 chains
-      // that made this screen (and the dashboard, which pre-warms it) slow.
-      // Future.wait preserves input order, so `results` lines up with
-      // `patients` exactly as the old sequential loop did — no change to
-      // list ordering or per-patient behavior, just concurrency.
-      final results = await Future.wait(
-        patients.map((patient) => _loadOneRecord(api, patient)),
-      );
+      // Capped at 3 in flight (same as SavedPrescriptionsStore's adherence
+      // prefetch): firing one request per patient all at once queued them
+      // behind Render's 4 PHP-FPM workers, and the ones at the back hit the
+      // 30s client timeout — "Could not load adherence data for N out of M
+      // patients". Batches keep `results` in the same order as `patients`.
+      const maxConcurrent = 3;
+      final results =
+          <({_PharmacistAdherenceRecord record, bool adherenceOk, String? error})>[];
+      for (var i = 0; i < patients.length; i += maxConcurrent) {
+        final batch = patients.skip(i).take(maxConcurrent);
+        results.addAll(
+          await Future.wait(batch.map((p) => _loadOneRecord(api, p))),
+        );
+      }
+
+      // One sequential retry for patients whose adherence call failed
+      // (transient timeout / cold-start 5xx) before reporting them.
+      for (var i = 0; i < results.length; i++) {
+        if (results[i].adherenceOk) continue;
+        results[i] = await _loadOneRecord(api, patients[i]);
+      }
 
       final List<_PharmacistAdherenceRecord> records = [];
       int adherenceSuccessCount = 0;
