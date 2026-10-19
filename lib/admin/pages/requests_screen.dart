@@ -979,9 +979,7 @@ class _RequestCardState extends State<_RequestCard> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
-                        '${d.medicine}: this request wants ${d.requested}, another '
-                        'pending request wants ${d.otherPending} — combined that\'s '
-                        'more than the ${d.remaining} remaining on this prescription.',
+                        _exceedLine(d),
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.redDark,
@@ -991,8 +989,12 @@ class _RequestCardState extends State<_RequestCard> {
                     ),
                   const SizedBox(height: 4),
                   Text(
-                    'Approving will record only the remaining amount and flag this '
-                    'request as a critical over-dispense attempt for audit.',
+                    // Approve re-checks the remaining stock and is refused
+                    // (CrossPharmacyDispenseService::validateItems), so it
+                    // can't partially apply this request.
+                    'Approve will be blocked because there isn\'t enough left. '
+                    'Use Flag as risk if the medicine was already handed over, '
+                    'or Reject if it wasn\'t.',
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.redDark.withValues(alpha: 0.7),
@@ -1089,6 +1091,20 @@ class _RequestCardState extends State<_RequestCard> {
         ],
       ),
     );
+  }
+
+  // Only mentions other pending requests when they actually add to the
+  // shortfall — "another request wants 0" made a plain over-claim read as
+  // a conflict between two requests.
+  static String _exceedLine(ExceedDetailItem d) {
+    final left = d.remaining <= 0
+        ? 'nothing is left on this prescription'
+        : 'only ${d.remaining} ${d.remaining == 1 ? 'is' : 'are'} left';
+    if (d.otherPending <= 0) {
+      return '${d.medicine}: this request asks for ${d.requested}, but $left.';
+    }
+    return '${d.medicine}: this request asks for ${d.requested} and other '
+        'pending requests ask for ${d.otherPending}, but $left.';
   }
 
   static String _formatWhen(String? raw) {
