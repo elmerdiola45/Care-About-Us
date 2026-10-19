@@ -143,8 +143,8 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
             child: Text(
               'Alert Details',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -162,13 +162,13 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline, size: 44, color: AppColors.danger),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               _errorMessage!,
               style: const TextStyle(color: AppColors.danger),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: _loadAlert,
               icon: const Icon(Icons.refresh),
@@ -199,13 +199,6 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                     ? AppColors.danger.withValues(alpha: 0.25)
                     : AppColors.border,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +210,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                         alert.title,
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           color: titleColor,
                         ),
                       ),
@@ -236,8 +229,8 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                       child: Text(
                         isHigh ? 'High' : 'Normal',
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                           color: titleColor,
                         ),
                       ),
@@ -248,17 +241,18 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                 Text(
                   alert.description,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 14,
                     color: AppColors.textSecondary,
                     height: 1.5,
                   ),
                 ),
-                if (alert.note.isNotEmpty && alert.note != alert.description) ...[
+                if (alert.note.isNotEmpty &&
+                    alert.note != alert.description) ...[
                   const SizedBox(height: 8),
                   Text(
                     alert.note,
                     style: const TextStyle(
-                      fontSize: 13.5,
+                      fontSize: 14,
                       color: AppColors.textPrimary,
                       height: 1.5,
                     ),
@@ -296,7 +290,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
@@ -312,7 +306,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
 
   Widget _detailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -321,7 +315,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
             child: Text(
               label,
               style: const TextStyle(
-                fontSize: 12.5,
+                fontSize: 12,
                 color: AppColors.textFaint,
                 fontWeight: FontWeight.w600,
               ),
@@ -331,7 +325,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 color: AppColors.textPrimary,
               ),
             ),

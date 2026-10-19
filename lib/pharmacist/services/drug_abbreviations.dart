@@ -28,6 +28,10 @@ class DrugAbbreviations {
     // a substitution covered there). Not a different drug or brand —
     // still FeSO4, so it resolves to the same target as "feso4" above.
     'fesov': 'ferrous sulfate',
+    // Chemical formula / common Rx shorthand.
+    'nacl': 'sodium chloride',
+    'ppa': 'phenylpropanolamine',
+    'mvs': 'multivitamins',
   };
 
   /// Looks up [window] (a lowercased 1-3 word leading window of an OCR

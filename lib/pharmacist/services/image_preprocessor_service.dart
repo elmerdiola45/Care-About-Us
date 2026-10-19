@@ -96,6 +96,53 @@ class ImagePreprocessorService {
     }
   }
 
+  /// Image for the vision models (Gemini/Groq): the original COLOR photo,
+  /// upright, longest edge capped at [_visionMaxEdge], JPEG quality 85.
+  ///
+  /// Deliberately NOT binarized: the fixed-threshold black/white pass in
+  /// [preprocess] erases faint or thin pen strokes, and vision models read
+  /// handwriting better from the real photo than from a thresholded one.
+  /// Binarizing only ever helped classic OCR engines like OCR.space.
+  ///
+  /// [img.bakeOrientation] rotates the pixels per the photo's EXIF
+  /// orientation. Without it a portrait phone photo can reach the model
+  /// sideways, since the backend's GD re-encode drops the EXIF tag.
+  static Uint8List prepareForVision(Uint8List originalBytes) {
+    final decoded = img.decodeImage(originalBytes);
+    if (decoded == null) {
+      throw const FormatException('Could not decode image for preprocessing.');
+    }
+
+    final upright = img.bakeOrientation(decoded);
+    final longestEdge = upright.width > upright.height
+        ? upright.width
+        : upright.height;
+
+    final img.Image resized;
+    if (longestEdge > _visionMaxEdge) {
+      resized = upright.width >= upright.height
+          ? img.copyResize(upright, width: _visionMaxEdge)
+          : img.copyResize(upright, height: _visionMaxEdge);
+    } else {
+      resized = upright;
+    }
+
+    return Uint8List.fromList(img.encodeJpg(resized, quality: 85));
+  }
+
+  // Matches the backend's PrescriptionOcr::MAX_DIMENSION (2048), so the
+  // server doesn't downscale it a second time.
+  static const int _visionMaxEdge = 2000;
+
+  /// [prepareForVision] that never throws — raw bytes back on any failure.
+  static Uint8List prepareForVisionOrFallback(Uint8List originalBytes) {
+    try {
+      return prepareForVision(originalBytes);
+    } catch (_) {
+      return originalBytes;
+    }
+  }
+
   /// Pure function version of the old multi-pass adjustment step —
   /// exposure, contrast, highlight/shadow/white/black correction. Takes
   /// raw r/g/b in, returns adjusted r/g/b out, with NO buffer allocation.

@@ -7,6 +7,7 @@ import '../../common/services/dashboard_repository.dart';
 import '../../common/session.dart';
 import '../../common/theme/app_colors.dart';
 import '../../common/utils/ph_time.dart';
+import '../../common/widgets/adaptive_nav_scaffold.dart';
 import '../../common/widgets/bottom_nav_bar.dart';
 import '../../common/widgets/responsive_center.dart';
 import '../data/saved_prescriptions_store.dart';
@@ -195,9 +196,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     // poll respects it.
     final recentFuture =
         _safeCall<void>(
-          () => SavedPrescriptionsStore.instance.fetchFromBackend(
-            force: !silent,
-          ),
+          () =>
+              SavedPrescriptionsStore.instance.fetchFromBackend(force: !silent),
         ).then((_) {
           if (!mounted) return;
           setState(() => _recentLoading = false);
@@ -230,10 +230,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   String? get _resolvedName {
     final fromProfile = _staffProfile?.name.trim() ?? '';
     if (fromProfile.isNotEmpty) return fromProfile;
-    final fromSession = (widget.staffName.isNotEmpty
-            ? widget.staffName
-            : (AppSession.instance.staffName ?? ''))
-        .trim();
+    final fromSession =
+        (widget.staffName.isNotEmpty
+                ? widget.staffName
+                : (AppSession.instance.staffName ?? ''))
+            .trim();
     return fromSession.isNotEmpty ? fromSession : null;
   }
 
@@ -260,26 +261,29 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOut,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.only(bottom: 12),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: AppColors.tealPale,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
-              const Icon(Icons.waving_hand_outlined,
-                  size: 16, color: AppColors.teal),
+              const Icon(
+                Icons.waving_hand_outlined,
+                size: 16,
+                color: AppColors.teal,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Welcome, $name',
                   style: const TextStyle(
                     color: AppColors.teal,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -346,35 +350,37 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: IndexedStack(
-          index: _navIndex,
-          children: [
-            _buildHomeTab(),
-            // Built (and its camera started) only while this tab is
-            // actually selected; switching away disposes it and stops
-            // the camera. Swapping in a lightweight placeholder for the
-            // other indices means the widget type changes and the old
-            // scanner state — and its MobileScannerController — is torn
-            // down, rather than sitting active off-screen forever.
-            _navIndex == 1
-                ? const FunctionalQrScannerScreen(showBackButton: false)
-                : const SizedBox.shrink(),
-            _visitedTabs.contains(2)
-                ? const SavedPrescriptionsListScreen()
-                : const SizedBox.shrink(),
-            _visitedTabs.contains(3)
-                ? const DispenseScreen()
-                : const SizedBox.shrink(),
-            _visitedTabs.contains(4)
-                ? const PatientAdherenceScreen()
-                : const SizedBox.shrink(),
-          ],
-        ),
+    return AdaptiveNavScaffold(
+      items: BottomNavBar.pharmacistItems,
+      currentIndex: _navIndex,
+      onTap: (i) => setState(() {
+        _navIndex = i;
+        _visitedTabs.add(i);
+      }),
+      body: IndexedStack(
+        index: _navIndex,
+        children: [
+          _buildHomeTab(),
+          // Built (and its camera started) only while this tab is
+          // actually selected; switching away disposes it and stops
+          // the camera. Swapping in a lightweight placeholder for the
+          // other indices means the widget type changes and the old
+          // scanner state — and its MobileScannerController — is torn
+          // down, rather than sitting active off-screen forever.
+          _navIndex == 1
+              ? const FunctionalQrScannerScreen(showBackButton: false)
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(2)
+              ? const SavedPrescriptionsListScreen()
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(3)
+              ? const DispenseScreen()
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(4)
+              ? const PatientAdherenceScreen()
+              : const SizedBox.shrink(),
+        ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -400,17 +406,17 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 children: [
                   _buildWelcomeBanner(),
                   _buildHeader(),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   _buildPeriodToggle(),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   _buildStatRow(),
                   const SizedBox(height: 16),
-                  _buildSectionLabel('PRESCRIPTION SCANNING'),
+                  _buildSectionLabel('Prescription scanning'),
                   const SizedBox(height: 8),
                   _buildScanCardsRow(),
                   const SizedBox(height: 20),
                   _buildRecentPrescriptions(),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                 ],
               ),
       ),
@@ -423,10 +429,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         return Expanded(
           child: Container(
             height: 80,
-            margin: const EdgeInsets.only(right: 10),
+            margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         );
@@ -446,12 +452,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             borderRadius: BorderRadius.circular(8),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Container(
           height: 160,
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ],
@@ -466,7 +472,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline, size: 44, color: AppColors.danger),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               _errorMessage ?? 'Something went wrong',
               style: const TextStyle(color: AppColors.danger, fontSize: 14),
@@ -485,7 +491,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   vertical: 12,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -523,7 +529,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 20,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 4),
@@ -531,7 +537,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 _getTodaySubtitle(),
                 style: const TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 12.5,
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -566,7 +572,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   Text(
                     name ?? 'Signed in',
                     style: const TextStyle(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
                   ),
@@ -576,10 +582,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   ),
                   Text(
                     branch,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Colors.grey.shade500,
-                    ),
+                    style: TextStyle(fontSize: 12, color: AppColors.textFaint),
                   ),
                 ],
               ),
@@ -590,7 +593,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               child: Row(
                 children: [
                   Icon(Icons.lock_outline, size: 18, color: AppColors.teal),
-                  SizedBox(width: 10),
+                  SizedBox(width: 12),
                   Text('Change Password'),
                 ],
               ),
@@ -601,7 +604,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               child: Row(
                 children: [
                   Icon(Icons.logout, size: 18, color: Colors.red),
-                  SizedBox(width: 10),
+                  SizedBox(width: 12),
                   Text(
                     'Log Out',
                     style: TextStyle(
@@ -639,7 +642,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
@@ -648,14 +651,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               size: 18,
               color: AppColors.textFaint,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 "Couldn't load stats for this period — pull down to refresh.",
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
             ),
           ],
@@ -685,7 +685,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 label: rxLabel,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: _statCard(
                 icon: Icons.warning_amber_rounded,
@@ -724,15 +724,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             padding: const EdgeInsets.only(right: 8),
             child: InkWell(
               onTap: () => _onPeriodChanged(p['value'] as String),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
+                  horizontal: 16,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
                   color: selected ? AppColors.teal : AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: selected ? AppColors.teal : AppColors.border,
                     width: 0.5,
@@ -742,7 +742,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   p['label']!,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                     color: selected ? Colors.white : AppColors.textSecondary,
                   ),
                 ),
@@ -788,17 +788,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     VoidCallback? onTap,
   }) {
     final card = Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -817,7 +811,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             value,
             style: TextStyle(
               fontSize: 20,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: valueColor,
             ),
           ),
@@ -825,7 +819,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11.5,
+              fontSize: 12,
               color: AppColors.textSecondary,
             ),
           ),
@@ -836,7 +830,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     if (onTap == null) return card;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       child: card,
     );
   }
@@ -846,9 +840,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       text,
       style: const TextStyle(
         color: AppColors.textFaint,
-        fontSize: 11.5,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.6,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
       ),
     );
   }
@@ -911,23 +905,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: highlighted ? AppColors.teal : AppColors.border,
             width: highlighted ? 1.6 : 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -937,7 +924,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               height: 34,
               decoration: BoxDecoration(
                 color: AppColors.tealPale,
-                borderRadius: BorderRadius.circular(9),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, size: 18, color: AppColors.teal),
             ),
@@ -945,8 +932,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             Text(
               title,
               style: const TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -954,7 +941,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             Text(
               subtitle,
               style: const TextStyle(
-                fontSize: 11.5,
+                fontSize: 12,
                 color: AppColors.textSecondary,
               ),
             ),
@@ -979,7 +966,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       children: [
         Row(
           children: [
-            _buildSectionLabel('RECENT PRESCRIPTIONS'),
+            _buildSectionLabel('Recent prescriptions'),
             const Spacer(),
             GestureDetector(
               onTap: () => Navigator.of(context).push(
@@ -991,7 +978,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 'View All',
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.teal,
                 ),
               ),
@@ -1021,7 +1008,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
@@ -1037,7 +1024,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1046,8 +1033,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   p.patientName.isEmpty ? 'Unknown patient' : p.patientName,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -1055,7 +1042,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 Text(
                   '$medCount medicine(s) · $dateLabel',
                   style: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -1066,24 +1053,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           Text(
             statusLabel,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
               color: statusColor,
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavBar(
-      currentIndex: _navIndex,
-      onTap: (i) => setState(() {
-        _navIndex = i;
-        _visitedTabs.add(i);
-      }),
-      items: BottomNavBar.pharmacistItems,
     );
   }
 }

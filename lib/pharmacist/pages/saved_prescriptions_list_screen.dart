@@ -5,7 +5,6 @@
 // specific to that saved prescription, with a Print option.
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -55,6 +54,9 @@ class SavedPrescriptionsListScreen extends StatefulWidget {
 class _SavedPrescriptionsListScreenState
     extends State<SavedPrescriptionsListScreen> {
   String? _expandedOcrCode;
+  // Portal-QR generation state for the inline panel, keyed by ocrCode.
+  String? _qrGeneratingOcr;
+  final Map<String, String> _qrErrors = {};
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -190,7 +192,7 @@ class _SavedPrescriptionsListScreenState
               'Saved Prescriptions',
               style: TextStyle(
                 color: SavedListColors.textPrimary,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
             SizedBox(height: 2),
@@ -239,11 +241,11 @@ class _SavedPrescriptionsListScreenState
                             Text(
                               'Failed to load records',
                               style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             Text(
                               _errorMessage!,
                               style: const TextStyle(
@@ -307,7 +309,7 @@ class _SavedPrescriptionsListScreenState
           hintText: 'Search patient, code, or doctor',
           hintStyle: const TextStyle(
             color: SavedListColors.textSecondary,
-            fontSize: 13.5,
+            fontSize: 14,
           ),
           prefixIcon: const Icon(
             Icons.search,
@@ -412,8 +414,8 @@ class _SavedPrescriptionsListScreenState
                   ? SavedListColors.textPrimary
                   : Colors.white)
             : SavedListColors.textSecondary,
-        fontWeight: FontWeight.w700,
-        fontSize: 12.5,
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
       ),
       backgroundColor: SavedListColors.card,
       shape: RoundedRectangleBorder(
@@ -428,7 +430,7 @@ class _SavedPrescriptionsListScreenState
               : SavedListColors.border,
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     );
   }
 
@@ -495,10 +497,10 @@ class _SavedPrescriptionsListScreenState
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               subtitle,
               style: const TextStyle(color: SavedListColors.textSecondary),
@@ -519,7 +521,7 @@ class _SavedPrescriptionsListScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: SavedListColors.card,
             borderRadius: BorderRadius.circular(16),
@@ -533,7 +535,7 @@ class _SavedPrescriptionsListScreenState
                   GestureDetector(
                     onTap: () => _onViewDetails(entry),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       child: _buildImageThumbnail(
                         entry.imageBytes,
                         52,
@@ -549,8 +551,8 @@ class _SavedPrescriptionsListScreenState
                         Text(
                           '${p.patientName} (${p.patientGender}) · ${p.patientAge}',
                           style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -558,7 +560,7 @@ class _SavedPrescriptionsListScreenState
                           '${p.medicines.length} medicine(s) · ₱${p.totalPrice.toStringAsFixed(2)}',
                           style: const TextStyle(
                             color: SavedListColors.textSecondary,
-                            fontSize: 12.5,
+                            fontSize: 12,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -602,13 +604,13 @@ class _SavedPrescriptionsListScreenState
                                       ),
                                       if (tier ==
                                           AdherenceTier.fullyDispensed) ...[
-                                        const SizedBox(width: 6),
+                                        const SizedBox(width: 8),
                                         Text(
                                           '100%',
                                           style: TextStyle(
                                             color: const Color(0xFF6B7280),
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
                                           ),
                                         ),
                                       ],
@@ -647,7 +649,7 @@ class _SavedPrescriptionsListScreenState
               const SizedBox(height: 4),
               _infoLine(_formatDateTime(p.dateTime)),
               if (p.medicines.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 const Divider(height: 1),
                 const SizedBox(height: 8),
                 for (final m in p.medicines) ...[
@@ -678,7 +680,7 @@ class _SavedPrescriptionsListScreenState
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),
@@ -701,7 +703,7 @@ class _SavedPrescriptionsListScreenState
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         ),
@@ -713,7 +715,7 @@ class _SavedPrescriptionsListScreenState
           ),
         ),
         if (isExpanded) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           _buildInlineQrPanel(entry: entry),
           const SizedBox(height: 16),
         ],
@@ -757,7 +759,7 @@ class _SavedPrescriptionsListScreenState
         children: [
           Text(
             name,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 2),
           Wrap(
@@ -766,16 +768,16 @@ class _SavedPrescriptionsListScreenState
             runSpacing: 2,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: typeColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   typeLabel,
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                     color: typeColor,
                   ),
                 ),
@@ -783,7 +785,7 @@ class _SavedPrescriptionsListScreenState
               Text(
                 qty,
                 style: const TextStyle(
-                  fontSize: 12.5,
+                  fontSize: 12,
                   color: SavedListColors.textSecondary,
                 ),
               ),
@@ -791,7 +793,7 @@ class _SavedPrescriptionsListScreenState
                 Text(
                   '· $duration',
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     color: SavedListColors.textFaint,
                   ),
                 ),
@@ -802,43 +804,88 @@ class _SavedPrescriptionsListScreenState
     );
   }
 
-  String _inlineQrPayload(PrescriptionEntry entry) {
-    // Gate on backendVerifyUrl, not entry.qrToken (token_id) — the
-    // backend only ever verifies the real secret via its hash, so a URL
-    // built from token_id alone is now rejected outright rather than
-    // just being weaker. backendVerifyUrl is only ever populated with a
-    // real, working verify URL (see updateQrToken() / saved_prescriptions_
-    // store.dart); when it's absent, fall back to showing the local
-    // payload rather than encoding a QR that can never verify.
-    final verifyUrl = entry.backendVerifyUrl;
-    if (verifyUrl == null || verifyUrl.isEmpty) {
-      return jsonEncode({
-        'rxNumber': entry.ocrCode,
-        'patientName': entry.prescription.patientName,
-        'patientAge': entry.prescription.patientAge,
-        'patientSex': entry.prescription.patientGender,
-        'doctor': entry.prescription.doctorName,
-        'date': entry.prescription.dateTime.toIso8601String(),
-        'medicines': entry.prescription.medicines
-            .map(
-              (m) => {
-                'name': m.name,
-                'strength': m.dosage,
-                'prescribedQuantity': m.quantity,
-                'stock': m.quantity * 3,
-                'unitPrice': 12.50,
-              },
-            )
-            .toList(),
-      });
-    }
-
-    return verifyUrl;
+  Widget _buildQrUnavailablePanel(PrescriptionEntry entry) {
+    final generating = _qrGeneratingOcr == entry.ocrCode;
+    final error = _qrErrors[entry.ocrCode];
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: SavedListColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: SavedListColors.border),
+      ),
+      child: Column(
+        children: [
+          if (generating) ...[
+            const SizedBox(height: 8),
+            const CircularProgressIndicator(color: SavedListColors.teal),
+            const SizedBox(height: 16),
+            const Text(
+              'Creating portal QR link...',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+          ] else ...[
+            const Icon(
+              Icons.link_off_rounded,
+              size: 40,
+              color: Color(0xFFDC2626),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Portal QR for ${entry.ocrCode} is not available',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error ??
+                  'The QR link could not be created. Check that the '
+                      'backend is running, then try again.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => setState(() => _expandedOcrCode = null),
+                    child: const Text('Close'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _generateBackendQrToken(entry),
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Try again'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _buildInlineQrPanel({required PrescriptionEntry entry}) {
-    final qrData = _inlineQrPayload(entry);
     final p = entry.prescription;
+    final link = entry.backendVerifyUrl;
+    // Only a real verify URL opens the patient portal when scanned with a
+    // phone camera. Without one, show why and offer a retry instead of the
+    // old local-JSON QR, which looked valid (and printed) but could never
+    // open anything.
+    if (link == null || link.isEmpty) {
+      return _buildQrUnavailablePanel(entry);
+    }
+    final qrData = link;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -857,31 +904,39 @@ class _SavedPrescriptionsListScreenState
               backgroundColor: Colors.white,
             ),
           ),
+          const SizedBox(height: 8),
+          // The exact link the QR opens — lets staff confirm it points at
+          // a reachable address (not 127.0.0.1) or type it on a phone.
+          SelectableText(
+            qrData,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+          ),
           const SizedBox(height: 12),
           Text(
             'QR code for ${p.ocrCode}',
             style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 14.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
               color: Color(0xFF1F2937),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             'Patient: ${p.patientName}',
             style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
               color: Color(0xFF6B7280),
             ),
           ),
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
               color: SavedListColors.greenBg,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: SavedListColors.green.withValues(alpha: .35),
               ),
@@ -889,13 +944,13 @@ class _SavedPrescriptionsListScreenState
             child: const Text(
               'Ready to scan at any branch.',
               style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
                 color: Color(0xFF2E9C6B),
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -910,12 +965,12 @@ class _SavedPrescriptionsListScreenState
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: const Text(
                     'OK',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   ),
                 ),
               ),
@@ -928,14 +983,14 @@ class _SavedPrescriptionsListScreenState
                   icon: const Icon(Icons.print_rounded, size: 16),
                   label: const Text(
                     ' Print',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: SavedListColors.teal,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -953,18 +1008,14 @@ class _SavedPrescriptionsListScreenState
     final label = isPending ? 'Pending QR' : 'QR Generated';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w600,
-          color: fg,
-        ),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg),
       ),
     );
   }
@@ -1016,18 +1067,14 @@ class _SavedPrescriptionsListScreenState
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w600,
-          color: fg,
-        ),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg),
       ),
     );
   }
@@ -1095,7 +1142,7 @@ class _SavedPrescriptionsListScreenState
     // only ever stores the token's hash, never the raw secret — see the
     // comment in saved_prescriptions_store.dart's fetchFromBackend). The
     // old status-only check meant those entries never got a fresh token
-    // and _inlineQrPayload() fell back to a dead local-JSON QR forever.
+    // and the panel fell back to a dead local-JSON QR forever.
     // The backend has no problem minting a second token for an
     // already-generated prescription (QrTokenController@generate has no
     // such guard — it just supersedes the prescription's token pointer),
@@ -1125,6 +1172,12 @@ class _SavedPrescriptionsListScreenState
   }
 
   Future<void> _generateBackendQrToken(PrescriptionEntry entry) async {
+    if (mounted) {
+      setState(() {
+        _qrGeneratingOcr = entry.ocrCode;
+        _qrErrors.remove(entry.ocrCode);
+      });
+    }
     try {
       // QrTokenController@generate only flips the prescription's status to
       // 'qr_generated' when it receives a prescription_id. If this entry
@@ -1196,22 +1249,19 @@ class _SavedPrescriptionsListScreenState
         );
       }
     } on LaravelApiException catch (e) {
+      _qrErrors[entry.ocrCode] = 'Backend refused the QR request: ${e.message}';
+    } catch (e) {
+      // Previously swallowed silently, leaving a dead local-JSON QR on
+      // screen. Surface it so staff know the QR can't open the portal.
+      _qrErrors[entry.ocrCode] =
+          'Could not reach the backend: '
+          '${e.toString().replaceFirst('Exception: ', '')}';
+    } finally {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Backend QR failed: ${e.message}. Using local QR.'),
-          ),
-        );
+        setState(() {
+          if (_qrGeneratingOcr == entry.ocrCode) _qrGeneratingOcr = null;
+        });
       }
-      SavedPrescriptionsStore.instance.updateStatus(
-        entry.ocrCode,
-        QrStatus.qrGenerated,
-      );
-    } catch (_) {
-      SavedPrescriptionsStore.instance.updateStatus(
-        entry.ocrCode,
-        QrStatus.qrGenerated,
-      );
     }
   }
 

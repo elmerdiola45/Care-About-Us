@@ -27,7 +27,7 @@ class QrDetailScreen extends StatelessWidget {
         foregroundColor: const Color(0xFF1F2937),
         title: const Text(
           'QR Detail',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       body: ResponsiveCenter.dashboard(
@@ -60,20 +60,20 @@ class QrDetailScreen extends StatelessWidget {
           const Text(
             'Prescription Medicines',
             style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
               color: Color(0xFF6B7280),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           for (final m in prescription.medicines)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
                 '• ${m.name} ${m.dosage} × ${m.quantity}',
                 style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF1F2937),
                 ),
               ),
@@ -84,7 +84,7 @@ class QrDetailScreen extends StatelessWidget {
               const Text(
                 'Total',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w600,
                   fontSize: 14,
                   color: Color(0xFF1F2937),
                 ),
@@ -93,8 +93,8 @@ class QrDetailScreen extends StatelessWidget {
               Text(
                 '₱${prescription.totalPrice.toStringAsFixed(2)}',
                 style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
                   color: Color(0xFF0B7B77),
                 ),
               ),
@@ -124,12 +124,12 @@ class QrDetailScreen extends StatelessWidget {
               backgroundColor: Colors.white,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Text(
             'QR code for ${prescription.ocrCode}',
             style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 14.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
               color: Color(0xFF1F2937),
             ),
           ),
@@ -137,17 +137,17 @@ class QrDetailScreen extends StatelessWidget {
           Text(
             'Patient: ${prescription.patientName}',
             style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
               color: Color(0xFF6B7280),
             ),
           ),
           const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFDCF3E8),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: const Color(0xFF2E9C6B).withValues(alpha: .35),
               ),
@@ -155,8 +155,8 @@ class QrDetailScreen extends StatelessWidget {
             child: const Text(
               'Ready to scan at any branch.',
               style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
                 color: Color(0xFF2E9C6B),
               ),
             ),
@@ -279,9 +279,9 @@ class QrDetailScreen extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF0B7B77),
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
         icon: const Icon(Icons.print, size: 18),

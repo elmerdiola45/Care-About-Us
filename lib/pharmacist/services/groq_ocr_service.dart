@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 
 import '../../common/services/app_config.dart';
 import '../../common/session.dart';
+import '../models/prescription_scan_result.dart' show OcrLine;
 
 /// Talks to OUR OWN Laravel backend's `/api/ocr/groq-scan` endpoint —
 /// this client NEVER calls Groq directly and NEVER holds a Groq API key.
@@ -23,8 +24,8 @@ import '../../common/session.dart';
 /// resolution + output length. Three things keep that small, in order
 /// of how much they matter:
 ///   1. The backend downsizes/recompresses the image before it ever
-///      reaches Groq (see `GroqOcrController::prepareImage` — capped at
-///      768px / JPEG quality 60), regardless of what the client sends.
+///      reaches Groq (see `PrescriptionOcr::prepareImageBase64` — capped
+///      at 2048px), regardless of what the client sends.
 ///   2. The backend's prompt asks for ONE thing only — a faithful
 ///      transcription, not medicine names/dosages/structuring — and caps
 ///      `max_tokens` accordingly. All of the actual "is this a real drug
@@ -34,13 +35,16 @@ import '../../common/session.dart';
 ///      [PriceLookupService] — the same code OCR.space/Tesseract text
 ///      already goes through. Groq is only ever asked to read
 ///      handwriting, never to think about it.
-///   3. Passing the SAME already-preprocessed (small, binarized) bytes
-///      used elsewhere in the pipeline — see [ImagePreprocessorService]
-///      — instead of the raw camera photo, means a smaller multipart
-///      upload and less work for the backend's own resize step.
+///   3. The client sends a resized color copy
+///      ([ImagePreprocessorService.prepareForVision]) instead of the raw
+///      camera photo — a smaller upload, but NOT binarized: vision models
+///      read faint pen strokes far better in the original colors.
 class GroqOcrResult {
   final bool success;
   final String rawText;
+
+  /// Per-line transcription with section/legibility from the backend.
+  final List<OcrLine> lines;
   final String? error;
 
   /// True when the failure looks like Groq's rate limit / quota being
@@ -52,6 +56,7 @@ class GroqOcrResult {
   const GroqOcrResult({
     required this.success,
     this.rawText = '',
+    this.lines = const [],
     this.error,
     this.isQuotaExceeded = false,
   });
@@ -131,7 +136,11 @@ class GroqOcrService {
         );
       }
 
-      return GroqOcrResult(success: true, rawText: rawText);
+      return GroqOcrResult(
+        success: true,
+        rawText: rawText,
+        lines: OcrLine.listFrom(data['lines']),
+      );
     } catch (e) {
       return GroqOcrResult(
         success: false,

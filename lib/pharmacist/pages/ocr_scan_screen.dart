@@ -165,27 +165,35 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       // upload under the backends' size limits, which is the actual point
       // of client-side preprocessing. Mobile keeps the full pass (real
       // background isolate, no freeze).
-      final preprocessSw = Stopwatch()..start();
-      Uint8List preprocessedBytes;
-      try {
-        preprocessedBytes = await compute(
-          kIsWeb
-              ? ImagePreprocessorService.preprocessLiteOrFallback
-              : ImagePreprocessorService.preprocessOrFallback,
-          rawBytes,
-        ).timeout(
-          // Hard ceiling so a pathological decode can never hang the whole
-          // scan. On timeout we upload the raw bytes — the backend accepts
-          // up to 12 MB and resizes server-side, so a plain phone photo
-          // still scans, just with a larger upload.
-          const Duration(seconds: 12),
-        );
-      } catch (_) {
-        // TimeoutException, or a failure of compute() itself.
-        // preprocessLiteOrFallback / preprocessOrFallback already handle
-        // decode/encode errors internally.
-        preprocessedBytes = rawBytes;
+      //
+      // The vision models (Gemini/Groq) get a resized COLOR copy instead
+      // (prepareForVision): binarizing erases faint pen strokes they could
+      // otherwise read. The binarized/lite image above is now built only
+      // if the scan falls all the way back to OCR.space.
+      //
+      // Hard ceiling on each pass so a pathological decode can never hang
+      // the whole scan. On timeout we upload the raw bytes — the backend
+      // accepts up to 8 MB and resizes server-side, so a plain phone photo
+      // still scans, just with a larger upload.
+      Future<Uint8List> runPreprocess(
+        Uint8List Function(Uint8List) pass,
+      ) async {
+        try {
+          return await compute(
+            pass,
+            rawBytes,
+          ).timeout(const Duration(seconds: 12));
+        } catch (_) {
+          // TimeoutException, or a failure of compute() itself. The
+          // *OrFallback passes already handle decode/encode errors.
+          return rawBytes;
+        }
       }
+
+      final preprocessSw = Stopwatch()..start();
+      final visionBytes = await runPreprocess(
+        ImagePreprocessorService.prepareForVisionOrFallback,
+      );
       preprocessSw.stop();
       // Perf timing only — no image content, no OCR output.
       _debugLog('ocr_preprocess_timing_ms:${preprocessSw.elapsedMilliseconds}');
@@ -195,7 +203,14 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       // raw capture, not the preprocessed version. Only the OCR pipeline
       // sees the preprocessed bytes.
 
-      await _processOcr(preprocessedBytes);
+      await _processOcr(
+        visionBytes,
+        ocrSpaceImage: () => runPreprocess(
+          kIsWeb
+              ? ImagePreprocessorService.preprocessLiteOrFallback
+              : ImagePreprocessorService.preprocessOrFallback,
+        ),
+      );
     } on TimeoutException {
       // Shouldn't normally surface here (picker itself has no timeout),
       // but keep the failure path uniform if the platform channel ever
@@ -223,7 +238,10 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
     }
   }
 
-  Future<void> _processOcr(Uint8List bytes) async {
+  Future<void> _processOcr(
+    Uint8List bytes, {
+    Future<Uint8List> Function()? ocrSpaceImage,
+  }) async {
     PrescriptionScanResult result;
     try {
       // Safety net: every network call inside scanPrescription already
@@ -236,11 +254,14 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       result = await PrescriptionOcrService.scanPrescription(
         bytes,
         pharmacyId: widget.pharmacyId,
+        ocrSpaceImage: ocrSpaceImage,
         onStageChanged: (stage) {
           if (!mounted) return;
           setState(() => _processingStage = stage);
         },
-      ).timeout(const Duration(seconds: 35));
+        // Gemini alone may take up to 55s when it is slow or its backup
+        // models are used, followed by Groq/OCR.space if that still fails.
+      ).timeout(const Duration(seconds: 100));
     } on TimeoutException {
       if (!mounted) return;
       setState(() {
@@ -347,18 +368,18 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
             child: Column(
               children: [
                 _buildHeader(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
                 _buildCameraCard(),
                 const SizedBox(height: 70),
                 _buildBookIcon(),
                 const SizedBox(height: 26),
                 _buildTitle(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
                 _buildDescription(),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 20),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 34),
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
                       _errorMessage!,
                       textAlign: TextAlign.center,
@@ -366,7 +387,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
                         color: _isQuotaExceeded
                             ? const Color(0xFF9A6B0A)
                             : Colors.red,
-                        fontSize: 13,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -383,7 +404,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: OcrColors.border)),
@@ -398,7 +419,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
           const SizedBox(width: 4),
           const Text(
             'OCR Prescription Scan',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -407,12 +428,12 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
 
   Widget _buildCameraCard() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 22),
-      padding: const EdgeInsets.symmetric(vertical: 34),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 32),
       width: double.infinity,
       decoration: BoxDecoration(
         color: OcrColors.dark,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
@@ -433,10 +454,10 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
             )
           else
             ClipRRect(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(12),
               child: Image.memory(_imageBytes!, height: 220, fit: BoxFit.cover),
             ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           Text(
             _isProcessing ? _processingStage : 'Tap to capture prescription',
             style: const TextStyle(color: OcrColors.dimText, fontSize: 16),
@@ -452,7 +473,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
               elevation: 0,
               minimumSize: const Size(170, 52),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             child: const Text(
@@ -471,7 +492,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       height: 78,
       decoration: BoxDecoration(
         color: OcrColors.tealLight,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: const Icon(
         Icons.menu_book_outlined,
@@ -487,14 +508,14 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       child: Text(
         'Capture a Handwritten Prescription',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
       ),
     );
   }
 
   Widget _buildDescription() {
     return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 34),
+      padding: EdgeInsets.symmetric(horizontal: 32),
       child: Text(
         'Photograph the prescription clearly.\n'
         'RxTrack extracts medicines using OCR.space and generates\n'

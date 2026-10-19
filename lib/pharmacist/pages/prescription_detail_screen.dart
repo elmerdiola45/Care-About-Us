@@ -300,7 +300,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
         foregroundColor: const Color(0xFF1F2937),
         title: const Text(
           'Prescription Details',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
         actions: [
           if (_currentEntry.prescription.dispensingStatus !=
@@ -394,7 +394,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
           GestureDetector(
             onTap: () => _openImageViewer(context),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               child: _buildImageThumbnail(
                 _currentEntry.imageBytes,
                 64,
@@ -402,7 +402,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,19 +410,19 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                 Text(
                   _currentEntry.prescription.patientName,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${_currentEntry.prescription.patientGender} · ${_currentEntry.prescription.patientAge} years old',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
+                    horizontal: 12,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
@@ -434,15 +434,15 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                               DispensingStatus.partiallyDispensed
                         ? const Color(0xFFFFF7E6)
                         : const Color(0xFFFDF0D8),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     _dispensingStatusLabel(
                       _currentEntry.prescription.dispensingStatus,
                     ),
                     style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                       color: _dispensingStatusColor(
                         _currentEntry.prescription.dispensingStatus,
                       ),
@@ -476,8 +476,8 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               Text(
                 'Patient Information',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
                   color: Color(0xFF6B7280),
                 ),
               ),
@@ -529,8 +529,8 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               Text(
                 'Prescriber Information',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
                   color: Color(0xFF6B7280),
                 ),
               ),
@@ -582,8 +582,8 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               Text(
                 'Medicines',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
                   color: Color(0xFF6B7280),
                 ),
               ),
@@ -611,7 +611,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                           '${m.brand.isNotEmpty ? ' (${m.brand})' : ''}'
                           '${m.dosage.isNotEmpty ? ' ${m.dosage}' : ''}',
                           style: const TextStyle(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
                         ),
@@ -627,17 +627,17 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
-                            vertical: 3,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: typeColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             typeLabel,
                             style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
                               color: typeColor,
                             ),
                           ),
@@ -648,8 +648,8 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                             child: Text(
                               'Fully dispensed',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.green.shade700,
                               ),
                             ),
@@ -660,8 +660,8 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                             child: Text(
                               'Remaining: $remaining',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.orange.shade700,
                               ),
                             ),
@@ -669,14 +669,14 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
                         '/${m.quantity}',
                         style: const TextStyle(
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           fontSize: 14,
                           color: Color(0xFF6B7280),
                         ),
@@ -691,7 +691,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
                                 horizontal: 8,
-                                vertical: 6,
+                                vertical: 8,
                               ),
                               border: OutlineInputBorder(),
                             ),
@@ -718,18 +718,18 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                       else
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
+                            horizontal: 12,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'Done',
                             style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                               color: Colors.green.shade700,
                             ),
                           ),
@@ -771,7 +771,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
             color: allFullyDispensed ? Colors.green : const Color(0xFF0B7B77),
             size: 20,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               allFullyDispensed
@@ -780,7 +780,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
                   ? 'Update dispensed quantities to reflect partial dispensing'
                   : 'Enter dispensed quantities for each medicine',
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF1F2937),
               ),
@@ -806,7 +806,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               label: const Text(
                 'Save Dispensing',
                 style: TextStyle(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF0B7B77),
                 ),
               ),
@@ -828,7 +828,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
           const Text(
             'Total',
             style: TextStyle(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               fontSize: 16,
               color: Colors.white,
             ),
@@ -837,8 +837,8 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
           Text(
             '₱${_currentEntry.prescription.totalPrice.toStringAsFixed(2)}',
             style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              fontSize: 20,
               color: Colors.white,
             ),
           ),
@@ -867,24 +867,24 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               Text(
                 'QR Code',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
                   color: Color(0xFF6B7280),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           if (_currentEntry.qrToken != null)
             Text(
               'Token: ${_currentEntry.qrToken}',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: Colors.grey.shade600,
                 fontFamily: 'monospace',
               ),
             ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Center(
             child: Container(
               padding: const EdgeInsets.all(12),
@@ -896,7 +896,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               child: Text(
                 qrJson,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontFamily: 'monospace',
                   color: Colors.grey.shade700,
                 ),
@@ -904,10 +904,10 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             _currentEntry.backendVerifyUrl ?? 'QR token ready for scanning',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             textAlign: TextAlign.center,
           ),
         ],
@@ -937,14 +937,14 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               Text(
                 'Raw OCR Text',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
                   color: Color(0xFF6B7280),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             _currentEntry.rawExtractedText,
             style: TextStyle(
@@ -964,7 +964,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
     TextInputType? keyboardType,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType ?? TextInputType.text,
@@ -972,25 +972,25 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
           labelText: label,
           labelStyle: const TextStyle(
             color: Color(0xFF6B7280),
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
-            vertical: 10,
+            vertical: 12,
           ),
           isDense: true,
         ),
         style: const TextStyle(
-          fontSize: 13.5,
+          fontSize: 14,
           color: Color(0xFF1F2937),
           fontWeight: FontWeight.w600,
         ),
@@ -1010,7 +1010,7 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
               label,
               style: TextStyle(
                 color: Colors.grey.shade600,
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1019,8 +1019,8 @@ class _PrescriptionDetailScreenState extends State<PrescriptionDetailScreen>
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
                 color: Color(0xFF1F2937),
               ),
             ),

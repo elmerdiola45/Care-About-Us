@@ -80,12 +80,23 @@ class PrescriptionParserService {
   /// the dosage gets silently dropped rather than corrected.
   static const String _digitLikeChars = r'0-9oOlIiZzSsBb';
 
+  /// A numeral that may contain digit-lookalike letters ("5OO"), but must
+  /// contain at least one REAL digit and must not start in the middle of
+  /// a word. Without both rules, ordinary words were read as dosages:
+  /// "Tagu[ig]" -> "1g", "[big]" -> "81g" — which is how an address line
+  /// ended up saved as the medicine "Block Lot Upper Bicutan Tagu 1g".
+  static const String _numeral =
+      '(?<![A-Za-z])[$_digitLikeChars]*\\d[$_digitLikeChars]*';
+
   // Same class of bug as _quantityPattern above: the numeral portion
   // needs its own capturing group so group(1) is the number and group(2)
   // is the unit — previously the numeral wasn't captured at all, so
   // group(1) grabbed the unit word and group(2) didn't exist.
+  //
+  // The second alternative still accepts a strength glued directly to
+  // the name ("Amoxicillin500mg") as long as it starts with a real digit.
   static final RegExp _dosagePattern = RegExp(
-    '([$_digitLikeChars]+(?:\\.[$_digitLikeChars]+)?)'
+    '((?:$_numeral|\\d[$_digitLikeChars]*)(?:\\.[$_digitLikeChars]+)?)'
     '\\s?(mg|mcg|g|ml|iu|%)\\b',
     caseSensitive: false,
   );
@@ -103,10 +114,13 @@ class PrescriptionParserService {
     caseSensitive: false,
   );
 */
+  // Numerals follow the same rules as [_dosagePattern] ([_numeral]) so
+  // "is tab" no longer reads as "15 tab", and the unit word must end at
+  // a word boundary so "1 tablespoon" isn't read as "1 tab".
   static final RegExp _quantityPattern = RegExp(
-    '#\\s?([$_digitLikeChars]+)|(?<![A-Za-z])([$_digitLikeChars]+)\\s?'
+    '#\\s?([$_digitLikeChars]*\\d[$_digitLikeChars]*)|($_numeral)\\s?'
     '(?:tabs?|tablets?|caps?|capsules?|pcs?|pieces?|'
-    'bottles?|amps?|vials?|sachets?)',
+    'bottles?|amps?|vials?|sachets?)\\b',
     caseSensitive: false,
   );
   // The physical dosage FORM word (as opposed to the strength captured
@@ -188,6 +202,7 @@ class PrescriptionParserService {
     String engineUsed = 'ocrspace+parser',
     List<String>? drugDictionary,
     Map<String, String>? corrections,
+    List<OcrLine> ocrLines = const [],
   }) {
     if (rawText.trim().isEmpty) {
       return PrescriptionScanResult(
@@ -204,6 +219,7 @@ class PrescriptionParserService {
         .toList();
 
     final patientName = _extractLabeled(lines, [
+      "patient's name",
       'patient name',
       'patient',
       'name of patient',
@@ -216,6 +232,9 @@ class PrescriptionParserService {
       lines,
       drugDictionary ?? _knownDrugs,
       corrections ?? const {},
+      _legibilityPerLine(lines, ocrLines),
+      _alignedOcrLines(lines, ocrLines)?.map((l) => l.section).toList() ??
+          const [],
     );
     // ignore: avoid_print
     print(
@@ -232,6 +251,7 @@ class PrescriptionParserService {
       doctorName: doctorName,
       medicines: medicines,
       rawText: rawText,
+      ocrLines: ocrLines,
       engineUsed: engineUsed,
     );
   }
@@ -374,16 +394,34 @@ class PrescriptionParserService {
     return null;
   }
 
+  /// A doctor's name followed by the MD title, allowing lowercase name
+  /// particles ("de la", "dela", "delos") and other titles before MD
+  /// ("RN, MD"). Group 1 is the name. Also used by the review screen.
+  static const String _doctorMdPattern =
+      r'^([A-Z][a-zA-Z.\-]*(?:\s+(?:[A-Z][a-zA-Z.\-]*|de|del|dela|della|la|las|los|delos|san|y)){1,6})'
+      r',?\s*(?:R\.?N\.?,?\s*)?M\.?\s?D\.?$';
+
+  static String? doctorFromMdLine(String line) =>
+      RegExp(_doctorMdPattern).firstMatch(line.trim())?.group(1)?.trim();
+
   static String? _extractDoctorName(List<String> lines) {
     final labeled = _extractLabeled(lines, ['doctor', 'physician']);
     if (labeled != null) return labeled;
 
+    // "Dr. Maria Santos", "Dra. Liza Mendoza"
     final drPattern = RegExp(
-      r'\bDr\.?\s+[A-Z][a-zA-Z.\-]*(?:\s+[A-Z][a-zA-Z.\-]*){0,3}',
+      r'\bDra?\.?\s+[A-Z][a-zA-Z.\-]*(?:\s+[A-Z][a-zA-Z.\-]*){0,3}',
     );
     for (final line in lines) {
       final match = drPattern.firstMatch(line);
       if (match != null) return match.group(0)!.trim();
+    }
+    // "Jose P. Rizal, M.D.", "Maria Clara de la Cruz, MD",
+    // "Juan Paolo J. Santos, RN, MD" — a name followed by the MD title.
+    final mdPattern = RegExp(_doctorMdPattern);
+    for (final line in lines) {
+      final match = mdPattern.firstMatch(line.trim());
+      if (match != null) return match.group(1)!.trim();
     }
     return null;
   }
@@ -510,20 +548,120 @@ class PrescriptionParserService {
     return '$line $next';
   }
 
+  /// The vision model's legibility rating for each entry of [lines], or
+  /// an empty list when [ocrLines] doesn't line up one-to-one with them
+  /// (no per-line data, or text that came from somewhere else).
+  static List<String> _legibilityPerLine(
+    List<String> lines,
+    List<OcrLine> ocrLines,
+  ) =>
+      _alignedOcrLines(lines, ocrLines)?.map((l) => l.legibility).toList() ??
+      const [];
+
+  /// [ocrLines] when they line up one-to-one with [lines], else null.
+  static List<OcrLine>? _alignedOcrLines(
+    List<String> lines,
+    List<OcrLine> ocrLines,
+  ) {
+    if (ocrLines.length != lines.length) return null;
+    for (var i = 0; i < lines.length; i++) {
+      if (ocrLines[i].text.trim() != lines[i]) return null;
+    }
+    return ocrLines;
+  }
+
+  static const List<String> _legibilityOrder = ['clear', 'partial', 'unclear'];
+
+  /// Least legible rating among [indices], or '' when unknown.
+  static String _worstLegibility(List<String> legibility, List<int> indices) {
+    var worst = '';
+    for (final i in indices) {
+      if (i < 0 || i >= legibility.length) return '';
+      final l = legibility[i];
+      if (_legibilityOrder.indexOf(l) > _legibilityOrder.indexOf(worst)) {
+        worst = l;
+      }
+    }
+    return worst;
+  }
+
   static List<PrescriptionMedicine> _extractMedicines(
     List<String> lines,
     List<String> drugDictionary,
     Map<String, String> corrections,
+    List<String> legibility,
+    List<String> sections,
   ) {
     final medicines = <PrescriptionMedicine>[];
+    // Index of the last line that belonged to the most recent medicine,
+    // and "(Brand)" lines already attached to a medicine above them.
+    var lastMedicineLine = -2;
+    final consumedParenLines = <int>{};
 
     for (var i = 0; i < lines.length && i < _maxLinesConsidered; i++) {
       if (medicines.length >= _maxMedicinesFound) break;
 
       final rawLine = lines[i];
+
+      // The vision model tags each line with what it is. Patient and
+      // doctor lines are never medicines; a line it tagged "other" (a
+      // side note such as "for Allergy", read as "Co-Allergy" and then
+      // fuzzy-matched to the brand "Co-Aleva") is only considered when it
+      // carries a strength or "#" quantity, in case the tag was wrong.
+      final section = i < sections.length ? sections[i] : '';
+      if (section == 'patient' || section == 'doctor') continue;
+      if (section == 'other' &&
+          !_dosagePattern.hasMatch(rawLine) &&
+          !rawLine.contains('#')) {
+        continue;
+      }
+      // A line the model tagged as an instruction is Sig text for the drug
+      // above — even when the doctor squeezed the quantity onto it
+      // ("1x1 day #30" had become a phantom "X Day #30" medicine). Its "#"
+      // count fills in that drug's quantity if it had none. Only skipped
+      // when the line plainly names a catalog drug with a strength.
+      if (section == 'instruction' && medicines.isNotEmpty) {
+        final namesDrug =
+            _dosagePattern.hasMatch(rawLine) &&
+            (_fuzzyMatchDrug(rawLine, drugDictionary).score >= 0.85);
+        if (!namesDrug) {
+          _attachSigToLast(medicines, rawLine);
+          final q = rawLine.contains('#') ? _findQuantity(rawLine) : '';
+          if (q.isNotEmpty && medicines.last.quantity.isEmpty) {
+            medicines.add(medicines.removeLast().copyWith(quantity: q));
+          }
+          lastMedicineLine = i;
+          continue;
+        }
+      }
+
+      // The brand and/or quantity of a drug written on the line(s) right
+      // after it: "(Augmentin 625)", "#14", "tabs # 10", "Rx # 100",
+      // "( Lipanthyl ) caps # 10", "#14 FS 6/17". These used to become
+      // phantom medicines ("Tabs #10", "FS #14") while the real drug
+      // above lost its quantity.
+      if (medicines.isNotEmpty && i == lastMedicineLine + 1) {
+        final continuation = _continuationOf(rawLine);
+        if (continuation != null) {
+          _updateLast(
+            medicines,
+            brand: continuation.brand,
+            quantity: continuation.quantity,
+            sourceLine: rawLine,
+            sourceLegibility: i < legibility.length ? legibility[i] : '',
+          );
+          if (_isStandaloneParenLine(rawLine)) consumedParenLines.add(i);
+          lastMedicineLine = i;
+          continue;
+        }
+      }
+
       // A standalone "(Brand)" line is consumed as part of the NEXT
       // medicine line's brand, never as its own medicine — skip it here.
       if (_isStandaloneParenLine(rawLine)) continue;
+
+      // Sig text with nothing above it to belong to is never a medicine.
+      if (medicines.isEmpty && _looksLikeSigLine(rawLine)) continue;
 
       // A "Sig:" line (the dosing instruction — "1 cap 3x a day for 7
       // days") sits on its OWN line right below the drug it belongs
@@ -563,37 +701,38 @@ class PrescriptionParserService {
           // line we're about to swallow actually belongs to the
           // NEXT drug, not this Sig.
           if (_maybeMergeNameOnlyLine(next, lines, j) != null) break;
+          // Wrapped Sig text never starts a new numbered item or carries
+          // a "#" quantity; a new drug line often does.
+          if (RegExp(r'^(?:\(?\d{1,2}[.)]?\s+[A-Za-z]|[①-⑳])').hasMatch(next) ||
+              next.contains('#')) {
+            break;
+          }
+          // The vision model tagged it as a medicine line, or it carries
+          // its own quantity ("Diosmin + H - 30"): a new drug, not more
+          // dosing text.
+          if ((j < sections.length && sections[j] == 'medicine') ||
+              _findQuantity(next).isNotEmpty) {
+            break;
+          }
           final probeName = next
               .replaceAll(_quantityPattern, ' ')
               .replaceAll(_dosagePattern, ' ')
               .trim();
+          // Any accepted drug-name match ends the Sig — this was a fixed
+          // 0.75 bar, so a misspelled next drug ("Guiafenasin", 0.73)
+          // was swallowed as more dosing text and vanished.
           if (_hasEnoughLettersToBeAName(probeName) &&
-              _fuzzyMatchDrug(probeName, drugDictionary).score >= 0.75) {
+              !_looksLikeSigContinuation(probeName) &&
+              _fuzzyMatchDrug(probeName, drugDictionary).name != null) {
             break;
           }
           segments.add(next);
           lastConsumed = j;
         }
 
-        final sigText = segments.join(' ');
-        final sigFrequency = _findFrequency(sigText);
-        final sigDuration = _findDuration(sigText);
-        if (sigFrequency.isNotEmpty || sigDuration.isNotEmpty) {
-          final prev = medicines.removeLast();
-          medicines.add(
-            PrescriptionMedicine(
-              name: prev.name,
-              dosage: prev.dosage,
-              quantity: prev.quantity,
-              frequency: sigFrequency.isNotEmpty
-                  ? sigFrequency
-                  : prev.frequency,
-              brand: prev.brand,
-              duration: sigDuration.isNotEmpty ? sigDuration : prev.duration,
-              matchConfidence: prev.matchConfidence,
-            ),
-          );
-        }
+        _attachSigToLast(medicines, segments.join(' '));
+        // A quantity line can follow the Sig too ("Sig ... / # 59").
+        if (lastMedicineLine == i - 1) lastMedicineLine = lastConsumed;
         i = lastConsumed;
         continue;
       }
@@ -604,6 +743,45 @@ class PrescriptionParserService {
           _looksLikeAddressLine(line)) {
         continue;
       }
+
+      // Dosing instructions written WITHOUT a "Sig:" label, directly
+      // under their drug — "1 tab 2x a day x 7 days", "Take 1 cap every
+      // 8 hours". These carry a quantity-looking "1 tab", so they used to
+      // pass the "is this a medicine line" check below and show up as
+      // phantom medicines named "Tab X A Day X Days". They are Sig text
+      // for the previous medicine, never a medicine of their own — unless
+      // the line actually names a drug, which the fuzzy check rules out.
+      if (!_dosagePattern.hasMatch(line) &&
+          _looksLikeUnlabeledInstruction(line) &&
+          _fuzzyMatchDrug(line, drugDictionary).name == null) {
+        _attachSigToLast(medicines, line);
+        continue;
+      }
+
+      // Item numbering: "1 Telmisartan", "(2) Amoxicillin", "③ Cetirizine".
+      // Removed only after the instruction check above, so "1 tab daily"
+      // still reads as dosing text rather than a drug called "tab daily".
+      //
+      // Also removed: when-to-take words written in Tagalog before the
+      // drug ("gabi (1) Atorvastatin", "umaga tanghali gabi (1) x
+      // Betahistine") and check marks. The name match only looks at the
+      // first words of the line, so these turned real drugs into phantom
+      // items like "Umaga X Clopidogrel". The timing itself is kept as
+      // the frequency (see _findFrequency).
+      final timingPrefix = _tagalogTimingPrefix.firstMatch(line);
+      final tagalogTiming = timingPrefix?.group(0) ?? '';
+      if (timingPrefix != null) line = line.substring(timingPrefix.end);
+      line = line
+          .replaceFirst(
+            RegExp(
+              r'^(?:(?:\(\d{1,2}\)|\d{1,2}(?=\s+[A-Za-z]{3})|[①-⑳])\s*)?'
+              r'(?:[x✓✔]\s+)?',
+              caseSensitive: false,
+            ),
+            '',
+          )
+          .trim();
+      if (line.isEmpty) continue;
 
       // The Rx (℞) symbol commonly sits on the SAME line as the first
       // drug rather than on its own line ("Rx Feso4 tab #30") — unlike
@@ -646,10 +824,15 @@ class PrescriptionParserService {
       // line has a dosage" check is unsafe (it would swallow an
       // unrelated, already-complete drug line on the next iteration
       // into a preceding diagnosis/complaint line).
+      // Every OCR line this medicine is built from, for "Read as" and
+      // the legibility rating on the review screen.
+      final sourceIndices = [nameLineIndex];
+
       final merged = _maybeMergeNameOnlyLine(line, lines, i);
       if (merged != null) {
         line = merged;
         i++;
+        sourceIndices.add(i);
       }
 
       // Brand written inline with the generic name, e.g.
@@ -664,17 +847,19 @@ class PrescriptionParserService {
             .trim();
         line = line.replaceAll(RegExp(r'\s+'), ' ');
       } else if (nameLineIndex > 0 &&
+          !consumedParenLines.contains(nameLineIndex - 1) &&
           _isStandaloneParenLine(lines[nameLineIndex - 1])) {
         // Brand written on its own line just above this one.
         final m = RegExp(
           r'^\(([A-Za-z][A-Za-z0-9\-\s]{1,30})\)$',
         ).firstMatch(lines[nameLineIndex - 1].trim());
         brand = m?.group(1)?.trim() ?? '';
+        sourceIndices.insert(0, nameLineIndex - 1);
       }
 
       final dosageMatch = _dosagePattern.firstMatch(line);
       final quantityMatch = _quantityPattern.firstMatch(line);
-      final frequency = _findFrequency(line);
+      final frequency = _findFrequency('$tagalogTiming $line');
       final dosageFormMatch = _dosageFormPattern.firstMatch(line);
       final dosageForm = dosageFormMatch != null
           ? _normalizeDosageForm(dosageFormMatch.group(1)!)
@@ -691,6 +876,14 @@ class PrescriptionParserService {
       // CorrectionMemoryService for what populates this map.
       final correctionHit = corrections[nameCandidate.trim().toLowerCase()];
 
+      // "Sitagliptin/Metformin", "FeSO4 + Folic acid": a combination
+      // product. Matched only against combination entries in the catalog
+      // — matched word by word it resolved to just "Sitagliptin", a
+      // different (single-drug) product.
+      final combo = correctionHit == null
+          ? _combination(nameCandidate, drugDictionary)
+          : null;
+
       // Skip the expensive fuzzy-match pass entirely for lines that are
       // obviously not a drug name (too few letters — pure symbol/digit
       // noise) and don't already have a correction-memory hit. This is
@@ -698,6 +891,8 @@ class PrescriptionParserService {
       ({String? name, double score}) match;
       if (correctionHit != null) {
         match = (name: correctionHit, score: 1.0);
+      } else if (combo != null) {
+        match = (name: combo.catalogName, score: combo.score);
       } else if (_hasEnoughLettersToBeAName(nameCandidate)) {
         match = _fuzzyMatchDrug(nameCandidate, drugDictionary);
       } else {
@@ -729,7 +924,11 @@ class PrescriptionParserService {
       // PriceLookupService/the review screen already know how to
       // surface as a "not in this pharmacy's medicine list" warning —
       // visible and correctable instead of missing.
-      if (dosageMatch == null && match.name == null && quantityMatch == null) {
+      if (dosageMatch == null &&
+          match.name == null &&
+          quantityMatch == null &&
+          _findQuantity(line).isEmpty &&
+          combo == null) {
         continue;
       }
 
@@ -816,7 +1015,7 @@ class PrescriptionParserService {
         // resolved to the same type, or one/both didn't match at all)
         // — safe default is main line = generic, secondary = brand,
         // same as the established convention.
-        name = match.name ?? _cleanName(nameCandidate);
+        name = match.name ?? combo?.label ?? _cleanName(nameCandidate);
         if (brandMatch.name != null) {
           brand = brandMatch.name!;
         }
@@ -826,9 +1025,14 @@ class PrescriptionParserService {
       if (name.isEmpty) continue;
 
       String dosage = dosageMatch != null
-          ? '${_fixDigitConfusions(dosageMatch.group(1)!)}'
-                '${dosageMatch.group(2)!.toLowerCase()}'
-          : '';
+          ? (_liquidStrength(line, dosageMatch) ??
+                '${_fixDigitConfusions(dosageMatch.group(1)!)}'
+                    '${dosageMatch.group(2)!.toLowerCase()}')
+          : (combo?.strength ?? '');
+      if (dosage.isEmpty && match.name != null && combo == null) {
+        // "Levocetirizine 5", "Co Amoxyclav 625": strength without a unit.
+        dosage = _bareStrength(line, name);
+      }
 
       // Cross-check the dosage against this medicine's known variants
       // (fuzzy-distance: snaps to the numerically nearest same-unit
@@ -872,11 +1076,7 @@ class PrescriptionParserService {
       final parsedMedicine = PrescriptionMedicine(
         name: name,
         dosage: dosage,
-        quantity: quantityMatch != null
-            ? _fixDigitConfusions(
-                quantityMatch.group(1) ?? quantityMatch.group(2) ?? '',
-              )
-            : '',
+        quantity: _findQuantity(line),
         frequency: frequency,
         brand: brand,
         dosageForm: dosageForm,
@@ -895,6 +1095,8 @@ class PrescriptionParserService {
                 brandMatch.score,
                 if (dosageWasSnapped) dosageSnapConfidence,
               ].reduce((a, b) => a < b ? a : b),
+        sourceText: sourceIndices.map((k) => lines[k]).join('  /  '),
+        sourceLegibility: _worstLegibility(legibility, sourceIndices),
       );
       // ignore: avoid_print
       print(
@@ -906,9 +1108,511 @@ class PrescriptionParserService {
         'matchConfidence=${parsedMedicine.matchConfidence.toStringAsFixed(2)}',
       );
       medicines.add(parsedMedicine);
+      lastMedicineLine = i;
     }
 
-    return medicines;
+    return medicines.map(_withQuantityEstimate).toList();
+  }
+
+  /// Recognizes a combination product in [text] ("Sitagliptin/Metformin
+  /// 100/1,000", "Guiafenasin + PPA + Paracetamol", "FeSO4 + Folic acid
+  /// # 30"). Returns the readable [label] built from the resolved
+  /// component names, the catalog combination entry it matches (or null
+  /// when the catalog has none), and its "a/b" [strength] if written
+  /// without units. Null when [text] names a single drug.
+  static ({String label, String? catalogName, double score, String strength})?
+  _combination(String text, List<String> drugDictionary) {
+    // The name ends where the first standalone number or "#" starts
+    // ("... 100/1,000 # 180"); "FeSO4" keeps its digit.
+    final cut = RegExp(r'(?:^|\s)[#\d]').firstMatch(text);
+    final namePart = cut == null ? text : text.substring(0, cut.start);
+    final afterName = cut == null ? '' : text.substring(cut.start);
+
+    final parts = namePart
+        .split(RegExp(r'\s*(?:\+|/|&|\band\b)\s*', caseSensitive: false))
+        // Trailing dashes/punctuation before a quantity ("H - 30").
+        .map((p) => p.trim().replaceAll(RegExp(r'[\s\-–—.,:;]+$'), '').trim())
+        .where((p) => p.replaceAll(RegExp(r'[^A-Za-z]'), '').isNotEmpty)
+        .toList();
+    if (parts.length < 2) return null;
+    // At least one component must be a real name, not just initials.
+    if (!parts.any(
+      (p) => p.replaceAll(RegExp(r'[^A-Za-z]'), '').length >= 4,
+    )) {
+      return null;
+    }
+
+    final resolved = <String>[];
+    for (final part in parts) {
+      final key = part.toLowerCase().replaceAll(RegExp(r'[^a-z0-9 ]'), '');
+      final abbreviation = DrugAbbreviations.resolve(key, drugDictionary);
+      final single = abbreviation == null
+          ? _fuzzyMatchDrug(part, drugDictionary).name
+          : null;
+      final name = abbreviation ?? single;
+      resolved.add(
+        (name != null && !name.contains('+')) ? name : _cleanName(part),
+      );
+    }
+    final label = resolved
+        .map((p) => p.split(' ').map(_capitalize).join(' '))
+        .join(' + ');
+
+    // Best catalog combination with the same number of components, each
+    // matching closely (or by the catalog's abbreviation, "salbu+guaife").
+    String? catalogName;
+    var bestScore = 0.0;
+    final wanted = resolved.map((p) => p.toLowerCase().trim()).toList();
+    for (final entry in drugDictionary.where((d) => d.contains('+'))) {
+      final entryParts = entry.split('+').map((p) => p.trim()).toList();
+      if (entryParts.length != wanted.length) continue;
+      var worst = 1.0;
+      for (final w in wanted) {
+        var bestPart = 0.0;
+        for (final e in entryParts) {
+          final double s;
+          if (e.length >= 4 && w.startsWith(e)) {
+            s = 0.95; // catalog abbreviation: "salbu" for "salbutamol"
+          } else if (w.length <= 2 && e.startsWith(w)) {
+            s = 0.85; // prescription initial: "H" for "hesperidin"
+          } else {
+            s = _similarity(w, e);
+          }
+          if (s > bestPart) bestPart = s;
+        }
+        if (bestPart < worst) worst = bestPart;
+      }
+      if (worst >= 0.8 && worst > bestScore) {
+        bestScore = worst;
+        catalogName = entry.split(' ').map(_capitalize).join(' ');
+      }
+    }
+
+    final ratio = RegExp(
+      r'^\s*(\d[\d,]*(?:\.\d+)?)\s*/\s*(\d[\d,]*(?:\.\d+)?)\b',
+    ).firstMatch(afterName);
+    final strength = ratio == null
+        ? ''
+        : '${ratio.group(1)!.replaceAll(',', '')}/'
+              '${ratio.group(2)!.replaceAll(',', '')}';
+
+    return (
+      label: label,
+      catalogName: catalogName,
+      score: bestScore,
+      strength: strength,
+    );
+  }
+
+  static final RegExp _formOrPackWord = RegExp(
+    r'\b(?:tabs?|tablets?|caps?|capsules?|bottles?|bots?|pcs?|pieces?|'
+    r'sachets?|amps?|ampules?|vials?|pre-?filled|syringes?|tubes?|boxe?s?|'
+    r'packs?|strips?|blisters?|nebules?|inhalers?|drops?|drp|sprays?|'
+    r'syrups?|syp|susp|suspension|creams?|ointments?|inj|injections?)\b\.?',
+    caseSensitive: false,
+  );
+
+  /// When [line] carries nothing but a "(Brand)" and/or a quantity — the
+  /// continuation of the drug line above it — returns them; otherwise
+  /// null. Allows the dosage-form word ("tabs # 10") and a pharmacy fill
+  /// stamp ("#14 FS 6/17") but nothing that could be a drug name.
+  static ({String brand, String quantity})? _continuationOf(String line) {
+    var rest = line
+        .trim()
+        .replaceFirst(RegExp(r'^(?:rx|℞)\.?\s*', caseSensitive: false), '');
+
+    var brand = '';
+    final paren = RegExp(r'^\(\s*([^()]{2,40}?)\s*\)').firstMatch(rest);
+    if (paren != null) {
+      // "(Meptin/Breeze)", "(Bioxol or Zibroxol)", "(Augmentin 625)":
+      // the first named brand, without its strength.
+      brand = paren
+          .group(1)!
+          .split(RegExp(r'\s*/\s*|\s+or\s+', caseSensitive: false))
+          .first
+          .replaceAll(RegExp(r'[\d.,/]+'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      rest = rest.substring(paren.end);
+    }
+
+    final quantity = _findQuantity(rest);
+
+    final leftover = rest
+        .replaceAll(RegExp(r'#\s*\(?\s*[IVXLC]{1,8}\b'), ' ')
+        .replaceAll(RegExp(r'#\s*\(?\s*\d+\s*\)?'), ' ')
+        .replaceAll(_quantityPattern, ' ')
+        .replaceAll(RegExp(r'\d+'), ' ')
+        .replaceAll(_formOrPackWord, ' ')
+        .replaceAll(RegExp(r'\b[fr]s\b.*$', caseSensitive: false), ' ')
+        .replaceAll(RegExp(r'[^A-Za-z]'), '');
+    if (leftover.length >= 3) return null;
+    if (brand.isEmpty && quantity.isEmpty) return null;
+    return (brand: brand, quantity: quantity);
+  }
+
+  /// Fills in the most recent medicine's brand/quantity where they are
+  /// still empty, and records [sourceLine] as part of what it was read
+  /// from.
+  static void _updateLast(
+    List<PrescriptionMedicine> medicines, {
+    required String brand,
+    required String quantity,
+    required String sourceLine,
+    required String sourceLegibility,
+  }) {
+    final prev = medicines.removeLast();
+    final legibility = prev.sourceLegibility.isEmpty || sourceLegibility.isEmpty
+        ? ''
+        : _worstLegibility(
+            [prev.sourceLegibility, sourceLegibility],
+            const [0, 1],
+          );
+    medicines.add(
+      prev.copyWith(
+        quantity: prev.quantity.isEmpty ? quantity : prev.quantity,
+        brand: prev.brand.isEmpty ? brand : prev.brand,
+        sourceText: '${prev.sourceText}  /  $sourceLine',
+        sourceLegibility: legibility,
+      ),
+    );
+  }
+
+  /// A strength written without its unit ("Levocetirizine 5", "Co
+  /// Amoxyclav 625"), as "5mg"/"625mg" — but only when the catalog stocks
+  /// exactly that strength of [name]; otherwise ''. Quantities ("#14",
+  /// "30's", "tab 10") and brand parentheses are ignored.
+  static String _bareStrength(String line, String name) {
+    final cleaned = line
+        .replaceAll(RegExp(r'#\s*\(?\s*\d+\s*\)?'), ' ')
+        .replaceAll(RegExp(r"\b\d+\s*['’]s\b"), ' ')
+        .replaceAll(
+          RegExp(
+            r'\b(?:tabs?|tablets?|caps?|capsules?|sachets?)\.?\s+\d+',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(RegExp(r'\([^)]*\)'), ' ');
+    final m = RegExp(
+      r'(?<![\d.#/])(\d+(?:\.\d+)?)(?![\d.]|\s*(?:x\b|/|-|%|mg|mcg|ml|iu|g\b|times))',
+      caseSensitive: false,
+    ).firstMatch(cleaned);
+    if (m == null) return '';
+    final candidate = '${m.group(1)}mg';
+    if (!PriceLookupService.hasVariantAtDosage(name, candidate)) return '';
+    if (!PriceLookupService.resolveDosageLabel(name, candidate).isExact) {
+      return '';
+    }
+    return candidate;
+  }
+
+  /// For a liquid written as a concentration ("250mg/5ml susp 60ml"),
+  /// returns the strength in the catalog's own `mg/bottle-ml` style
+  /// ("250/60ml"), or `<mg>mg/<per>ml` ("5mg/5ml") when no bottle size is
+  /// written.
+  /// Returns null for a plain strength ("500mg").
+  ///
+  /// Without this, "250mg/5ml" was cut down to "250mg" and the syrup was
+  /// matched and priced as the 250 mg CAPSULE — a different product.
+  static String? _liquidStrength(String line, RegExpMatch dosageMatch) {
+    if (dosageMatch.group(2)!.toLowerCase() != 'mg') return null;
+    final per = RegExp(
+      r'^\s*/\s*(\d+(?:\.\d+)?)\s*ml\b',
+      caseSensitive: false,
+    ).firstMatch(line.substring(dosageMatch.end));
+    if (per == null) return null;
+
+    final strength = _fixDigitConfusions(dosageMatch.group(1)!);
+    final afterPer = line.substring(dosageMatch.end + per.end);
+    // The bottle size: a later "<n> ml" larger than the per-dose volume.
+    for (final m in RegExp(
+      r'(\d+(?:\.\d+)?)\s*ml\b',
+      caseSensitive: false,
+    ).allMatches(afterPer)) {
+      final ml = double.parse(m.group(1)!);
+      if (ml >= 15) return '$strength/${m.group(1)}ml';
+    }
+    return '${strength}mg/${per.group(1)}ml';
+  }
+
+  /// Applies the frequency/duration found in [sigText] to the most
+  /// recently parsed medicine, and keeps the text itself (used to work
+  /// out the dose per intake for a quantity estimate). No-op when there is
+  /// no previous medicine.
+  static void _attachSigToLast(
+    List<PrescriptionMedicine> medicines,
+    String sigText,
+  ) {
+    if (medicines.isEmpty) return;
+    final sigFrequency = _findFrequency(sigText);
+    final sigDuration = _findDuration(sigText);
+    final prev = medicines.removeLast();
+    medicines.add(
+      prev.copyWith(
+        frequency: sigFrequency.isNotEmpty ? sigFrequency : prev.frequency,
+        duration: sigDuration.isNotEmpty ? sigDuration : prev.duration,
+        sigText: prev.sigText.isEmpty
+            ? sigText.trim()
+            : '${prev.sigText} ${sigText.trim()}',
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Quantity
+  // ---------------------------------------------------------------------
+
+  static const Map<String, int> _romanValues = {
+    'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100,
+  };
+
+  /// Value of an uppercase Roman numeral ("XIV" -> 14), or null.
+  static int? _romanToInt(String s) {
+    if (s.isEmpty || !RegExp(r'^[IVXLC]+$').hasMatch(s)) return null;
+    var total = 0;
+    for (var i = 0; i < s.length; i++) {
+      final v = _romanValues[s[i]]!;
+      final next = i + 1 < s.length ? _romanValues[s[i + 1]]! : 0;
+      total += v < next ? -v : v;
+    }
+    return total > 0 && total <= 500 ? total : null;
+  }
+
+  /// The quantity to dispense as written on [line], or '' when none is.
+  ///
+  /// A "#" quantity wins over a "30 tabs" style count anywhere on the line
+  /// — "Losartan 50mg 1 tab OD #30" used to read as 1 (the dose). Also
+  /// reads "# (10)", "#XXX" (Roman numerals), "Qty: 30", "Disp: 30" and
+  /// "30's". A small count right before a frequency ("1 tab twice a
+  /// day") is a dose, not a quantity.
+  static String _findQuantity(String line) {
+    final hash = RegExp(
+      '#\\s*\\(?\\s*([$_digitLikeChars]*\\d[$_digitLikeChars]*)\\s*\\)?',
+    ).firstMatch(line);
+    if (hash != null) return _fixDigitConfusions(hash.group(1)!);
+
+    final roman = RegExp(r'#\s*\(?\s*([IVXLC]{1,8})\b').firstMatch(line);
+    final romanValue = roman == null ? null : _romanToInt(roman.group(1)!);
+    if (romanValue != null) return '$romanValue';
+
+    // Not a bare "No." — that is the License/PTR/SSS/Tel label on the
+    // doctor's lines ("Lic. No. 0123456").
+    final labeled = RegExp(
+      r'\b(?:qty\.?|quantity|disp\.?|dispense)\s*:?\s*(\d+)\b',
+      caseSensitive: false,
+    ).firstMatch(line);
+    if (labeled != null) return labeled.group(1)!;
+
+    final apostrophe = RegExp(r"\b(\d+)\s*['’]s\b").firstMatch(line);
+    if (apostrophe != null) return apostrophe.group(1)!;
+
+    // Count after a dash at the end of the drug line: "Sambong - 60",
+    // "Diosmin + H - 30".
+    // Not a "1 - 0 - 1" dosing schedule, and a name must come before it.
+    final dashed = RegExp(r'\s[-–—]\s*(\d{1,4})\s*$').firstMatch(line);
+    if (dashed != null &&
+        int.parse(dashed.group(1)!) > 0 &&
+        !RegExp(r'\d\s*[-–—]\s*\d\s*[-–—]\s*\d').hasMatch(line) &&
+        line
+                .substring(0, dashed.start)
+                .replaceAll(RegExp(r'[^A-Za-z]'), '')
+                .length >=
+            3) {
+      return dashed.group(1)!;
+    }
+
+    // The form word before the count: "tab 10", "caps 30".
+    final formFirst = RegExp(
+      r'\b(?:tabs?|tablets?|caps?|capsules?|sachets?)\.?\s+(\d{1,4})\b'
+      r'(?!\s*(?:mg|mcg|g|ml|iu|%|x\b|/|-|times|tabs?|caps?))',
+      caseSensitive: false,
+    ).firstMatch(line);
+    if (formFirst != null) return formFirst.group(1)!;
+
+    final counted = _quantityPattern.firstMatch(line);
+    if (counted != null) {
+      final value = _fixDigitConfusions(
+        counted.group(1) ?? counted.group(2) ?? '',
+      );
+      final n = int.tryParse(value) ?? 0;
+      final isDose =
+          n <= 4 && _findFrequency(line.substring(counted.end)).isNotEmpty;
+      if (!isDose) return value;
+    }
+    return '';
+  }
+
+  /// One intake from Sig text: "1 tab", "1/2 tab", "½ tab", "2 caps",
+  /// "5ml", "1 tsp" (5 ml). Null when no dose is written.
+  static ({double amount, String unit})? _dosePerIntake(String sig) {
+    final m = RegExp(
+      r'(\d+(?:\.\d+)?(?:\s*/\s*\d+)?|½|¼)\s*'
+      r'(tabs?|tablets?|caps?|capsules?|sachets?|ml|cc|tsps?|teaspoons?|'
+      r'tbsps?|tablespoons?|puffs?|drops?|gtts?)\b',
+      caseSensitive: false,
+    ).firstMatch(sig);
+    if (m == null) return null;
+
+    final raw = m.group(1)!.replaceAll(' ', '');
+    double? amount;
+    if (raw == '½') {
+      amount = 0.5;
+    } else if (raw == '¼') {
+      amount = 0.25;
+    } else if (raw.contains('/')) {
+      final p = raw.split('/');
+      final d = double.tryParse(p[1]) ?? 0;
+      amount = d == 0 ? null : (double.tryParse(p[0]) ?? 0) / d;
+    } else {
+      amount = double.tryParse(raw);
+    }
+    if (amount == null || amount <= 0) return null;
+
+    final u = m.group(2)!.toLowerCase();
+    if (u.startsWith('tab')) return (amount: amount, unit: 'tab');
+    if (u.startsWith('cap')) return (amount: amount, unit: 'cap');
+    if (u.startsWith('sachet')) return (amount: amount, unit: 'sachet');
+    if (u == 'ml' || u == 'cc') return (amount: amount, unit: 'ml');
+    if (u.startsWith('tsp') || u.startsWith('teaspoon')) {
+      return (amount: amount * 5, unit: 'ml');
+    }
+    if (u.startsWith('tbsp') || u.startsWith('tablespoon')) {
+      return (amount: amount * 15, unit: 'ml');
+    }
+    return (amount: amount, unit: 'device'); // puffs / drops
+  }
+
+  /// Doses per day from a parsed frequency ("twice daily, after meals",
+  /// "3x daily", "every 8 hours"), or null when it doesn't say.
+  static int? _timesPerDay(String frequency) {
+    final f = frequency.toLowerCase();
+    if (f.startsWith('once daily')) return 1;
+    if (f.startsWith('twice daily')) return 2;
+    final times = RegExp(r'^(\d+)x daily').firstMatch(f);
+    if (times != null) return int.parse(times.group(1)!);
+    final every = RegExp(r'^every (\d+) hours?').firstMatch(f);
+    if (every != null) {
+      final h = int.parse(every.group(1)!);
+      return h > 0 && h <= 24 ? (24 / h).floor() : null;
+    }
+    if (f == 'at bedtime') return 1;
+    return null;
+  }
+
+  /// Public wrapper for the review screen and tests.
+  static String quantityFrom(String line) => _findQuantity(line);
+
+  static String _fmt(double v) =>
+      v == v.roundToDouble() ? '${v.toInt()}' : '$v';
+
+  /// For a medicine with no written quantity, estimates one from its Sig
+  /// (dose × doses per day × days) and records how, in quantityBasis. A
+  /// liquid is counted in bottles when the bottle size is known from the
+  /// strength ("250/60ml" -> 60 ml bottles). When nothing can be worked
+  /// out the quantity stays empty and quantityBasis says it wasn't
+  /// written. Either way the review screen asks for confirmation.
+  static PrescriptionMedicine _withQuantityEstimate(PrescriptionMedicine m) {
+    if (m.quantity.isNotEmpty) return m;
+
+    const notWritten = 'Quantity not written — enter it from the prescription';
+    final dose = _dosePerIntake(m.sigText);
+    final perDay = _timesPerDay(m.frequency);
+    final days = int.tryParse(
+      RegExp(r'^(\d+) day').firstMatch(m.duration)?.group(1) ?? '',
+    );
+    if (dose == null) return m.copyWith(quantityBasis: notWritten);
+
+    if (dose.unit == 'device') {
+      return m.copyWith(
+        quantity: '1',
+        quantityBasis: 'Quantity not written — assumed 1 (spray/drops)',
+      );
+    }
+    if (perDay == null || days == null) {
+      return m.copyWith(quantityBasis: notWritten);
+    }
+
+    final total = dose.amount * perDay * days;
+    final schedule =
+        '${_fmt(dose.amount)} ${dose.unit} × $perDay/day × $days days';
+
+    if (dose.unit == 'ml') {
+      final bottle = double.tryParse(
+        RegExp(r'^\d+(?:\.\d+)?/(\d+(?:\.\d+)?)ml$')
+                .firstMatch(m.dosage)
+                ?.group(1) ??
+            '',
+      );
+      if (bottle == null || bottle <= 0) {
+        return m.copyWith(
+          quantity: '1',
+          quantityBasis:
+              'Estimated from Sig: $schedule = ${_fmt(total)} ml; '
+              'bottle size not written — check',
+        );
+      }
+      final bottles = (total / bottle).ceil();
+      return m.copyWith(
+        quantity: '$bottles',
+        quantityBasis:
+            'Estimated from Sig: $schedule = ${_fmt(total)} ml '
+            '→ $bottles × ${_fmt(bottle)} ml bottle${bottles == 1 ? '' : 's'}',
+      );
+    }
+
+    final count = total.ceil();
+    return m.copyWith(
+      quantity: '$count',
+      quantityBasis: 'Estimated from Sig: $schedule = $count',
+    );
+  }
+
+  /// Wrapped dosing text ("a day", "for 7 days", "at bedtime", "every 8
+  /// hrs", "after meals") — never a drug name, even if a fuzzy match
+  /// against the catalog happens to clear the bar.
+  static bool _looksLikeSigContinuation(String text) {
+    final lower = text.toLowerCase().trim();
+    return _findFrequency(lower).isNotEmpty ||
+        _findDuration(lower).isNotEmpty ||
+        RegExp(
+          r'^(?:a\s*day|for\b|at\b|every\b|after\b|before\b|with\b|then\b|'
+          r'or\b|and\b|if\b|when\b|as\b|until\b|x\s*\d)',
+        ).hasMatch(lower);
+  }
+
+  static const Set<String> _sigVerbs = {
+    'take',
+    'give',
+    'inom',
+    'apply',
+    'instill',
+    'inhale',
+    'gargle',
+    'insert',
+    'nebulize',
+  };
+
+  static final RegExp _numberLead = RegExp(r'^(?:\d+(?:\s*/\s*\d+)?|½)');
+  static final RegExp _verbLead = RegExp(
+    r'^(?:take|inom|apply|give|instill|use)\b',
+    caseSensitive: false,
+  );
+
+  /// True for an unlabeled Sig line: one that opens with an amount
+  /// ("1 tab", "1/2 tsp") or an instruction verb ("Take", "Inom") and
+  /// carries dosing information. A number-led line must include a
+  /// frequency or duration, so a quantity-first medicine line such as
+  /// "2 bottles Ambroxol syrup" is not mistaken for an instruction.
+  static bool _looksLikeUnlabeledInstruction(String line) {
+    final trimmed = line.trim();
+    final hasTiming =
+        _findFrequency(trimmed).isNotEmpty || _findDuration(trimmed).isNotEmpty;
+    if (_numberLead.hasMatch(trimmed)) return hasTiming;
+    if (_verbLead.hasMatch(trimmed)) {
+      return hasTiming || _quantityPattern.hasMatch(trimmed);
+    }
+    return false;
   }
 
   // Philippine addresses very commonly name a block/lot, barangay, purok,
@@ -1003,38 +1707,104 @@ class PrescriptionParserService {
   }
   */
 
+  /// Frequency-map values that say WHEN to take a dose rather than how
+  /// often. They are reported alongside the how-often part instead of
+  /// replacing it: "1 tab 2x a day after meals" used to come out as just
+  /// "after meals" because that map entry happened to match first.
+  static const Set<String> _timingQualifiers = {
+    'at bedtime',
+    'before meals',
+    'after meals',
+  };
+
   static String _findFrequency(String line) {
     final lower = line.toLowerCase();
 
     String base = '';
+    final timing = <String>[];
     for (final entry in _frequencyMap.entries) {
       final pattern = RegExp(r'\b' + RegExp.escape(entry.key) + r'\b');
-      if (pattern.hasMatch(lower)) {
+      if (!pattern.hasMatch(lower)) continue;
+      if (_timingQualifiers.contains(entry.value)) {
+        if (!timing.contains(entry.value)) timing.add(entry.value);
+      } else if (base.isEmpty) {
         base = entry.value;
-        break;
       }
     }
     if (base.isEmpty) {
-      final xTimesMatch = RegExp(r'(\d)\s*x\s*a?\s*day').firstMatch(lower);
+      // "3x a day", "3x/day", "3 x daily", "3 times a day"
+      final xTimesMatch = RegExp(
+        r'(\d)\s*(?:x|times)\s*(?:a|/|per)?\s*(?:day|daily)',
+      ).firstMatch(lower);
       if (xTimesMatch != null) {
-        base = '${xTimesMatch.group(1)}x daily';
+        base = _timesDaily(int.parse(xTimesMatch.group(1)!));
       }
     }
     if (base.isEmpty) {
-      final qHourMatch = RegExp(r'\bq\s*(\d+)\s*h\b').firstMatch(lower);
-      if (qHourMatch != null) {
-        final n = qHourMatch.group(1);
+      // "q6h", "q 6h", "every 6 hrs", "every 6 hours"
+      final everyHours = RegExp(
+        r'\b(?:q\s*(\d+)\s*h|every\s*(\d+)\s*(?:hours?|hrs?|h))\b',
+      ).firstMatch(lower);
+      if (everyHours != null) {
+        final n = everyHours.group(1) ?? everyHours.group(2);
         base = 'every $n hour${n == '1' ? '' : 's'}';
       }
     }
+    if (base.isEmpty) {
+      // Morning-noon-night schedule: "1-0-1", "1 - 1 - 1", "0-0-1".
+      final schedule = RegExp(
+        r'(?<![\d/])([0-2](?:/2)?)\s*-\s*([0-2](?:/2)?)\s*-\s*([0-2](?:/2)?)(?![\d/])',
+      ).firstMatch(lower);
+      if (schedule != null) {
+        final doses = [1, 2, 3].where((g) => schedule.group(g) != '0').length;
+        if (doses > 0) base = _timesDaily(doses);
+      }
+    }
+    if (base.isEmpty) {
+      // Tagalog times of day: "umaga" (morning), "tanghali" (noon),
+      // "hapon" (afternoon), "gabi" (night) — one dose each.
+      final times = {
+        for (final m in RegExp(
+          r'\b(umaga|tanghali|hapon|gabi)\b',
+        ).allMatches(lower))
+          m.group(1),
+      };
+      if (times.isNotEmpty) {
+        base = _timesDaily(times.length);
+      } else if (RegExp(r'\bbago\s+matulog\b').hasMatch(lower)) {
+        base = 'once daily';
+      }
+    }
+    if (RegExp(r'\bbago\s+matulog\b').hasMatch(lower) &&
+        !timing.contains('at bedtime')) {
+      timing.add('at bedtime');
+    }
+    if (base.isEmpty &&
+        RegExp(r'\b(?:daily|a\s*day|per\s*day|/\s*day)\b').hasMatch(lower)) {
+      // "1 tab daily", "1 tab a day"
+      base = 'once daily';
+    }
 
-    final asNeeded = _findAsNeeded(lower);
-
-    if (base.isNotEmpty && asNeeded) return '$base, as needed';
-    if (base.isNotEmpty) return base;
-    if (asNeeded) return 'as needed';
-    return '';
+    final parts = [
+      if (base.isNotEmpty) base,
+      ...timing,
+      if (_findAsNeeded(lower)) 'as needed',
+    ];
+    return parts.join(', ');
   }
+
+  /// Leading Tagalog when-to-take words: "umaga", "tanghali", "hapon",
+  /// "gabi", "sa gabi"/"sagabi", "bago matulog" (any combination).
+  static final RegExp _tagalogTimingPrefix = RegExp(
+    r'^(?:(?:sa\s*)?(?:umaga|tanghali|hapon|gabi)\b[\s,/&-]*|bago\s+matulog\b[\s,]*)+',
+    caseSensitive: false,
+  );
+
+  static String _timesDaily(int n) => switch (n) {
+    1 => 'once daily',
+    2 => 'twice daily',
+    _ => '${n}x daily',
+  };
 
   static bool _findAsNeeded(String lower) {
     if (RegExp(r'\bas\s+needed\b').hasMatch(lower)) return true;
@@ -1053,6 +1823,14 @@ class PrescriptionParserService {
     final firstToken = trimmed
         .split(RegExp(r'[\s:.]+'))
         .firstWhere((t) => t.isNotEmpty, orElse: () => '');
+    final lower = firstToken.toLowerCase();
+    // "S 1 tab ...", "S. take 1 tab ..." — the abbreviated Sig mark — and
+    // instructions that open with the dosing verb ("give 4ml ...",
+    // "take 1 tablet ..."). Used to fall through to the medicine parser
+    // and come out as phantom drugs like "Give 4ml" or, via fuzzy
+    // matching of "take tablet", the unrelated "Simeco Tablet".
+    if (lower == 's' && trimmed.length > 2) return true;
+    if (_sigVerbs.contains(lower)) return true;
     if (firstToken.length < 2 || firstToken.length > 5) return false;
     if (RegExp(r'\d').hasMatch(firstToken)) return false;
     return _similarity(firstToken.toLowerCase(), 'sig') >= 0.5;
@@ -1091,10 +1869,21 @@ class PrescriptionParserService {
   static String _findDuration(String sigText) {
     final lower = sigText.toLowerCase();
 
-    final digitMatch = RegExp(r'for\s+(\d+)\s*days?').firstMatch(lower);
+    String days(int n) => '$n day${n == 1 ? '' : 's'}';
+
+    // "for 7 days", "x 7 days", "x7d", "× 7 days", "7 days", "7d"
+    final digitMatch = RegExp(
+      r'(?:\bfor\s*|\bx\s*|×\s*|\b)(\d+)\s*(?:days?|d)\b',
+    ).firstMatch(lower);
     if (digitMatch != null) {
-      final n = digitMatch.group(1)!;
-      return '$n day${n == '1' ? '' : 's'}';
+      return days(int.parse(digitMatch.group(1)!));
+    }
+    // "for 2 weeks", "x 2 wks"
+    final weekMatch = RegExp(
+      r'\b(\d+)\s*(?:weeks?|wks?)\b',
+    ).firstMatch(lower);
+    if (weekMatch != null) {
+      return days(int.parse(weekMatch.group(1)!) * 7);
     }
 
     final tokens = lower.split(RegExp(r'\s+'));
@@ -1158,6 +1947,8 @@ class PrescriptionParserService {
     final words = cleaned.split(RegExp(r'\s+'));
 
     String? best;
+    String bestTarget = '';
+    String bestWindow = '';
     double bestScore = 0.0;
 
     // SPEED-FIRST (post-audit): a score this high means we've already
@@ -1188,26 +1979,30 @@ class PrescriptionParserService {
     ) {
       final window = words.take(windowSize).join(' ');
       for (final drug in drugDictionary) {
-        // Cheap pre-filter before paying for a full Levenshtein pass:
-        // if the lengths differ by more than ~45%, edit distance can't
-        // possibly clear the similarity threshold below anyway, so
-        // there's no point computing it. Matters more now than when
-        // this was first written — the PNF-EML fallback dictionary is
-        // 339 entries (vs. the original ~16-entry list), so skipping
-        // obviously-mismatched lengths meaningfully cuts wasted work
-        // specifically on the fallback path where the dictionary is
-        // largest.
-        final lengthDiff = (window.length - drug.length).abs();
-        final longerLen = window.length > drug.length
-            ? window.length
-            : drug.length;
-        if (longerLen > 0 && lengthDiff / longerLen > 0.45) continue;
+        // Catalog keys often carry a dosage-form word ("carvedilol
+        // tablet", "ambroxol cap."). Compared only in full, "Carvedilol"
+        // scored higher against the brand "Marvelon" (a contraceptive)
+        // than against its own entry — so the name without the form word
+        // is compared too.
+        for (final target in _matchTargets(drug)) {
+          // Cheap pre-filter before paying for a full Levenshtein pass:
+          // if the lengths differ by more than ~45%, edit distance can't
+          // possibly clear the similarity threshold below anyway, so
+          // there's no point computing it.
+          final lengthDiff = (window.length - target.length).abs();
+          final longerLen = window.length > target.length
+              ? window.length
+              : target.length;
+          if (longerLen > 0 && lengthDiff / longerLen > 0.45) continue;
 
-        final score = _similarity(window, drug);
-        if (score > bestScore) {
-          bestScore = score;
-          best = drug;
-          if (bestScore >= earlyExitScore) break outer;
+          final score = _similarity(window, target);
+          if (score > bestScore) {
+            bestScore = score;
+            best = drug;
+            bestTarget = target;
+            bestWindow = window;
+            if (bestScore >= earlyExitScore) break outer;
+          }
         }
       }
     }
@@ -1248,7 +2043,30 @@ class PrescriptionParserService {
       // that's the first place to look. The fix at that point is smarter
       // corroboration (dosage/brand cross-check), not nudging this number
       // back up, which would just reintroduce cases like this one.
-      final threshold = best.length <= 5 ? 0.78 : 0.60;
+      final threshold = bestTarget.length <= 5 ? 0.78 : 0.60;
+      // A different drug of the same class is not a misread of this one:
+      // "Empagliflozin" scored 0.85 against the catalog's "Dapagliflozin"
+      // and was silently swapped for it. Such a name is left unmatched
+      // (shown as not in the catalog) instead.
+      if (bestScore >= threshold &&
+          bestScore < 1.0 &&
+          _isOtherDrugOfSameClass(bestWindow, bestTarget)) {
+        return (name: null, score: bestScore);
+      }
+      // A weak match that doesn't even start with the same letter is
+      // usually a different drug with a similar ending — "Betahistine"
+      // scored 0.73 against "Ebastine", "Trimetazidine" against
+      // "Rimantadine" — not a misread. Real misreads in the test photos
+      // ("Bioguc" for Biogesic, "Guiafenasin", "Cetirizne") all kept the
+      // first letter; strong matches (0.80+, e.g. "Timox" for Himox) are
+      // still accepted either way.
+      if (bestScore >= threshold &&
+          bestScore < 0.8 &&
+          bestWindow.isNotEmpty &&
+          bestTarget.isNotEmpty &&
+          bestWindow[0] != bestTarget[0]) {
+        return (name: null, score: bestScore);
+      }
       if (bestScore >= threshold) {
         return (
           name: best.split(' ').map(_capitalize).join(' '),
@@ -1268,12 +2086,22 @@ class PrescriptionParserService {
     // the raw text ISN'T already something the pharmacy stocks under
     // its own name, which is what actually makes it safe to treat as
     // an abbreviation rather than a coincidental short match.
+    //
+    // Tokenized separately from `words` above because abbreviations are
+    // chemical formulas whose digits matter: `cleaned` strips "feso4" to
+    // "feso", which is not a known abbreviation — that is why "FeSO4 tab
+    // #30" was being saved as the unmatched item "FeSO Tab".
+    final rawWords = candidate
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9\s\-]'), ' ')
+        .trim()
+        .split(RegExp(r'\s+'));
     for (
       int windowSize = 1;
-      windowSize <= 3 && windowSize <= words.length;
+      windowSize <= 3 && windowSize <= rawWords.length;
       windowSize++
     ) {
-      final window = words.take(windowSize).join(' ');
+      final window = rawWords.take(windowSize).join(' ');
       final target = DrugAbbreviations.resolve(window, drugDictionary);
       if (target != null) {
         return (name: target.split(' ').map(_capitalize).join(' '), score: 1.0);
@@ -1281,6 +2109,45 @@ class PrescriptionParserService {
     }
 
     return (name: null, score: bestScore);
+  }
+
+  /// Name endings shared by every drug of a class — two names ending the
+  /// same way are different drugs when what comes before differs.
+  static const List<String> _drugClassStems = [
+    'gliflozin', 'gliptin', 'sartan', 'dipine', 'statin', 'prazole',
+    'tidine', 'floxacin', 'cycline', 'mycin', 'cillin', 'olol', 'pril',
+    'azole', 'lukast', 'tadine', 'triptan', 'setron', 'parin', 'oxetine',
+    'azepam', 'zolam', 'profen', 'coxib', 'fenac', 'glinide', 'ciclovir',
+    'clovir', 'methasone', 'nisolone', 'terol', 'tropium', 'semide',
+    'thiazide', 'gabalin', 'pentin', 'dronate', 'vastatin', 'cetirizine',
+  ];
+
+  /// True when [read] and [catalog] are two different drugs of one class
+  /// ("empagliflozin" vs "dapagliflozin", "amlodipine" vs "felodipine"):
+  /// same class ending, but the part before it differs by 2+ letters —
+  /// more than a handwriting misread of the same name.
+  static bool _isOtherDrugOfSameClass(String read, String catalog) {
+    final a = read.trim().split(RegExp(r'\s+')).first;
+    final b = catalog.trim().split(RegExp(r'\s+')).first;
+    for (final stem in _drugClassStems) {
+      if (!a.endsWith(stem) || !b.endsWith(stem)) continue;
+      final prefixA = a.substring(0, a.length - stem.length);
+      final prefixB = b.substring(0, b.length - stem.length);
+      if (_levenshtein(prefixA, prefixB) >= 2) return true;
+    }
+    return false;
+  }
+
+  static final RegExp _catalogFormSuffix = RegExp(
+    r'\s+(?:tablets?|tab|caps?|capsules?|drops?|syrup|susp|suspension|'
+    r'cream|ointment|nebule|inhaler|spray)\.?$',
+  );
+
+  /// [drug] itself, plus [drug] without a trailing dosage-form word
+  /// ("carvedilol tablet" -> "carvedilol") when it has one.
+  static List<String> _matchTargets(String drug) {
+    final stripped = drug.replaceFirst(_catalogFormSuffix, '').trim();
+    return stripped.isEmpty || stripped == drug ? [drug] : [drug, stripped];
   }
 
   static double _similarity(String a, String b) {

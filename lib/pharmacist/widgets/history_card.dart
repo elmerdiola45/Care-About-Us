@@ -27,7 +27,7 @@ class HistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             for (int i = 0; i < records.length; i++) ...[
@@ -55,7 +55,7 @@ class HistoryCard extends StatelessWidget {
         record.label,
         style: TextStyle(
           fontWeight: FontWeight.bold,
-          fontSize: 15,
+          fontSize: 14,
           color: record.isCompleted ? null : const Color(0xFFBFC6CE),
         ),
       ),
@@ -64,7 +64,9 @@ class HistoryCard extends StatelessWidget {
           ? Text(
               record.statusLabel!,
               style: TextStyle(
-                color: record.isCompleted ? const Color(0xFF0B7B77) : const Color(0xFFBFC6CE),
+                color: record.isCompleted
+                    ? const Color(0xFF0B7B77)
+                    : const Color(0xFFBFC6CE),
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),

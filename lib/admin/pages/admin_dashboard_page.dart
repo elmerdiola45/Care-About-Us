@@ -9,7 +9,9 @@ import '../../../common/models/dashboard_models.dart';
 import '../../../common/services/laravel_api_service.dart';
 import '../../../common/services/alert_tracker.dart';
 import '../../common/session.dart';
+import '../../common/widgets/adaptive_nav_scaffold.dart';
 import '../../common/widgets/bottom_nav_bar.dart';
+import '../../common/widgets/responsive_center.dart';
 import '../../common/widgets/tap_target.dart';
 import 'add_staff_sheet.dart';
 import 'admin_patient_adherence_page.dart';
@@ -108,13 +110,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void _startAlertPolling() {
     _pollAlerts();
     _pollPendingRequests();
-    _alertPollTimer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) {
-        _pollAlerts();
-        _pollPendingRequests();
-      },
-    );
+    _alertPollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _pollAlerts();
+      _pollPendingRequests();
+    });
   }
 
   Future<void> _pollPendingRequests() async {
@@ -217,44 +216,39 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: IndexedStack(
-          index: _navIndex,
-          children: [
-            Column(
-              children: [
-                _buildHeader(),
-                _buildTopTabs(),
-                Expanded(
-                  child: IndexedStack(
-                    index: _topTab,
-                    children: [
-                      _OverviewTab(api: _api),
-                      _UsersTab(api: _api, isAdmin: _isAdmin),
-                      _ReportsTab(api: _api),
-                    ],
-                  ),
+    return AdaptiveNavScaffold(
+      items: BottomNavBar.adminItemsWithBadge(_pendingRequestCount),
+      currentIndex: _navIndex,
+      onTap: _handleNav,
+      body: IndexedStack(
+        index: _navIndex,
+        children: [
+          Column(
+            children: [
+              _buildHeader(),
+              _buildTopTabs(),
+              Expanded(
+                child: IndexedStack(
+                  index: _topTab,
+                  children: [
+                    _OverviewTab(api: _api),
+                    _UsersTab(api: _api, isAdmin: _isAdmin),
+                    _ReportsTab(api: _api),
+                  ],
                 ),
-              ],
-            ),
-            _visitedTabs.contains(1)
-                ? const QrOcrRecordsScreen()
-                : const SizedBox.shrink(),
-            _visitedTabs.contains(2)
-                ? RequestsScreen(key: _requestsKey)
-                : const SizedBox.shrink(),
-            _visitedTabs.contains(3)
-                ? const AdminPatientAdherencePage()
-                : const SizedBox.shrink(),
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _navIndex,
-        onTap: _handleNav,
-        requestBadgeCount: _pendingRequestCount,
+              ),
+            ],
+          ),
+          _visitedTabs.contains(1)
+              ? const QrOcrRecordsScreen()
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(2)
+              ? RequestsScreen(key: _requestsKey)
+              : const SizedBox.shrink(),
+          _visitedTabs.contains(3)
+              ? const AdminPatientAdherencePage()
+              : const SizedBox.shrink(),
+        ],
       ),
     );
   }
@@ -262,224 +256,263 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Widget _buildHeader() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppSession.instance.branchName ?? 'Care About Us Pharmacy',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Admin Dashboard',
-                  style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TapTarget(
-            onTap: () async {
-              // The badge shows the true unresolved count, not a "seen"
-              // flag — it's correct for it to stay put while just viewing.
-              // But it also shouldn't wait up to 30s (the poll interval)
-              // to reflect alerts actually resolved/approved while this
-              // screen was open, so re-poll the moment we're back instead
-              // of leaving it stale until the next timer tick.
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const AlertsDashboardScreen(),
-                ),
-              );
-              if (mounted) _pollAlerts();
-            },
-            semanticLabel: 'Dispensing alerts',
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              width: 42,
-              height: 42,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.teal.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.notifications_outlined,
-                      color: AppColors.teal,
-                      size: 20,
-                    ),
-                  ),
-                  if (_unresolvedAlertCount > 0)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 5,
-                          vertical: 1,
-                        ),
-                        constraints: const BoxConstraints(minWidth: 18),
-                        decoration: BoxDecoration(
-                          color: AppColors.danger,
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        child: Text(
-                          _unresolvedAlertCount > 99
-                              ? '99+'
-                              : '$_unresolvedAlertCount',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 8), // ADD
-          PopupMenuButton<String>(
-            // ADD
-            offset: const Offset(0, 48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            icon: Container(
-              width: 42,
-              height: 42,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.teal.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.person_outline,
-                color: AppColors.teal,
-                size: 20,
-              ),
-            ),
-            itemBuilder: (context) => [
-              PopupMenuItem<String>(
-                enabled: false,
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1140),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+          child: Row(
+            children: [
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _adminName ?? 'Admin',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      _adminRole ?? '',
+                      AppSession.instance.branchName ??
+                          'Care About Us Pharmacy',
                       style: TextStyle(
+                        color: AppColors.textFaint,
                         fontSize: 12,
-                        color: Colors.grey.shade600,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem<String>(
-                value: 'change_password',
-                child: Row(
-                  children: [
-                    Icon(Icons.lock_outline, size: 18, color: AppColors.teal),
-                    SizedBox(width: 10),
-                    Text('Change Password'),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem<String>(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, size: 18, color: Colors.red),
-                    SizedBox(width: 10),
-                    Text(
-                      'Log Out',
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Admin Dashboard',
                       style: TextStyle(
-                        color: Colors.red,
+                        fontSize: 20,
                         fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
                 ),
+              ),
+              TapTarget(
+                onTap: () async {
+                  // The badge shows the true unresolved count, not a "seen"
+                  // flag — it's correct for it to stay put while just viewing.
+                  // But it also shouldn't wait up to 30s (the poll interval)
+                  // to reflect alerts actually resolved/approved while this
+                  // screen was open, so re-poll the moment we're back instead
+                  // of leaving it stale until the next timer tick.
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AlertsDashboardScreen(),
+                    ),
+                  );
+                  if (mounted) _pollAlerts();
+                },
+                semanticLabel: 'Dispensing alerts',
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 42,
+                  height: 42,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.teal.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_outlined,
+                          color: AppColors.teal,
+                          size: 20,
+                        ),
+                      ),
+                      if (_unresolvedAlertCount > 0)
+                        Positioned(
+                          right: -2,
+                          top: -2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
+                            constraints: const BoxConstraints(minWidth: 18),
+                            decoration: BoxDecoration(
+                              color: AppColors.danger,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              _unresolvedAlertCount > 99
+                                  ? '99+'
+                                  : '$_unresolvedAlertCount',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 8), // ADD
+              PopupMenuButton<String>(
+                // ADD
+                offset: const Offset(0, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                icon: Container(
+                  width: 42,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.teal.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.person_outline,
+                    color: AppColors.teal,
+                    size: 20,
+                  ),
+                ),
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    enabled: false,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _adminName ?? 'Admin',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          _adminRole ?? '',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem<String>(
+                    value: 'change_password',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.lock_outline,
+                          size: 18,
+                          color: AppColors.teal,
+                        ),
+                        SizedBox(width: 12),
+                        Text('Change Password'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem<String>(
+                    value: 'logout',
+                    child: Row(
+                      children: [
+                        Icon(Icons.logout, size: 18, color: Colors.red),
+                        SizedBox(width: 12),
+                        Text(
+                          'Log Out',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                onSelected: (value) {
+                  if (value == 'logout') _logout();
+                  if (value == 'change_password') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ChangePasswordScreen(),
+                      ),
+                    );
+                  }
+                },
               ),
             ],
-            onSelected: (value) {
-              if (value == 'logout') _logout();
-              if (value == 'change_password') {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ChangePasswordScreen(),
-                  ),
-                );
-              }
-            },
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildTopTabs() {
     const labels = ['Overview', 'Users', 'Reports'];
+    // On phones the three tabs split the full width as before; on wider
+    // screens they keep a fixed 480px strip aligned with the page content
+    // instead of stretching into three 400px-wide hit areas.
     return Container(
-      color: Colors.white,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
       padding: const EdgeInsets.only(top: 8),
-      child: Row(
-        children: List.generate(labels.length, (i) {
-          final selected = _topTab == i;
-          return Expanded(
-            child: TapTarget(
-              onTap: () => setState(() => _topTab = i),
-              semanticLabel: labels[i],
-              child: Container(
-                padding: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: selected ? AppColors.teal : Colors.transparent,
-                      width: 2.5,
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1140),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Row(
+              children: List.generate(labels.length, (i) {
+                final selected = _topTab == i;
+                return Expanded(
+                  child: TapTarget(
+                    onTap: () => setState(() => _topTab = i),
+                    semanticLabel: labels[i],
+                    child: Container(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: selected
+                                ? AppColors.teal
+                                : Colors.transparent,
+                            width: 2.5,
+                          ),
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        labels[i],
+                        style: TextStyle(
+                          color: selected
+                              ? AppColors.teal
+                              : AppColors.textFaint,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  labels[i],
-                  style: TextStyle(
-                    color: selected ? AppColors.teal : Colors.grey.shade500,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 14.5,
-                  ),
-                ),
-              ),
+                );
+              }),
             ),
-          );
-        }),
+          ),
+        ),
       ),
     );
   }
@@ -644,256 +677,159 @@ class _OverviewTabState extends State<_OverviewTab> {
         ? '${_formatShortDate(_summary!.dateFrom)} – ${_formatShortDate(_summary!.dateTo)}'
         : '';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                '$periodLabel, ${_formatDate(DateTime.now())}',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-              ),
-              const Spacer(),
-              if (_refreshing) ...[
-                SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.teal,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              _PeriodSelector(
-                selected: _period,
-                onChanged: (p) {
-                  if (p != _period) {
-                    _loadData(period: p);
-                  }
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  value: '${_summary?.rxCount ?? 0}',
-                  label: rxLabel,
-                  color: AppColors.teal,
-                  subtitle: dateSubtitle,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  value: '${_summary?.odFlagsLogged ?? 0}',
-                  label: 'OD Flags Logged',
-                  color: AppColors.danger,
-                  subtitle: dateSubtitle,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  value: '${_summary?.alertsRaisedInPeriod ?? 0}',
-                  label: 'Alerts Received',
-                  color: AppColors.warning,
-                  subtitle: periodLabel,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  value: '${_summary?.avgAdherence ?? 0}%',
-                  label: 'Avg. Adherence',
-                  color: AppColors.success,
-                  subtitle: dateSubtitle,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TapTarget(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const QrOcrRecordsScreen()),
-            ),
-            semanticLabel: 'QR and OCR records log',
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.tealPale,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.description_outlined,
-                      color: AppColors.teal,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'QR & OCR Records Log',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'View today\'s scan activity',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward,
-                    color: Colors.grey.shade400,
-                    size: 18,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TapTarget(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => PriceListPage()),
-            ),
-            semanticLabel: 'Medicine price list',
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.tealPale,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.sell_outlined,
-                      color: AppColors.teal,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Medicine Price List',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Edit prices or upload a price list file',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward,
-                    color: Colors.grey.shade400,
-                    size: 18,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Dispensing Trend',
-                  style: TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Divider(color: Colors.grey.shade200),
-                const SizedBox(height: 14),
-                _DispensingChart(
-                  points: _trend.isEmpty ? _defaultTrend() : _trend,
-                ),
-              ],
-            ),
-          ),
-        ],
+    final stats = [
+      _StatCard(
+        value: '${_summary?.rxCount ?? 0}',
+        label: rxLabel,
+        color: AppColors.teal,
+        icon: Icons.receipt_long_outlined,
+        subtitle: dateSubtitle,
       ),
+      _StatCard(
+        value: '${_summary?.odFlagsLogged ?? 0}',
+        label: 'OD Flags Logged',
+        color: AppColors.danger,
+        icon: Icons.flag_outlined,
+        subtitle: dateSubtitle,
+      ),
+      _StatCard(
+        value: '${_summary?.alertsRaisedInPeriod ?? 0}',
+        label: 'Alerts Received',
+        color: AppColors.warning,
+        icon: Icons.notifications_active_outlined,
+        subtitle: periodLabel,
+      ),
+      _StatCard(
+        value: '${_summary?.avgAdherence ?? 0}%',
+        label: 'Avg. Adherence',
+        color: AppColors.success,
+        icon: Icons.favorite_outline_rounded,
+        subtitle: dateSubtitle,
+      ),
+    ];
+
+    final shortcuts = [
+      _ShortcutCard(
+        icon: Icons.description_outlined,
+        title: 'QR & OCR Records Log',
+        subtitle: 'View today\'s scan activity',
+        semanticLabel: 'QR and OCR records log',
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const QrOcrRecordsScreen()),
+        ),
+      ),
+      _ShortcutCard(
+        icon: Icons.sell_outlined,
+        title: 'Medicine Price List',
+        subtitle: 'Edit prices or upload a price list file',
+        semanticLabel: 'Medicine price list',
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => PriceListPage()),
+        ),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final padding = centeredContentPadding(
+          constraints.maxWidth,
+          top: 16,
+          bottom: 24,
+        );
+        final contentWidth = constraints.maxWidth - padding.horizontal;
+        // 4 stat cards across once there's room for them to stay readable,
+        // otherwise the original 2x2 grid.
+        final statColumns = contentWidth >= 720 ? 4 : 2;
+        final shortcutColumns = contentWidth >= 640 ? 2 : 1;
+        return SingleChildScrollView(
+          padding: padding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                // Full width so spaceBetween can push the selector right.
+                width: double.infinity,
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 10,
+                  children: [
+                    Text(
+                      '$periodLabel, ${_formatDate(DateTime.now())}',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_refreshing) ...[
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.teal,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        _PeriodSelector(
+                          selected: _period,
+                          onChanged: (p) {
+                            if (p != _period) {
+                              _loadData(period: p);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _ResponsiveGrid(columns: statColumns, children: stats),
+              const SizedBox(height: 16),
+              _ResponsiveGrid(columns: shortcutColumns, children: shortcuts),
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.fromBorderSide(
+                    BorderSide(color: AppColors.border),
+                  ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dispensing Trend',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Divider(color: Colors.grey.shade200),
+                    const SizedBox(height: 16),
+                    _DispensingChart(
+                      points: _trend.isEmpty ? _defaultTrend() : _trend,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -944,6 +880,115 @@ class _OverviewTabState extends State<_OverviewTab> {
       'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}';
+  }
+}
+
+/// Lays [children] out in rows of [columns] equal-width cells with uniform
+/// gaps, stretching each row's cells to the tallest one.
+class _ResponsiveGrid extends StatelessWidget {
+  final int columns;
+  final List<Widget> children;
+  const _ResponsiveGrid({required this.columns, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    const gap = 12.0;
+    final rows = <Widget>[];
+    for (var i = 0; i < children.length; i += columns) {
+      final cells = <Widget>[];
+      for (var j = 0; j < columns; j++) {
+        if (j > 0) cells.add(const SizedBox(width: gap));
+        final index = i + j;
+        cells.add(
+          Expanded(
+            child: index < children.length
+                ? children[index]
+                : const SizedBox.shrink(),
+          ),
+        );
+      }
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: gap));
+      rows.add(
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: cells,
+          ),
+        ),
+      );
+    }
+    return Column(children: rows);
+  }
+}
+
+class _ShortcutCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String semanticLabel;
+  final VoidCallback onTap;
+  const _ShortcutCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.semanticLabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TapTarget(
+      onTap: onTap,
+      semanticLabel: semanticLabel,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.tealPale,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: AppColors.teal),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward, color: Colors.grey.shade400, size: 18),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -999,16 +1044,16 @@ class _PeriodButton extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
           color: selected ? AppColors.teal : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
             color: selected ? Colors.white : AppColors.textFaint,
           ),
         ),
@@ -1033,6 +1078,28 @@ class _DispensingChartState extends State<_DispensingChart> {
     final points = widget.points;
     if (points.isEmpty) return const SizedBox(height: 168);
     final maxCount = points.map((p) => p.count).reduce((a, b) => a > b ? a : b);
+    if (maxCount == 0) {
+      return SizedBox(
+        height: 168,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.bar_chart_rounded,
+                size: 36,
+                color: Colors.grey.shade300,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'No prescriptions dispensed in this period',
+                style: TextStyle(fontSize: 14, color: AppColors.textFaint),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: 168,
       child: Row(
@@ -1041,9 +1108,11 @@ class _DispensingChartState extends State<_DispensingChart> {
         children: List.generate(points.length, (i) {
           final point = points[i];
           final isSelected = _selectedIndex == i;
-          final barHeight = maxCount > 0
-              ? (100 * (point.value / maxCount)).toDouble().clamp(10.0, 100.0)
-              : 5.0;
+          // Scaled by count against the busiest day's count (previously used
+          // `value`, a different field, so bar heights didn't match counts).
+          final barHeight = point.count == 0
+              ? 4.0
+              : (100 * (point.count / maxCount)).toDouble().clamp(10.0, 100.0);
           return Expanded(
             child: TapTarget(
               onTap: () =>
@@ -1065,14 +1134,14 @@ class _DispensingChartState extends State<_DispensingChart> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.tealDark,
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   '${point.count} Rx',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -1094,7 +1163,7 @@ class _DispensingChartState extends State<_DispensingChart> {
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.tealDark : AppColors.teal,
                       borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(6),
+                        top: Radius.circular(8),
                       ),
                     ),
                   ),
@@ -1102,12 +1171,12 @@ class _DispensingChartState extends State<_DispensingChart> {
                   Text(
                     point.day,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       color: isSelected
                           ? AppColors.tealDark
-                          : Colors.grey.shade500,
+                          : AppColors.textFaint,
                       fontWeight: isSelected
-                          ? FontWeight.w700
+                          ? FontWeight.w600
                           : FontWeight.w400,
                     ),
                   ),
@@ -1144,12 +1213,14 @@ class _StatCard extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
+  final IconData icon;
   final String? subtitle;
 
   const _StatCard({
     required this.value,
     required this.label,
     required this.color,
+    required this.icon,
     this.subtitle,
   });
 
@@ -1158,39 +1229,56 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
           ),
           if (subtitle != null && subtitle!.isNotEmpty) ...[
             const SizedBox(height: 2),
             Text(
               subtitle!,
               style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey.shade500,
+                fontSize: 12,
+                color: AppColors.textFaint,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -1324,88 +1412,101 @@ class _UsersTabState extends State<_UsersTab> {
   }
 
   Widget _buildContent() {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Staff Accounts',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
+    return LayoutBuilder(
+      builder: (context, constraints) => ListView(
+        padding: centeredContentPadding(
+          constraints.maxWidth,
+          maxWidth: 900,
+          top: 20,
+          bottom: 20,
+        ),
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Staff Accounts',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _openAddStaffSheet,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.teal,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                label: const Text(
+                  'Add User',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'Search staff by name or email',
+                hintStyle: TextStyle(color: AppColors.textFaint, fontSize: 14),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppColors.textFaint,
+                  size: 20,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 14,
                 color: AppColors.textPrimary,
               ),
             ),
-            ElevatedButton.icon(
-              onPressed: _openAddStaffSheet,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.teal,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-              ),
-              icon: const Icon(Icons.add, size: 16, color: Colors.white),
-              label: const Text(
-                'Add User',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12.5,
+          ),
+          const SizedBox(height: 16),
+          if (_filteredStaff.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 32),
+              child: Center(
+                child: Text(
+                  'No staff members found',
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: TextField(
-            controller: _searchController,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              hintText: 'Search staff by name or email',
-              hintStyle: TextStyle(color: AppColors.textFaint, fontSize: 13.5),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: AppColors.textFaint,
-                size: 20,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
+            )
+          else
+            ..._filteredStaff.map(
+              (s) => _StaffCard(
+                staff: s,
+                api: widget.api,
+                isAdmin: widget.isAdmin,
               ),
             ),
-            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (_filteredStaff.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 32),
-            child: Center(
-              child: Text(
-                'No staff members found',
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-            ),
-          )
-        else
-          ..._filteredStaff.map(
-            (s) =>
-                _StaffCard(staff: s, api: widget.api, isAdmin: widget.isAdmin),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1431,7 +1532,7 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg, label) = _style;
     final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
@@ -1439,7 +1540,7 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: fg),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg),
       ),
     );
     if (onTap == null) {
@@ -1503,17 +1604,11 @@ class _StaffCardState extends State<_StaffCard> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -1524,7 +1619,7 @@ class _StaffCardState extends State<_StaffCard> {
               s.initials,
               style: const TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
             ),
@@ -1537,8 +1632,8 @@ class _StaffCardState extends State<_StaffCard> {
                 Text(
                   s.name,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -1546,7 +1641,7 @@ class _StaffCardState extends State<_StaffCard> {
                 Text(
                   s.roleLabel,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 12,
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1554,7 +1649,7 @@ class _StaffCardState extends State<_StaffCard> {
                 const SizedBox(height: 2),
                 Text(
                   'Last: ${s.lastActive}',
-                  style: TextStyle(fontSize: 11.5, color: AppColors.textFaint),
+                  style: TextStyle(fontSize: 12, color: AppColors.textFaint),
                 ),
               ],
             ),
@@ -1607,7 +1702,7 @@ class _StaffCardState extends State<_StaffCard> {
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: SafeArea(
           child: Column(
@@ -1627,7 +1722,7 @@ class _StaffCardState extends State<_StaffCard> {
                 'Set Staff Status',
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -1641,7 +1736,7 @@ class _StaffCardState extends State<_StaffCard> {
                   title: Text(
                     _statusLabel(st),
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -1719,155 +1814,162 @@ class _ReportsTabState extends State<_ReportsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        const Text(
-          'Reports',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+    return LayoutBuilder(
+      builder: (context, constraints) => ListView(
+        padding: centeredContentPadding(
+          constraints.maxWidth,
+          maxWidth: 1100,
+          top: 20,
+          bottom: 20,
+        ),
+        children: [
+          const Text(
+            'Reports',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        _ReportTypeSelector(
-          selected: _reportType,
-          onChanged: (type) {
-            setState(() {
-              _reportType = type;
-              _error = null;
-              _dispensingRows = [];
-              _seniorCitizenRows = [];
-            });
-          },
-        ),
-        const SizedBox(height: 16),
-        _DateRangeField(
-          dateRange: _dateRange,
-          onPick: () async {
-            final picked = await showDateRangePicker(
-              context: context,
-              firstDate: DateTime(2020),
-              lastDate: DateTime.now(),
-            );
-            if (picked != null) {
+          const SizedBox(height: 16),
+          _ReportTypeSelector(
+            selected: _reportType,
+            onChanged: (type) {
               setState(() {
-                _dateRange = picked;
+                _reportType = type;
                 _error = null;
                 _dispensingRows = [];
                 _seniorCitizenRows = [];
               });
-            }
-          },
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _loadingPreview ? null : _loadPreview,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.teal,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            },
+          ),
+          const SizedBox(height: 16),
+          _DateRangeField(
+            dateRange: _dateRange,
+            onPick: () async {
+              final picked = await showDateRangePicker(
+                context: context,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now(),
+              );
+              if (picked != null) {
+                setState(() {
+                  _dateRange = picked;
+                  _error = null;
+                  _dispensingRows = [];
+                  _seniorCitizenRows = [];
+                });
+              }
+            },
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _loadingPreview ? null : _loadPreview,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.teal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                icon: _loadingPreview
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
+                  icon: _loadingPreview
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.visibility_outlined,
+                          size: 18,
                           color: Colors.white,
                         ),
-                      )
-                    : const Icon(
-                        Icons.visibility_outlined,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                label: Text(
-                  _loadingPreview ? 'Loading...' : 'Preview',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  label: Text(
+                    _loadingPreview ? 'Loading...' : 'Preview',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _exportingPdf ? null : _exportPdf,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.danger,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _exportingPdf ? null : _exportPdf,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.danger,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                icon: _exportingPdf
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
+                  icon: _exportingPdf
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.picture_as_pdf_outlined,
+                          size: 18,
                           color: Colors.white,
                         ),
-                      )
-                    : const Icon(
-                        Icons.picture_as_pdf_outlined,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                label: Text(
-                  _exportingPdf ? 'Exporting...' : 'Export as PDF',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  label: Text(
+                    _exportingPdf ? 'Exporting...' : 'Export as PDF',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
+              ),
+            ],
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.dangerBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.danger.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 18,
+                    color: AppColors.danger,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(
+                        color: AppColors.danger,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
-        ),
-        if (_error != null) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.dangerBg,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.danger.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 18,
-                  color: AppColors.danger,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _error!,
-                    style: const TextStyle(
-                      color: AppColors.danger,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 20),
+          if (_reportType == ReportType.dispensing) ...[
+            _DispensingPreviewTable(rows: _dispensingRows),
+          ] else ...[
+            _SeniorCitizenPreviewTable(rows: _seniorCitizenRows),
+          ],
         ],
-        const SizedBox(height: 20),
-        if (_reportType == ReportType.dispensing) ...[
-          _DispensingPreviewTable(rows: _dispensingRows),
-        ] else ...[
-          _SeniorCitizenPreviewTable(rows: _seniorCitizenRows),
-        ],
-      ],
+      ),
     );
   }
 
@@ -2022,20 +2124,20 @@ class _ReportTypeButton extends StatelessWidget {
     return TapTarget(
       onTap: onTap,
       semanticLabel: label,
-      borderRadius: BorderRadius.circular(11),
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
           color: selected ? AppColors.teal : Colors.transparent,
-          borderRadius: BorderRadius.circular(11),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
             color: selected ? Colors.white : AppColors.textFaint,
           ),
         ),
@@ -2059,7 +2161,7 @@ class _DateRangeField extends StatelessWidget {
       onTap: onPick,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
@@ -2072,12 +2174,12 @@ class _DateRangeField extends StatelessWidget {
               size: 18,
               color: AppColors.textFaint,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 13.5,
+                  fontSize: 14,
                   color: dateRange == null
                       ? AppColors.textFaint
                       : AppColors.textSecondary,
@@ -2159,91 +2261,61 @@ class _DispensingPreviewTable extends StatelessWidget {
                 DataColumn(
                   label: Text(
                     'Date Dispensed',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'RX No.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Physician',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Patient Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Generic Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Brand Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Lot No.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Expiry Date',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Qty Served',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Remarks',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
               ],
@@ -2260,52 +2332,46 @@ class _DispensingPreviewTable extends StatelessWidget {
                     DataCell(
                       Text(
                         row.dateDispensed,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
-                      Text(
-                        row.rxNumber,
-                        style: const TextStyle(fontSize: 12.5),
-                      ),
+                      Text(row.rxNumber, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
                       Text(
                         row.physicianName,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         row.patientName,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         row.genericName,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
-                      Text(
-                        row.brandName,
-                        style: const TextStyle(fontSize: 12.5),
-                      ),
+                      Text(row.brandName, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
-                      Text(row.lotNo, style: const TextStyle(fontSize: 12.5)),
+                      Text(row.lotNo, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
                       Text(
                         row.expiryDate,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         '${row.quantityServed}',
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
@@ -2322,7 +2388,7 @@ class _DispensingPreviewTable extends StatelessWidget {
                           row.remarks,
                           style: TextStyle(
                             color: tagColor,
-                            fontSize: 11.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -2349,11 +2415,11 @@ class _DispensingRecordCard extends StatelessWidget {
     final tagColor = isFully ? AppColors.success : AppColors.warning;
     final tagBg = isFully ? AppColors.successBg : AppColors.warningBg;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -2366,8 +2432,8 @@ class _DispensingRecordCard extends StatelessWidget {
                 child: Text(
                   row.patientName,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
               ),
@@ -2382,7 +2448,7 @@ class _DispensingRecordCard extends StatelessWidget {
                   row.remarks,
                   style: TextStyle(
                     color: tagColor,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -2421,7 +2487,7 @@ class _DispensingRecordCard extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ),
       ],
@@ -2475,73 +2541,49 @@ class _SeniorCitizenPreviewTable extends StatelessWidget {
                 DataColumn(
                   label: Text(
                     'Date',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Senior Citizen Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'OSCA ID No.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Drug Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Gross Cost',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     '% Discount',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Net Cost',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'OR No.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
               ],
@@ -2549,46 +2591,40 @@ class _SeniorCitizenPreviewTable extends StatelessWidget {
                 return DataRow(
                   cells: [
                     DataCell(
-                      Text(row.date, style: const TextStyle(fontSize: 12.5)),
+                      Text(row.date, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
                       Text(
                         row.seniorCitizenName,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
-                      Text(row.oscaId, style: const TextStyle(fontSize: 12.5)),
+                      Text(row.oscaId, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
-                      Text(
-                        row.drugName,
-                        style: const TextStyle(fontSize: 12.5),
-                      ),
+                      Text(row.drugName, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
                       Text(
                         '₱${row.grossCost.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         '${row.discountPercent.toStringAsFixed(0)}%',
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         '₱${row.netCost.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
-                      Text(
-                        row.orNumber,
-                        style: const TextStyle(fontSize: 12.5),
-                      ),
+                      Text(row.orNumber, style: const TextStyle(fontSize: 12)),
                     ),
                   ],
                 );
@@ -2608,11 +2644,11 @@ class _SeniorCitizenRecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -2620,7 +2656,7 @@ class _SeniorCitizenRecordCard extends StatelessWidget {
         children: [
           Text(
             row.seniorCitizenName,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
           const SizedBox(height: 2),
           Text(
@@ -2653,7 +2689,7 @@ class _SeniorCitizenRecordCard extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ),
       ],

@@ -14,11 +14,16 @@ class PatientAdherenceDetailScreen extends StatefulWidget {
   final Map<String, dynamic>? patient;
   final AdherenceStatus? adherence;
 
+  /// False when [adherence] came from the bulk list endpoint, whose refill
+  /// history only has the last 3 fills.
+  final bool fullHistory;
+
   const PatientAdherenceDetailScreen({
     super.key,
     required this.patientId,
     this.patient,
     this.adherence,
+    this.fullHistory = true,
   });
 
   @override
@@ -43,21 +48,35 @@ class _PatientAdherenceDetailScreenState
     );
     _patient = widget.patient;
     _adherence = widget.adherence;
-    _loadDetail();
+    final preview = widget.adherence;
+    if (!widget.fullHistory && preview != null) {
+      // Show the list's data right away and fetch the full refill history
+      // in the background, instead of a full-screen "Loading..." first.
+      _history = List.from(preview.refillHistory);
+      _isLoading = false;
+      _loadDetail(silent: true);
+    } else {
+      _loadDetail();
+    }
   }
 
   bool get _hasUsableAdherence =>
+      widget.fullHistory &&
       widget.adherence != null &&
       (widget.adherence!.hasData ||
           widget.adherence!.medicationNames.isNotEmpty ||
           widget.adherence!.refillHistory.isNotEmpty);
 
-  Future<void> _loadDetail() async {
-    setState(() {
-      _isLoading = true;
-      _isNotFound = false;
-      _errorMessage = null;
-    });
+  /// [silent]: the screen is already showing preview data, so no spinner,
+  /// and a failure keeps the preview instead of replacing it with an error.
+  Future<void> _loadDetail({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+        _isNotFound = false;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final api = LaravelApiService(token: AppSession.instance.token);
@@ -96,6 +115,7 @@ class _PatientAdherenceDetailScreenState
           );
         } catch (e) {
           debugPrint('DETAIL: adherence fetch failed: $e');
+          if (silent) return;
           adherence = AdherenceStatus.noData();
         }
       }
@@ -186,6 +206,10 @@ class _PatientAdherenceDetailScreenState
         });
       }
     } catch (e) {
+      if (silent) {
+        debugPrint('DETAIL: background refresh failed: $e');
+        return;
+      }
       if (mounted) {
         final msg = e.toString();
         setState(() {
@@ -341,8 +365,8 @@ class _PatientAdherenceDetailScreenState
                         Text(
                           'Patient not found',
                           style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -351,7 +375,7 @@ class _PatientAdherenceDetailScreenState
                           'The patient record could not be found. It may have been removed.',
                           style: TextStyle(
                             color: Colors.grey.shade600,
-                            fontSize: 13,
+                            fontSize: 14,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -419,13 +443,13 @@ class _PatientAdherenceDetailScreenState
                                 size: 44,
                                 color: AppColors.danger,
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 12),
                               Text(
                                 _errorMessage!,
                                 style: const TextStyle(color: AppColors.danger),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 12),
                               ElevatedButton.icon(
                                 onPressed: _loadDetail,
                                 icon: const Icon(Icons.refresh),
@@ -439,11 +463,11 @@ class _PatientAdherenceDetailScreenState
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                         children: [
                           _buildScoreCard(tierColor, tierBg, tierLabel),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                           _buildMedicationsCard(),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                           _buildRefillHistoryCard(),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                           _buildInfoBanner(),
                         ],
                       ),
@@ -475,8 +499,8 @@ class _PatientAdherenceDetailScreenState
                 Text(
                   name,
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -484,7 +508,7 @@ class _PatientAdherenceDetailScreenState
                 Text(
                   _genderAgeDisplay,
                   style: const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 12,
                     color: AppColors.textFaint,
                   ),
                 ),
@@ -532,12 +556,12 @@ class _PatientAdherenceDetailScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'ADHERENCE STATUS',
+                  'Adherence status',
                   style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -545,8 +569,8 @@ class _PatientAdherenceDetailScreenState
                   tierLabel,
                   style: TextStyle(
                     color: tierColor,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -554,17 +578,17 @@ class _PatientAdherenceDetailScreenState
                   '$displayScore%',
                   style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (_adherence != null && _adherence!.reason.isNotEmpty) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     _adherence!.reason,
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -643,19 +667,19 @@ class _PatientAdherenceDetailScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'MEDICATIONS FROM DISPENSING HISTORY',
+            'Medications from dispensing history',
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
             ),
           ),
           const SizedBox(height: 12),
           if (medEntries.isEmpty)
             Text(
               'No medications dispensed yet.',
-              style: TextStyle(color: AppColors.textFaint, fontSize: 13),
+              style: TextStyle(color: AppColors.textFaint, fontSize: 14),
             )
           else
             ...medEntries.map((entry) {
@@ -690,7 +714,7 @@ class _PatientAdherenceDetailScreenState
                             Text(
                               entry.key,
                               style: const TextStyle(
-                                fontSize: 13.5,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
@@ -709,7 +733,7 @@ class _PatientAdherenceDetailScreenState
                                 'Complete',
                                 style: TextStyle(
                                   color: AppColors.success,
-                                  fontSize: 11.5,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -720,7 +744,7 @@ class _PatientAdherenceDetailScreenState
                   ),
                   if (!isLast)
                     const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
+                      padding: EdgeInsets.symmetric(vertical: 12),
                       child: Divider(height: 1, color: AppColors.border),
                     ),
                 ],
@@ -738,19 +762,19 @@ class _PatientAdherenceDetailScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'DISPENSING HISTORY',
+            'Dispensing history',
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           if (events.isEmpty)
             Text(
               'No dispensing history yet.',
-              style: TextStyle(color: AppColors.textFaint, fontSize: 13),
+              style: TextStyle(color: AppColors.textFaint, fontSize: 14),
             )
           else
             for (int i = 0; i < events.length; i++)
@@ -790,15 +814,15 @@ class _PatientAdherenceDetailScreenState
           const SizedBox(width: 12),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     event.medicineName,
                     style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -806,7 +830,7 @@ class _PatientAdherenceDetailScreenState
                   Text(
                     '×${event.quantityServed} · ${_fmtDate(event.dispensedAt)}',
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -830,22 +854,22 @@ class _PatientAdherenceDetailScreenState
   Widget _buildInfoBanner() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.tealPale,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.shield_outlined, color: AppColors.teal, size: 18),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               _adherence?.reason ??
                   'View only. Contact a pharmacist or admin to send reminders or make updates.',
               style: const TextStyle(
-                fontSize: 12.5,
+                fontSize: 12,
                 color: AppColors.textSecondary,
                 height: 1.4,
               ),
@@ -882,15 +906,9 @@ class _PatientAdherenceDetailScreenState
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: child,
     );
@@ -942,8 +960,8 @@ class _ScoreRing extends StatelessWidget {
             '$score%',
             style: TextStyle(
               color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
           ),
         ),

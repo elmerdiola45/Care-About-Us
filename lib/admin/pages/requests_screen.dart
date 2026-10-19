@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../admin/data/admin_api_service.dart';
 import '../../../admin/models/admin_models.dart';
 import '../../../common/theme/app_colors.dart';
+import '../../../common/theme/app_theme.dart';
 import '../../../common/utils/ph_time.dart';
 import '../../../common/widgets/responsive_center.dart';
 
@@ -210,6 +211,14 @@ class RequestsScreenState extends State<RequestsScreen> {
 
   void _retry() => _load();
 
+  void _removeRequest(String requestId) {
+    if (!mounted) return;
+    setState(
+      () =>
+          _requests = _requests.where((r) => r.requestId != requestId).toList(),
+    );
+  }
+
   // Replaces (or appends) a single request in _requests without touching
   // _loading — the surrounding list stays visible, only the one card
   // updates. Used after a successful approve/flag/reject so those actions
@@ -218,11 +227,14 @@ class RequestsScreenState extends State<RequestsScreen> {
     if (!mounted) return;
     setState(() {
       final idx = _requests.indexWhere((r) => r.requestId == updated.requestId);
-      if (idx != -1) {
-        _requests[idx] = updated;
-      } else {
-        _requests = [..._requests, updated];
-      }
+      // Builds a new list instead of writing into _requests in place, which
+      // throws if the list from the API/poll is unmodifiable.
+      _requests = idx != -1
+          ? [
+              for (var i = 0; i < _requests.length; i++)
+                i == idx ? updated : _requests[i],
+            ]
+          : [..._requests, updated];
     });
   }
 
@@ -230,33 +242,49 @@ class RequestsScreenState extends State<RequestsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        backgroundColor: AppColors.bg,
-        elevation: 0,
-        title: const Text(
-          'Requests',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Column(
+            children: [
+              // Header lives in the centered column (not an AppBar) so the
+              // title and controls line up with the list on wide screens.
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Requests',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      _buildDateDropdown(),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.refresh,
+                          color: AppColors.textPrimary,
+                        ),
+                        tooltip: 'Refresh',
+                        onPressed: _loading ? null : _load,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _buildFilterBar(),
+              Expanded(child: _buildBody()),
+            ],
           ),
         ),
-        actions: [
-          _buildDateDropdown(),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
-            tooltip: 'Refresh',
-            onPressed: _loading ? null : _load,
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildFilterBar(),
-          Expanded(child: _buildBody()),
-        ],
       ),
     );
   }
@@ -264,7 +292,8 @@ class RequestsScreenState extends State<RequestsScreen> {
   // Display-only filter chips. Always visible — sits above the body so it
   // stays on screen during loading / error / empty / filtered states.
   Widget _buildFilterBar() {
-    return Padding(
+    return Container(
+      alignment: Alignment.centerLeft,
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -274,6 +303,7 @@ class RequestsScreenState extends State<RequestsScreen> {
               () {
                 final selected = _filter == f;
                 return ChoiceChip(
+                  showCheckmark: false,
                   label: Text(f.label),
                   selected: selected,
                   onSelected: (_) => setState(() => _filter = f),
@@ -285,8 +315,8 @@ class RequestsScreenState extends State<RequestsScreen> {
                           color: AppColors.textSecondary.withValues(alpha: 0.4),
                         ),
                   labelStyle: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     color: selected ? Colors.white : AppColors.textSecondary,
                   ),
                 );
@@ -304,10 +334,10 @@ class RequestsScreenState extends State<RequestsScreen> {
   // already-loaded _requests; changing it issues no API request.
   Widget _buildDateDropdown() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppColors.textSecondary.withValues(alpha: 0.3),
         ),
@@ -324,7 +354,7 @@ class RequestsScreenState extends State<RequestsScreen> {
           borderRadius: BorderRadius.circular(12),
           style: const TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             color: AppColors.teal,
           ),
           items: [
@@ -363,7 +393,7 @@ class RequestsScreenState extends State<RequestsScreen> {
                 "Couldn't reach the backend",
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
@@ -385,7 +415,7 @@ class RequestsScreenState extends State<RequestsScreen> {
                     vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: const Text('Retry'),
@@ -416,15 +446,15 @@ class RequestsScreenState extends State<RequestsScreen> {
               Text(
                 'No requests yet',
                 style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                   color: AppColors.textPrimary,
                 ),
               ),
               SizedBox(height: 4),
               Text(
                 'Cross-pharmacy dispenses will appear here.',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -441,16 +471,64 @@ class RequestsScreenState extends State<RequestsScreen> {
         .toList();
 
     if (visible.isEmpty) {
-      return const Center(
+      // Requests exist, just none match the filters — say which filters are
+      // hiding them and offer the widest view instead of a bare message.
+      final statusPart = _filter == _RequestFilter.all
+          ? ''
+          : '${_filter.label.toLowerCase()} ';
+      final canWiden =
+          _filter != _RequestFilter.all ||
+          _dateFilter != _RequestDateFilter.month;
+      return Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 40),
-          child: Text(
-            'No requests found',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              color: AppColors.textPrimary,
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: const BoxDecoration(
+                  color: AppColors.tealPale,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.filter_alt_off_outlined,
+                  color: AppColors.teal,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No requests found',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'There are no ${statusPart}requests for '
+                '${_dateFilter.label.toLowerCase()}.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              if (canWiden) ...[
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () => setState(() {
+                    _filter = _RequestFilter.all;
+                    _dateFilter = _RequestDateFilter.month;
+                  }),
+                  icon: const Icon(Icons.calendar_month_outlined, size: 18),
+                  label: const Text('Show all this month'),
+                ),
+              ],
+            ],
           ),
         ),
       );
@@ -471,6 +549,7 @@ class RequestsScreenState extends State<RequestsScreen> {
                 api: _api,
                 onUpdated: _patchRequest,
                 onActionFailed: _silentRefresh,
+                onDeleted: _removeRequest,
               ),
             ),
           ],
@@ -490,6 +569,7 @@ class _RequestCard extends StatefulWidget {
   final AdminApiService api;
   final ValueChanged<CrossPharmacyRequestResponse> onUpdated;
   final VoidCallback onActionFailed;
+  final ValueChanged<String> onDeleted;
 
   const _RequestCard({
     super.key,
@@ -497,6 +577,7 @@ class _RequestCard extends StatefulWidget {
     required this.api,
     required this.onUpdated,
     required this.onActionFailed,
+    required this.onDeleted,
   });
 
   @override
@@ -516,6 +597,9 @@ class _RequestCardState extends State<_RequestCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request approved and applied.')),
       );
+      // The card keeps its State across the status change (same key),
+      // so clear the spinner or the next button (e.g. Delete) stays stuck.
+      setState(() => _acting = false);
       if (updated != null) {
         widget.onUpdated(updated);
       } else {
@@ -563,6 +647,9 @@ class _RequestCardState extends State<_RequestCard> {
           content: Text('Request flagged as an over-dispense risk.'),
         ),
       );
+      // The card keeps its State across the status change (same key),
+      // so clear the spinner or the next button (e.g. Delete) stays stuck.
+      setState(() => _acting = false);
       if (updated != null) {
         widget.onUpdated(updated);
       } else {
@@ -573,6 +660,51 @@ class _RequestCardState extends State<_RequestCard> {
       setState(() => _acting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$e'), backgroundColor: AppColors.danger),
+      );
+    }
+  }
+
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete request?'),
+        content: Text(
+          'Remove the request for ${widget.request.patientName} '
+          '(${widget.request.rxNumber}) from this list? Its audit record '
+          'and any alerts are kept.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _acting = true);
+    try {
+      await widget.api.deleteCrossPharmacyRequest(widget.request.requestId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Request deleted.')));
+      widget.onDeleted(widget.request.requestId);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _acting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.danger,
+        ),
       );
     }
   }
@@ -601,6 +733,9 @@ class _RequestCardState extends State<_RequestCard> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Request rejected.')));
+      // The card keeps its State across the status change (same key),
+      // so clear the spinner or the next button (e.g. Delete) stays stuck.
+      setState(() => _acting = false);
       if (updated != null) {
         widget.onUpdated(updated);
       } else {
@@ -622,102 +757,181 @@ class _RequestCardState extends State<_RequestCard> {
     final isRejected = request.status == RequestStatus.rejected;
     final isActionable = request.status == RequestStatus.pending;
 
+    final submittedBy =
+        'Submitted by ${request.dispensedBy ?? request.requestingStaffName}'
+        '${_formatWhen(request.dispensedAt)}';
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  request.requestingPharmacyName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
-                    color: AppColors.textPrimary,
-                  ),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.tealPale,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.local_pharmacy_outlined,
+                  color: AppColors.teal,
+                  size: 22,
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request.requestingPharmacyName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 14,
+                      runSpacing: 4,
+                      children: [
+                        if (request.requestingPharmacyLocation.isNotEmpty)
+                          _MetaItem(
+                            icon: Icons.place_outlined,
+                            text: request.requestingPharmacyLocation,
+                          ),
+                        if (request.requestingPharmacyLicense.isNotEmpty)
+                          _MetaItem(
+                            icon: Icons.verified_outlined,
+                            text:
+                                'FDA License No. ${request.requestingPharmacyLicense}',
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
               _StatusBadge(status: request.status),
             ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            request.requestingPharmacyLocation,
-            style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-          ),
-          if (request.requestingPharmacyLicense.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              'FDA License No. ${request.requestingPharmacyLicense}',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(10),
+            width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.bg,
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.surface,
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${request.patientName} · ${request.rxNumber}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.person_outline_rounded,
+                        size: 18,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          request.patientName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Text(
+                          request.rxNumber,
+                          style: appMono(color: AppColors.textSecondary),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
+                const Divider(height: 1, color: AppColors.border),
                 for (final m in request.medicines)
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      '${m.name}'
-                      '${m.brand.trim().isNotEmpty ? ' (${m.brand.trim()})' : ''}'
-                      '${m.dosage.trim().isNotEmpty ? ' ${m.dosage.trim()}' : ''}'
-                      ' × ${m.quantity} claimed',
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        color: AppColors.teal,
-                      ),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.medication_outlined,
+                          size: 17,
+                          color: AppColors.teal,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${m.name}'
+                            '${m.brand.trim().isNotEmpty ? ' (${m.brand.trim()})' : ''}'
+                            '${m.dosage.trim().isNotEmpty ? ' ${m.dosage.trim()}' : ''}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.tealPale,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            '× ${m.quantity} claimed',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.teal,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                const SizedBox(height: 4),
               ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Submitted by: ${request.dispensedBy ?? request.requestingStaffName}'
-            '${request.dispensedAt != null ? ' · ${request.dispensedAt}' : ''}',
-            style: TextStyle(fontSize: 11.5, color: AppColors.textFaint),
           ),
           if ((isFlagged || isRejected) && request.rejectionReason != null) ...[
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isRejected ? AppColors.redLight : AppColors.amberLight,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 '${isRejected ? 'Rejected' : 'Flagged'}: ${request.rejectionReason}',
@@ -734,10 +948,10 @@ class _RequestCardState extends State<_RequestCard> {
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.redLight,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: AppColors.danger.withValues(alpha: 0.2),
                 ),
@@ -748,14 +962,14 @@ class _RequestCardState extends State<_RequestCard> {
                   const Row(
                     children: [
                       Icon(Icons.block, size: 16, color: AppColors.danger),
-                      SizedBox(width: 6),
+                      SizedBox(width: 8),
                       Text(
-                        'OVERDISPENSING RISK',
+                        'Overdispensing risk',
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.danger,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0,
                         ),
                       ),
                     ],
@@ -765,9 +979,7 @@ class _RequestCardState extends State<_RequestCard> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
-                        '${d.medicine}: this request wants ${d.requested}, another '
-                        'pending request wants ${d.otherPending} — combined that\'s '
-                        'more than the ${d.remaining} remaining on this prescription.',
+                        _exceedLine(d),
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.redDark,
@@ -777,10 +989,14 @@ class _RequestCardState extends State<_RequestCard> {
                     ),
                   const SizedBox(height: 4),
                   Text(
-                    'Approving will record only the remaining amount and flag this '
-                    'request as a critical over-dispense attempt for audit.',
+                    // Approve re-checks the remaining stock and is refused
+                    // (CrossPharmacyDispenseService::validateItems), so it
+                    // can't partially apply this request.
+                    'Approve will be blocked because there isn\'t enough left. '
+                    'Use Flag as risk if the medicine was already handed over, '
+                    'or Reject if it wasn\'t.',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       color: AppColors.redDark.withValues(alpha: 0.7),
                     ),
                   ),
@@ -788,104 +1004,199 @@ class _RequestCardState extends State<_RequestCard> {
               ),
             ),
           ],
-          if (isActionable) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _acting ? null : _reject,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textSecondary,
-                      side: BorderSide(color: AppColors.textSecondary),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final submitted = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.badge_outlined,
+                    size: 15,
+                    color: AppColors.textFaint,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      submittedBy,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                    child: _acting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.textSecondary,
-                            ),
-                          )
-                        : const Text(
-                            'Reject',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
-                            ),
-                          ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _acting ? null : _flagAsRisk,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.danger,
-                      side: const BorderSide(color: AppColors.danger),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                ],
+              );
+              if (!isActionable) {
+                return Row(
+                  children: [
+                    Expanded(child: submitted),
+                    const SizedBox(width: 12),
+                    _actionButton(
+                      label: 'Delete',
+                      icon: Icons.delete_outline_rounded,
+                      color: AppColors.danger,
+                      onPressed: _delete,
+                      expand: false,
                     ),
-                    child: _acting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.danger,
-                            ),
-                          )
-                        : const Text(
-                            'Flag as risk',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                  ),
+                  ],
+                );
+              }
+              final wide = constraints.maxWidth >= 620;
+              final buttons = [
+                _actionButton(
+                  label: 'Reject',
+                  icon: Icons.close_rounded,
+                  color: AppColors.textSecondary,
+                  onPressed: _reject,
+                  expand: !wide,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _acting ? null : _approve,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.teal,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: _acting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Approve',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                  ),
+                const SizedBox(width: 12),
+                _actionButton(
+                  label: 'Flag as risk',
+                  icon: Icons.flag_outlined,
+                  color: AppColors.danger,
+                  onPressed: _flagAsRisk,
+                  expand: !wide,
                 ),
-              ],
-            ),
-          ],
+                const SizedBox(width: 12),
+                _actionButton(
+                  label: 'Approve',
+                  icon: Icons.check_rounded,
+                  color: AppColors.teal,
+                  onPressed: _approve,
+                  filled: true,
+                  expand: !wide,
+                ),
+              ];
+              if (wide) {
+                return Row(
+                  children: [
+                    Expanded(child: submitted),
+                    const SizedBox(width: 12),
+                    ...buttons,
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  submitted,
+                  const SizedBox(height: 12),
+                  Row(children: buttons),
+                ],
+              );
+            },
+          ),
         ],
       ),
+    );
+  }
+
+  // Only mentions other pending requests when they actually add to the
+  // shortfall — "another request wants 0" made a plain over-claim read as
+  // a conflict between two requests.
+  static String _exceedLine(ExceedDetailItem d) {
+    final left = d.remaining <= 0
+        ? 'nothing is left on this prescription'
+        : 'only ${d.remaining} ${d.remaining == 1 ? 'is' : 'are'} left';
+    if (d.otherPending <= 0) {
+      return '${d.medicine}: this request asks for ${d.requested}, but $left.';
+    }
+    return '${d.medicine}: this request asks for ${d.requested} and other '
+        'pending requests ask for ${d.otherPending}, but $left.';
+  }
+
+  static String _formatWhen(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    final parsed = DateTime.tryParse(raw);
+    return ' · ${parsed != null ? formatPhilippineDateTime(parsed) : raw}';
+  }
+
+  Widget _actionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+    required bool expand,
+    bool filled = false,
+  }) {
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    );
+    const padding = EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+    const textStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 14);
+    final Widget child = _acting
+        ? SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: filled ? Colors.white : color,
+            ),
+          )
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 17),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: textStyle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          );
+    final Widget button = filled
+        ? ElevatedButton(
+            onPressed: _acting ? null : onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: padding,
+              shape: shape,
+            ),
+            child: child,
+          )
+        : OutlinedButton(
+            onPressed: _acting ? null : onPressed,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: color,
+              side: BorderSide(color: color.withValues(alpha: 0.6)),
+              padding: padding,
+              shape: shape,
+            ),
+            child: child,
+          );
+    return expand ? Expanded(child: button) : button;
+  }
+}
+
+class _MetaItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _MetaItem({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.textFaint),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -923,7 +1234,7 @@ class _FlagReasonDialogState extends State<_FlagReasonDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(
         widget.title,
-        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -932,7 +1243,7 @@ class _FlagReasonDialogState extends State<_FlagReasonDialog> {
           Text(
             widget.description,
             style: const TextStyle(
-              fontSize: 12.5,
+              fontSize: 12,
               color: AppColors.textSecondary,
             ),
           ),
@@ -944,7 +1255,7 @@ class _FlagReasonDialogState extends State<_FlagReasonDialog> {
             decoration: InputDecoration(
               hintText: widget.hintText,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
@@ -1005,14 +1316,14 @@ class _StatusBadge extends StatelessWidget {
         break;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg),
       ),
     );
   }

@@ -139,13 +139,13 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                                 size: 44,
                                 color: AppColors.danger,
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 12),
                               Text(
                                 _errorMessage!,
                                 style: const TextStyle(color: AppColors.danger),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 12),
                               ElevatedButton.icon(
                                 onPressed: _loadAlerts,
                                 icon: const Icon(Icons.refresh),
@@ -160,7 +160,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                         itemCount: _filtered.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) =>
                             _buildAlertCard(_filtered[index]),
                       ),
@@ -187,8 +187,8 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
             child: Text(
               'Dispensing Alerts',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -211,13 +211,13 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
     ];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
       child: Row(
         children: chips.map((chip) {
           final (label, value) = chip;
           final isSelected = _selectedPriority == value;
           return Padding(
-            padding: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.only(right: 12),
             child: ChoiceChip(
               label: Text(label),
               selected: isSelected,
@@ -228,15 +228,15 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
               labelStyle: TextStyle(
                 color: isSelected ? Colors.white : AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
-                fontSize: 13,
+                fontSize: 14,
               ),
               backgroundColor: const Color(0xFFEDF1F1),
               selectedColor: _selectedPriority == AlertPriority.high
                   ? AppColors.danger
                   : AppColors.teal,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 side: BorderSide.none,
               ),
             ),
@@ -262,22 +262,24 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
           AlertTracker.instance.markAsRead(alert.alertId);
           LaravelApiService(token: AppSession.instance.token)
               .markAlertAsRead(alert.alertId)
-              .catchError((_) => AlertTracker.instance.unmarkAsRead(alert.alertId));
+              .catchError(
+                (_) => AlertTracker.instance.unmarkAsRead(alert.alertId),
+              );
         }
         if (mounted) {
           Navigator.of(context)
               .push(
-            MaterialPageRoute(
-              builder: (_) => AlertDetailScreen(alertId: alert.alertId),
-            ),
-          )
+                MaterialPageRoute(
+                  builder: (_) => AlertDetailScreen(alertId: alert.alertId),
+                ),
+              )
               .then((_) {
-            if (mounted) _loadAlerts(silent: true);
-          });
+                if (mounted) _loadAlerts(silent: true);
+              });
         }
       },
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
@@ -286,13 +288,6 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                 ? AppColors.danger.withValues(alpha: 0.25)
                 : AppColors.border,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Row(
           children: [
@@ -301,7 +296,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
               height: 40,
               decoration: BoxDecoration(
                 color: bg,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: titleColor, size: 20),
             ),
@@ -313,7 +308,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                   Text(
                     alert.title,
                     style: TextStyle(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       fontSize: 14,
                       color: AppColors.textPrimary,
                     ),
@@ -322,7 +317,7 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                   Text(
                     alert.note,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                       height: 1.4,
                     ),
@@ -352,8 +347,8 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
                 child: Text(
                   isHigh ? 'High' : 'Normal',
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     color: titleColor,
                   ),
                 ),
@@ -377,11 +372,11 @@ class _AlertsDashboardScreenState extends State<AlertsDashboardScreen> {
               size: 44,
               color: AppColors.success,
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 12),
             Text(
               'No active alerts',
               style: TextStyle(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),

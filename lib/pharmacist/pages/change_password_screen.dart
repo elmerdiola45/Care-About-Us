@@ -71,7 +71,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       labelText: label,
       filled: true,
       fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: AppColors.border),
@@ -108,7 +108,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           'Change Password',
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -176,7 +176,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
                         vertical: 12,
-                        horizontal: 14,
+                        horizontal: 16,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.dangerBg,
@@ -195,7 +195,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                               _errorMessage!,
                               style: const TextStyle(
                                 color: AppColors.danger,
-                                fontSize: 13,
+                                fontSize: 14,
                               ),
                             ),
                           ),
@@ -212,7 +212,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         backgroundColor: AppColors.teal,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 0,
                       ),
@@ -228,8 +228,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           : const Text(
                               'Update Password',
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                     ),

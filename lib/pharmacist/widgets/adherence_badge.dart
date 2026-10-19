@@ -15,10 +15,7 @@ class AdherenceBadge extends StatelessWidget {
   });
 
   factory AdherenceBadge.fromStatus(String? status) {
-    return AdherenceBadge(
-      tier: tierFor(status),
-      label: status ?? 'Unknown',
-    );
+    return AdherenceBadge(tier: tierFor(status), label: status ?? 'Unknown');
   }
 
   (Color, Color, String) get _style {
@@ -50,11 +47,14 @@ class AdherenceBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
       child: Text(
         displayLabel,
-        style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 12.5),
+        style: TextStyle(color: fg, fontWeight: FontWeight.w600, fontSize: 12),
       ),
     );
   }

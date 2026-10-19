@@ -590,15 +590,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   color: isHighPriority ? AppColors.danger : AppColors.warning,
                   size: 28,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     isHighPriority
                         ? 'BLOCKED: High Priority Alert'
                         : 'Dispensing Alert',
                     style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: isHighPriority
                           ? AppColors.danger
                           : AppColors.textPrimary,
@@ -622,10 +622,10 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 if (isHighPriority) ...[
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppColors.dangerBg,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
@@ -639,7 +639,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                           child: Text(
                             'This requires admin review before proceeding.',
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: AppColors.danger,
                             ),
@@ -740,13 +740,13 @@ class _DispenseScreenState extends State<DispenseScreen> {
               color: isPartial ? Colors.orange : Colors.red,
               size: 24,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 isPartial ? 'Partially saved to server' : 'Not saved to server',
                 style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
                 ),
               ),
             ),
@@ -789,7 +789,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Official Receipt Number',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -797,7 +797,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
           children: [
             const Text(
               'Enter the OR number issued for this senior citizen discount transaction.',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1145,11 +1145,22 @@ class _DispenseScreenState extends State<DispenseScreen> {
         dispensingStatus: newStatus,
       );
 
-      await Navigator.of(context).push(
+      final done = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (_) => DispensingSummaryScreen(transaction: transaction),
         ),
       );
+
+      // Opened as its own page (deep link from Saved Rx / QR scanner):
+      // "Done" returns to wherever the user came from. As the Dispense tab
+      // there is nothing to pop, so just go back to the list.
+      if (done == true &&
+          mounted &&
+          widget.initialOcrCode != null &&
+          Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+        return;
+      }
 
       if (mounted) {
         setState(() {
@@ -1186,11 +1197,11 @@ class _DispenseScreenState extends State<DispenseScreen> {
         title: widget.initialOcrCode != null && selectedEntry != null
             ? Text(
                 selectedEntry.prescription.patientName,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(fontWeight: FontWeight.w600),
               )
             : const Text(
                 'Dispensing Record',
-                style: TextStyle(fontWeight: FontWeight.w700),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
         actions: [
           if (_selectedOcrCode != null)
@@ -1268,41 +1279,25 @@ class _DispenseScreenState extends State<DispenseScreen> {
                     Text(
                       'This prescription may belong to another pharmacy. '
                       'Use Cross-Pharmacy Scan to submit a dispensing request.',
-                      style: TextStyle(
-                        color: Color(0xFF8A8F9C),
-                        fontSize: 12.5,
-                      ),
+                      style: TextStyle(color: Color(0xFF8A8F9C), fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               )
             : _selectedOcrCode != null && selectedEntry != null
-            ? SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  children: [
-                    _buildPatientCard(selectedEntry),
-                    if (_isBlockedByStock) ...[
-                      const SizedBox(height: 18),
-                      _buildMedicineNotAvailableCard(),
+            ? _buildDetailLayout(selectedEntry)
+            : Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 820),
+                  child: Column(
+                    children: [
+                      _buildSearchBar(),
+                      Expanded(child: _buildEntryList(entries)),
                     ],
-                    const SizedBox(height: 18),
-                    _sectionLabel('DISPENSING HISTORY'),
-                    const SizedBox(height: 8),
-                    _buildBackendHistoryCard(),
-                    const SizedBox(height: 18),
-                    _sectionLabel('DISPENSE NOW'),
-                    const SizedBox(height: 8),
-                    _buildMedicinesList(selectedEntry),
-                  ],
+                  ),
                 ),
-              )
-            : Column(
-                children: [
-                  _buildSearchBar(),
-                  Expanded(child: _buildEntryList(entries)),
-                ],
               ),
       ),
       bottomNavigationBar: _buildBottomBar(),
@@ -1310,21 +1305,70 @@ class _DispenseScreenState extends State<DispenseScreen> {
   }
 
   // ---------- SEARCH BAR ----------
+  /// Selected-prescription view. Phones and tablets get the original single
+  /// column (centered and capped so cards don't stretch across a browser
+  /// window); wide screens put the patient + history on the left and the
+  /// "Dispense now" list on the right so both are visible without scrolling.
+  Widget _buildDetailLayout(PrescriptionEntry entry) {
+    final summary = <Widget>[
+      _buildPatientCard(entry),
+      if (_isBlockedByStock) ...[
+        const SizedBox(height: 16),
+        _buildMedicineNotAvailableCard(),
+      ],
+      const SizedBox(height: 16),
+      _sectionLabel('Dispensing history'),
+      const SizedBox(height: 8),
+      _buildBackendHistoryCard(),
+    ];
+    final dispense = <Widget>[
+      _sectionLabel('DISPENSE NOW'),
+      const SizedBox(height: 8),
+      _buildMedicinesList(entry),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final twoColumn = constraints.maxWidth >= 1000;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: twoColumn ? 1280 : 820),
+              child: twoColumn
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: Column(children: summary)),
+                          Expanded(child: Column(children: dispense)),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        ...summary,
+                        const SizedBox(height: 16),
+                        ...dispense,
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFEEF0F3)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 1),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
         ),
         child: TextField(
           controller: _searchController,
@@ -1332,10 +1376,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
           style: const TextStyle(fontSize: 14, color: Color(0xFF1A1D29)),
           decoration: InputDecoration(
             hintText: 'Search by patient name, RX code, or doctor...',
-            hintStyle: const TextStyle(
-              color: Color(0xFF8A8F9C),
-              fontSize: 13.5,
-            ),
+            hintStyle: const TextStyle(color: Color(0xFF8A8F9C), fontSize: 14),
             prefixIcon: const Icon(
               Icons.search,
               color: Color(0xFF8A8F9C),
@@ -1357,8 +1398,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
+              horizontal: 16,
+              vertical: 16,
             ),
           ),
         ),
@@ -1368,14 +1409,17 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
   // ---------- SECTION LABEL ----------
   Widget _sectionLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8, top: 4),
+    // Left-aligned with the 16px-margin cards below it (the parent Column
+    // centers its children by default, which floated these labels mid-row).
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.fromLTRB(20, 4, 16, 8),
       child: Text(
         text,
         style: const TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.6,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0,
           color: Color(0xFFA4A9B4),
         ),
       ),
@@ -1391,17 +1435,11 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1414,7 +1452,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFFF0F2F5),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFEEF0F3)),
+                border: Border.all(color: AppColors.border),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -1438,7 +1476,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFFF0F2F5),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFEEF0F3)),
+                border: Border.all(color: AppColors.border),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -1469,8 +1507,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 p.patientName.isNotEmpty ? p.patientName[0].toUpperCase() : '?',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ),
@@ -1483,7 +1521,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   '${p.patientName}, ${p.patientAge}${p.patientGender}',
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF1A1D29),
                   ),
                 ),
@@ -1491,7 +1529,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 Text(
                   '${p.ocrCode} · ${p.doctorName} · PRC ${p.licenseNo}',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     color: Color(0xFF8A8F9C),
                     height: 1.5,
                   ),
@@ -1500,14 +1538,14 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   children: [
                     if (p.isSenior)
                       Container(
-                        margin: const EdgeInsets.only(top: 6, right: 6),
+                        margin: const EdgeInsets.only(top: 8, right: 8),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
-                          vertical: 3,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF7E6),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1517,12 +1555,12 @@ class _DispenseScreenState extends State<DispenseScreen> {
                               size: 12,
                               color: Color(0xFFD97706),
                             ),
-                            SizedBox(width: 3),
+                            SizedBox(width: 4),
                             Text(
                               'Senior Citizen',
                               style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
                                 color: Color(0xFFD97706),
                               ),
                             ),
@@ -1531,9 +1569,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
                       ),
                     if (p.dispensingStatus != DispensingStatus.pending)
                       Container(
-                        margin: const EdgeInsets.only(top: 6),
+                        margin: const EdgeInsets.only(top: 8),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
+                          horizontal: 12,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
@@ -1545,7 +1583,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                                     DispensingStatus.overDispensing
                               ? const Color(0xFFFEE2E2)
                               : const Color(0xFFFFF7E6),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
                           p.dispensingStatus == DispensingStatus.fullyDispensed
@@ -1555,8 +1593,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                               ? 'Overdispensing'
                               : 'Partial',
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                             color:
                                 p.dispensingStatus ==
                                     DispensingStatus.fullyDispensed
@@ -1616,7 +1654,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
               Text(
                 'Medicine Not Available',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w600,
                   fontSize: 14,
                   color: Color(0xFFDC2626),
                 ),
@@ -1627,9 +1665,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
           const Text(
             'None of the medicine(s) still owed on this prescription are '
             'currently in stock at this pharmacy:',
-            style: TextStyle(fontSize: 12.5, color: Color(0xFF991B1B)),
+            style: TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           ...unavailable.map(
             (m) => Padding(
               padding: const EdgeInsets.only(bottom: 2),
@@ -1638,20 +1676,20 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 '${m.brand.isNotEmpty ? ' (${m.brand})' : ''}'
                 '${m.dosage.isNotEmpty ? ' ${m.dosage}' : ''}',
                 style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF991B1B),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           const Text(
             'Dispensing is blocked for this prescription until stock is '
             'available. Nothing has been dispensed.',
             style: TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -1667,8 +1705,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 textStyle: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ),
@@ -1685,15 +1723,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 1),
-            ),
-          ],
         ),
         child: Row(
           children: [
@@ -1702,7 +1734,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
               size: 20,
               color: const Color(0xFF8A8F9C).withValues(alpha: 0.6),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1710,8 +1742,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   Text(
                     'No dispensing history yet',
                     style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       color: Color(0xFF1A1D29),
                     ),
                   ),
@@ -1733,15 +1765,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 1),
-            ),
-          ],
         ),
         child: const Row(
           children: [
@@ -1753,11 +1779,11 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 color: Color(0xFF0B7B77),
               ),
             ),
-            SizedBox(width: 10),
+            SizedBox(width: 12),
             Text(
               'Loading dispensing history…',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF0B7B77),
               ),
@@ -1771,15 +1797,9 @@ class _DispenseScreenState extends State<DispenseScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1795,8 +1815,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
               Text(
                 'Server History (${_backendLogs.length})',
                 style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF0B7B77),
                 ),
               ),
@@ -1804,8 +1824,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
           ),
           const SizedBox(height: 12),
           for (int i = 0; i < _backendLogs.length; i++) ...[
-            if (i > 0) const Divider(color: Color(0xFFEEF0F3), height: 1),
-            const SizedBox(height: 10),
+            if (i > 0) const Divider(color: AppColors.border, height: 1),
+            const SizedBox(height: 12),
             _buildBackendLogRow(_backendLogs[i]),
           ],
         ],
@@ -1826,7 +1846,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
     MedicineItem? matched;
     try {
       matched = _selectedEntry?.prescription.medicines.firstWhere(
-        (m) => m.name == log.productName,
+        (m) =>
+            m.name.trim().toLowerCase() == log.productName.trim().toLowerCase(),
       );
     } on StateError {
       matched = null;
@@ -1872,22 +1893,22 @@ class _DispenseScreenState extends State<DispenseScreen> {
             '${log.productName} ×${log.quantityServed}',
             style: const TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: Color(0xFF1A1D29),
             ),
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: badgeBg,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
               color: badgeFg,
             ),
           ),
@@ -1907,29 +1928,23 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (int i = 0; i < p.medicines.length; i++) ...[
-            if (i > 0) const Divider(color: Color(0xFFEEF0F3), height: 1),
-            const SizedBox(height: 14),
+            if (i > 0) const Divider(color: AppColors.border, height: 1),
+            const SizedBox(height: 16),
             _buildMedicineStepperRow(p.medicines[i]),
           ],
           const SizedBox(height: 16),
-          Divider(color: const Color(0xFFEEF0F3), height: 1),
-          const SizedBox(height: 14),
+          Divider(color: AppColors.border, height: 1),
+          const SizedBox(height: 16),
           _buildTotalRow(p),
         ],
       ),
@@ -1967,14 +1982,14 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 m.brand.isNotEmpty ? '${m.name} (${m.brand})' : m.name,
                 style: const TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF1A1D29),
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 m.dosage,
-                style: TextStyle(fontSize: 13, color: const Color(0xFF8A8F9C)),
+                style: TextStyle(fontSize: 14, color: const Color(0xFF8A8F9C)),
               ),
               if (m.unitPrice > 0)
                 Text(
@@ -1989,7 +2004,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 Text(
                   'Already dispensed: \u00D7${m.disposedQuantity}',
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     color: Color(0xFF1F9D63),
                     fontWeight: FontWeight.w600,
                   ),
@@ -1998,7 +2013,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
           ),
           if (isOverDispensed) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFFEE2E2),
                 borderRadius: BorderRadius.circular(8),
@@ -2006,15 +2021,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
               child: Text(
                 'Overdispensing',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: const Color(0xFFDC2626),
                 ),
               ),
             ),
           ] else if (isFullyDispensed) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFE6F6EE),
                 borderRadius: BorderRadius.circular(8),
@@ -2022,15 +2037,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
               child: const Text(
                 'Fully Dispensed',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF1F9D63),
                 ),
               ),
             ),
           ] else if (isOutOfStock) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFFEE2E2),
                 borderRadius: BorderRadius.circular(8),
@@ -2041,8 +2056,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
               child: const Text(
                 'Out of Stock',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFFDC2626),
                 ),
               ),
@@ -2069,13 +2084,13 @@ class _DispenseScreenState extends State<DispenseScreen> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                           color: Color(0xFF1A1D29),
                         ),
                         decoration: const InputDecoration(
                           isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 6),
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
                           border: OutlineInputBorder(),
                         ),
                         onChanged: (value) =>
@@ -2096,13 +2111,13 @@ class _DispenseScreenState extends State<DispenseScreen> {
                           ? 'of $cap (stock: ${m.availableStock})'
                           : 'of $cap'),
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     color: _quantityErrors[m.name] != null || isPartiallyStocked
                         ? const Color(0xFFDC2626)
                         : const Color(0xFFA4A9B4),
                     fontWeight:
                         _quantityErrors[m.name] != null || isPartiallyStocked
-                        ? FontWeight.w700
+                        ? FontWeight.w600
                         : FontWeight.normal,
                   ),
                 ),
@@ -2134,13 +2149,13 @@ class _DispenseScreenState extends State<DispenseScreen> {
           children: [
             const Text(
               'Total Medicines',
-              style: TextStyle(fontSize: 13, color: Color(0xFF8A8F9C)),
+              style: TextStyle(fontSize: 14, color: Color(0xFF8A8F9C)),
             ),
             Text(
               '$totalCount',
               style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: Color(0xFF0B5E55),
               ),
             ),
@@ -2153,16 +2168,16 @@ class _DispenseScreenState extends State<DispenseScreen> {
             children: [
               const Text(
                 'Subtotal',
-                style: TextStyle(fontSize: 13, color: Color(0xFF8A8F9C)),
+                style: TextStyle(fontSize: 14, color: Color(0xFF8A8F9C)),
               ),
               Text(
                 '₱${gross.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 13, color: Color(0xFF8A8F9C)),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF8A8F9C)),
               ),
             ],
           ),
           if (p.isSenior) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -2177,7 +2192,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                     Text(
                       'SC Discount (20%)',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         color: Color(0xFFD97706),
                         fontWeight: FontWeight.w600,
                       ),
@@ -2187,15 +2202,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 Text(
                   '−₱${discount.toStringAsFixed(2)}',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     color: Color(0xFFD97706),
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            const Divider(color: Color(0xFFEEF0F3), height: 1),
+            const Divider(color: AppColors.border, height: 1),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2204,15 +2219,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   'Total Payable',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF1A1D29),
                   ),
                 ),
                 Text(
                   '₱${net.toStringAsFixed(2)}',
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF0B5E55),
                   ),
                 ),
@@ -2220,7 +2235,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
             ),
           ] else ...[
             const SizedBox(height: 8),
-            const Divider(color: Color(0xFFEEF0F3), height: 1),
+            const Divider(color: AppColors.border, height: 1),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2229,15 +2244,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   'Total Payable',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF1A1D29),
                   ),
                 ),
                 Text(
                   '₱${net.toStringAsFixed(2)}',
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF0B5E55),
                   ),
                 ),
@@ -2298,10 +2313,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                 _searchQuery.isNotEmpty
                     ? 'Try a different search term.'
                     : 'All prescriptions are either fully dispensed or already completed.',
-                style: const TextStyle(
-                  color: Color(0xFF8A8F9C),
-                  fontSize: 12.5,
-                ),
+                style: const TextStyle(color: Color(0xFF8A8F9C), fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -2313,7 +2325,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: entries.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final entry = entries[index];
         final p = entry.prescription;
@@ -2325,27 +2337,16 @@ class _DispenseScreenState extends State<DispenseScreen> {
 
         return InkWell(
           onTap: () => _onSelectEntry(entry),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isSelected ? const Color(0xFFF0FAF9) : Colors.white,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected
-                    ? const Color(0xFF0B7B77)
-                    : const Color(0xFFEEF0F3),
+                color: isSelected ? const Color(0xFF0B7B77) : AppColors.border,
                 width: isSelected ? 1.5 : 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: isSelected ? 0.06 : 0.02,
-                  ),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2359,7 +2360,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                         color: isSelected
                             ? const Color(0xFF0B7B77)
                             : AppColors.teal.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         Icons.person_outline,
@@ -2375,7 +2376,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                           Text(
                             p.patientName,
                             style: TextStyle(
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               fontSize: 14,
                               color: isSelected
                                   ? const Color(0xFF0B7B77)
@@ -2397,7 +2398,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
-                          vertical: 3,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEE2E2),
@@ -2406,8 +2407,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                         child: Text(
                           'Overdispensing',
                           style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                             color: const Color(0xFFDC2626),
                           ),
                         ),
@@ -2416,7 +2417,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
-                          vertical: 3,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF7E6),
@@ -2425,8 +2426,8 @@ class _DispenseScreenState extends State<DispenseScreen> {
                         child: Text(
                           'Partial',
                           style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                             color: const Color(0xFFD97706),
                           ),
                         ),
@@ -2448,7 +2449,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
                     Text(
                       p.ocrCode,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         color: const Color(0xFF9CA3AF),
                         fontFamily: 'monospace',
                       ),
@@ -2483,7 +2484,7 @@ class _DispenseScreenState extends State<DispenseScreen> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: const Color(0xFFEEF0F3))),
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: SafeArea(
         child: Row(
@@ -2510,15 +2511,15 @@ class _DispenseScreenState extends State<DispenseScreen> {
                     foregroundColor: const Color(0xFF0B7B77),
                     side: BorderSide(color: Color(0xFF0B7B77)),
                     padding: EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: context.isSmallPhone ? 10 : 16,
+                      vertical: 16,
+                      horizontal: context.isSmallPhone ? 12 : 16,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     textStyle: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
                   ),
                 ),
@@ -2546,13 +2547,13 @@ class _DispenseScreenState extends State<DispenseScreen> {
                   disabledBackgroundColor: Color(
                     0xFF0B7B77,
                   ).withValues(alpha: 0.4),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   textStyle: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
               ),

@@ -36,6 +36,27 @@ class PrescriptionMedicine {
   /// an OCR misread than a genuine match.
   final double matchConfidence;
 
+  /// The OCR line(s) this medicine was parsed from, exactly as read —
+  /// shown on the review screen as "Read as" so the pharmacist can
+  /// compare what the AI read with what was matched.
+  final String sourceText;
+
+  /// The vision model's own legibility rating for [sourceText] ('clear',
+  /// 'partial', 'unclear'), worst of its lines; empty when unknown (e.g.
+  /// OCR.space results, which carry no per-line rating).
+  final String sourceLegibility;
+
+  /// The Sig/instruction text attached to this medicine, as read.
+  final String sigText;
+
+  /// Empty when [quantity] was written on the prescription. Otherwise a
+  /// short explanation of where it came from — an estimate from the Sig
+  /// ("1 tab × 2/day × 7 days = 14") or that it wasn't written at all —
+  /// so the review screen can ask the pharmacist to confirm it.
+  final String quantityBasis;
+
+  bool get quantityEstimated => quantityBasis.isNotEmpty;
+
   const PrescriptionMedicine({
     required this.name,
     required this.dosage,
@@ -45,7 +66,35 @@ class PrescriptionMedicine {
     this.dosageForm = '',
     this.duration = '',
     this.matchConfidence = 0.0,
+    this.sourceText = '',
+    this.sourceLegibility = '',
+    this.sigText = '',
+    this.quantityBasis = '',
   });
+
+  PrescriptionMedicine copyWith({
+    String? quantity,
+    String? frequency,
+    String? brand,
+    String? duration,
+    String? sourceText,
+    String? sourceLegibility,
+    String? sigText,
+    String? quantityBasis,
+  }) => PrescriptionMedicine(
+    name: name,
+    dosage: dosage,
+    quantity: quantity ?? this.quantity,
+    frequency: frequency ?? this.frequency,
+    brand: brand ?? this.brand,
+    dosageForm: dosageForm,
+    duration: duration ?? this.duration,
+    matchConfidence: matchConfidence,
+    sourceText: sourceText ?? this.sourceText,
+    sourceLegibility: sourceLegibility ?? this.sourceLegibility,
+    sigText: sigText ?? this.sigText,
+    quantityBasis: quantityBasis ?? this.quantityBasis,
+  );
 
   factory PrescriptionMedicine.fromJson(Map<String, dynamic> json) {
     return PrescriptionMedicine(
@@ -60,7 +109,45 @@ class PrescriptionMedicine {
           '',
       duration: json['duration']?.toString() ?? '',
       matchConfidence: (json['matchConfidence'] as num?)?.toDouble() ?? 0.0,
+      sourceText: json['sourceText']?.toString() ?? '',
+      sourceLegibility: json['sourceLegibility']?.toString() ?? '',
+      sigText: json['sigText']?.toString() ?? '',
+      quantityBasis: json['quantityBasis']?.toString() ?? '',
     );
+  }
+}
+
+/// One handwritten line as transcribed by the vision model (Gemini/Groq),
+/// with the model's own judgement of what the line is and how sure it
+/// was of reading it. [legibility] is 'clear', 'partial' or 'unclear'.
+class OcrLine {
+  final String text;
+  final String section;
+  final String legibility;
+
+  const OcrLine({
+    required this.text,
+    this.section = 'other',
+    this.legibility = 'partial',
+  });
+
+  bool get isUncertain => legibility != 'clear';
+
+  factory OcrLine.fromJson(Map<String, dynamic> json) => OcrLine(
+    text: json['text']?.toString() ?? '',
+    section: json['section']?.toString() ?? 'other',
+    legibility: json['legibility']?.toString() ?? 'partial',
+  );
+
+  /// Parses the backend's `lines` array; anything malformed is skipped,
+  /// and a missing/non-list value yields an empty list.
+  static List<OcrLine> listFrom(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => OcrLine.fromJson(Map<String, dynamic>.from(e)))
+        .where((l) => l.text.trim().isNotEmpty)
+        .toList();
   }
 }
 
@@ -83,6 +170,10 @@ class PrescriptionScanResult {
   final String? doctorName;
   final List<PrescriptionMedicine> medicines;
   final String rawText;
+
+  /// Per-line transcription with section/legibility, when the engine
+  /// provides it (Gemini/Groq). Empty for OCR.space results.
+  final List<OcrLine> ocrLines;
   final String? error;
 
   /// Which engine produced this result — useful for debugging/QA.
@@ -103,6 +194,7 @@ class PrescriptionScanResult {
     this.doctorName,
     this.medicines = const [],
     this.rawText = '',
+    this.ocrLines = const [],
     this.error,
     this.engineUsed = 'ocrspace',
     this.isQuotaExceeded = false,

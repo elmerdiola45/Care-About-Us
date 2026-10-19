@@ -5,9 +5,12 @@
 //   PrescriptionOcrService) for structured patient/doctor/medicine
 //   fields, and a regex fallback parser for the fields that pipeline
 //   doesn't extract yet (diagnosis, license/PTR/S2 numbers, address).
-// - Shows scanned OCR text preview with "OCR Complete" badge
+// - Shows the prescription photo (zoomable; pinned beside the form on
+//   wide screens) so every value can be checked against the paper
 // - Provides editable fields: Doctor, Date, Patient, Diagnosis, etc.
-// - Shows MDRP Compliant auto-generated price list table
+// - Shows the auto-generated price list, each medicine marked verified /
+//   check / not matched with what the OCR actually read ("Read as");
+//   "check" rows must be confirmed against the photo before saving
 // - Saves only when the pharmacist explicitly taps "Save & Continue"
 //   after reviewing/correcting fields. Shows a success banner and a
 //   "View Saved List" button afterward.
@@ -192,7 +195,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   late final TextEditingController _doctorController;
   late final TextEditingController _dateController;
   late final TextEditingController _patientController;
-  late final TextEditingController _diagnosisController;
   late final TextEditingController _licenseController;
   late final TextEditingController _ptController;
   late final TextEditingController _s2Controller;
@@ -263,7 +265,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     _patientController = TextEditingController(
       text: _pick(widget.scanResult?.patientName, parsed.patient),
     );
-    _diagnosisController = TextEditingController(text: parsed.diagnosis);
+
     _licenseController = TextEditingController(text: parsed.licenseNo);
     _ptController = TextEditingController(text: parsed.ptNo);
     _s2Controller = TextEditingController(text: parsed.s2);
@@ -366,6 +368,9 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           isEssential: true,
           duration: _combineSig(m.frequency, m.duration),
           matchConfidence: m.matchConfidence,
+          sourceText: m.sourceText,
+          sourceLegibility: m.sourceLegibility,
+          quantityBasis: m.quantityBasis,
         );
       }).toList();
     } else {
@@ -650,7 +655,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     _doctorController.dispose();
     _dateController.dispose();
     _patientController.dispose();
-    _diagnosisController.dispose();
     _licenseController.dispose();
     _ptController.dispose();
     _s2Controller.dispose();
@@ -819,6 +823,33 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       return;
     }
 
+    // Rows the pipeline wasn't sure about (weak catalog match, guessed
+    // strength/price, or a line the AI itself rated hard to read) must be
+    // checked against the photo. Saving them unconfirmed is how a misread
+    // turns into a dispensed wrong drug.
+    final unconfirmedCount = _matchedMeds
+        .where((m) => m.reviewStatus == _ReviewStatus.check)
+        .length;
+    if (unconfirmedCount > 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              unconfirmedCount == 1
+                  ? 'Check the medicine marked "Check" against the photo, '
+                        'then tap Confirm before saving.'
+                  : 'Check the $unconfirmedCount medicines marked "Check" '
+                        'against the photo, then tap Confirm on each before '
+                        'saving.',
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
+
     // A Senior Citizen prescription must carry an OSCA ID — it's the
     // identifier the discount/eligibility record keys off downstream.
     if (_isSenior && _oscaIdController.text.trim().isEmpty) {
@@ -839,7 +870,6 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     setState(() => _isSaving = true);
 
     final cleanedPatientName = _cleanPatientName(patientName);
-    final diagnosis = _diagnosisController.text.trim();
     final licenseNo = _licenseController.text.trim();
     final ptNo = _ptController.text.trim();
     final s2 = _s2Controller.text.trim();
@@ -907,7 +937,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       ptNo: ptNo,
       s2: s2,
       patientAddress: patientAddress.isEmpty ? null : patientAddress,
-      diagnosis: diagnosis.isEmpty ? null : diagnosis,
+      diagnosis: null,
       ocrCode: ocrCode,
       dateTime: dateTime,
       medicines: medicines,
@@ -1148,7 +1178,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           'OCR Prescription Scan → Review',
           style: TextStyle(
             color: OcrReviewColors.textPrimary,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
@@ -1169,28 +1199,28 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         children: [
           ResponsiveCenter.dashboard(
             padding: EdgeInsets.zero,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              children: [
-                _buildScannedNotePreview(),
-                if (_hasUnavailableMedicine) ...[
-                  const SizedBox(height: 12),
-                  _buildMedicineNotAvailableCard(),
-                ],
-                if (_validationWarnings.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  _buildValidationWarnings(),
-                ],
-                if (_isSaved && _ocrCode != null) ...[
-                  const SizedBox(height: 16),
-                  _buildSavedBanner(),
-                ],
-                _buildEditableFieldsSection(),
-                const SizedBox(height: 16),
-                _buildMedicineListSection(),
-                const SizedBox(height: 18),
-                _buildBottomButtons(),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Wide (desktop/tablet web): photo pinned on the left so it
+                // stays visible while scrolling the fields and medicines.
+                // Narrow (phone): photo card at the top of the list.
+                final wide = constraints.maxWidth >= 900;
+                final list = _buildReviewList(showPhoto: !wide);
+                if (!wide) return list;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: constraints.maxWidth * 0.42,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 0, 24),
+                        child: _buildPhotoCard(fillHeight: true),
+                      ),
+                    ),
+                    Expanded(child: list),
+                  ],
+                );
+              },
             ),
           ),
           if (_isOpeningExisting)
@@ -1205,13 +1235,223 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     );
   }
 
+  Widget _buildReviewList({required bool showPhoto}) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      children: [
+        if (showPhoto) _buildPhotoCard(fillHeight: false),
+        if (_hasUnavailableMedicine) ...[
+          const SizedBox(height: 12),
+          _buildMedicineNotAvailableCard(),
+        ],
+        if (_validationWarnings.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildValidationWarnings(),
+        ],
+        if (_isSaved && _ocrCode != null) ...[
+          const SizedBox(height: 16),
+          _buildSavedBanner(),
+        ],
+        if (showPhoto ||
+            _hasUnavailableMedicine ||
+            _validationWarnings.isNotEmpty)
+          const SizedBox(height: 12),
+        _buildEditableFieldsSection(),
+        const SizedBox(height: 16),
+        _buildMedicineListSection(),
+        const SizedBox(height: 16),
+        _buildBottomButtons(),
+      ],
+    );
+  }
+
+  static const _statusGreen = Color(0xFF2E9C6B);
+  static const _statusAmber = Color(0xFFD97706);
+  static const _statusRed = Color(0xFFDC2626);
+
+  static Color _statusColor(_ReviewStatus s) => switch (s) {
+    _ReviewStatus.verified => _statusGreen,
+    _ReviewStatus.check => _statusAmber,
+    _ReviewStatus.problem => _statusRed,
+  };
+
+  static IconData _statusIcon(_ReviewStatus s) => switch (s) {
+    _ReviewStatus.verified => Icons.check_circle_rounded,
+    _ReviewStatus.check => Icons.error_outline_rounded,
+    _ReviewStatus.problem => Icons.cancel_rounded,
+  };
+
+  /// The prescription photo next to (wide) or above (narrow) the fields,
+  /// so every value can be checked against what is actually written.
+  /// Pinch/scroll to zoom in place; the expand button opens it full screen.
+  Widget _buildPhotoCard({required bool fillHeight}) {
+    final photo = ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: ColoredBox(
+        color: const Color(0xFF111827),
+        child: InteractiveViewer(
+          minScale: 1,
+          maxScale: 6,
+          child: Center(
+            child: Image.memory(
+              widget.imageBytes,
+              fit: BoxFit.contain,
+              gaplessPlayback: true,
+              errorBuilder: (_, _, _) => const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'Photo unavailable',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: OcrReviewColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: OcrReviewColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Prescription photo',
+                  style: TextStyle(
+                    color: OcrReviewColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'View full screen',
+                icon: const Icon(Icons.open_in_full_rounded, size: 20),
+                onPressed: _openPhotoFullScreen,
+              ),
+            ],
+          ),
+          const Text(
+            'Compare every medicine below with what is written here. '
+            'Pinch or scroll to zoom.',
+            style: TextStyle(
+              fontSize: 12,
+              color: OcrReviewColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (fillHeight)
+            Expanded(child: photo)
+          else
+            SizedBox(height: 300, child: photo),
+          const SizedBox(height: 12),
+          _buildReviewSummary(),
+        ],
+      ),
+    );
+  }
+
+  /// "2 verified · 1 to check · 0 not matched" — live, so it updates as
+  /// the pharmacist confirms or fixes rows.
+  Widget _buildReviewSummary() {
+    var verified = 0, check = 0, problem = 0;
+    for (final m in _matchedMeds) {
+      switch (m.reviewStatus) {
+        case _ReviewStatus.verified:
+          verified++;
+        case _ReviewStatus.check:
+          check++;
+        case _ReviewStatus.problem:
+          problem++;
+      }
+    }
+
+    Widget chip(_ReviewStatus s, String label) {
+      final color = _statusColor(s);
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_statusIcon(s), size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      children: [
+        chip(_ReviewStatus.verified, '$verified verified'),
+        chip(_ReviewStatus.check, '$check to check'),
+        chip(_ReviewStatus.problem, '$problem not matched'),
+      ],
+    );
+  }
+
+  void _openPhotoFullScreen() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: InteractiveViewer(
+                minScale: 1,
+                maxScale: 8,
+                child: Center(
+                  child: Image.memory(widget.imageBytes, fit: BoxFit.contain),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: SafeArea(
+                child: IconButton(
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSavedBanner() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: OcrReviewColors.greenBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: OcrReviewColors.green.withValues(alpha: 0.35),
         ),
@@ -1224,7 +1464,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             color: OcrReviewColors.green,
             size: 20,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1233,7 +1473,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   'Prescription saved as $_ocrCode',
                   style: const TextStyle(
                     color: OcrReviewColors.green,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
                 ),
@@ -1242,7 +1482,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   'Generate a QR code from the Saved Rx list.',
                   style: TextStyle(
                     color: OcrReviewColors.textSecondary,
-                    fontSize: 12.5,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -1256,10 +1496,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   Widget _buildValidationWarnings() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF7E6),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: const Color(0xFFD97706).withValues(alpha: 0.35),
         ),
@@ -1278,8 +1518,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               Text(
                 'Validation Notice',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                   color: Color(0xFFD97706),
                 ),
               ),
@@ -1291,10 +1531,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 '• $w',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: Color(0xFF92400E),
-                ),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF92400E)),
               ),
             ),
           ),
@@ -1324,10 +1561,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFEE2E2),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: const Color(0xFFDC2626).withValues(alpha: 0.5),
         ),
@@ -1342,7 +1579,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               Text(
                 'Not Matched to Catalog',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w600,
                   fontSize: 14,
                   color: Color(0xFFDC2626),
                 ),
@@ -1353,23 +1590,23 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           Text(
             'The medicine or strength below could not be matched to this '
             'pharmacy\'s catalog (this is not a live stock check):',
-            style: const TextStyle(fontSize: 12.5, color: Color(0xFF991B1B)),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           ...affected.map(
             (label) => Padding(
               padding: const EdgeInsets.only(bottom: 2),
               child: Text(
                 '• $label',
                 style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF991B1B),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           const Text(
             'Nothing will be substituted automatically. You can still save '
             'and dispense the other medicine(s) on this prescription now — '
@@ -1380,7 +1617,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             'your explicit confirmation.',
             style: TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -1395,85 +1632,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 textStyle: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScannedNotePreview() {
-    // Use the merged values (structured pipeline result + regex-parsed
-    // admin fields) that already populated the editable controllers,
-    // rather than reading straight off scanResult — our OCR.space/
-    // Tesseract pipeline doesn't extract date/diagnosis/license/PTR/S2/
-    // address itself, so those only exist post-merge.
-    final displayText =
-        'Doctor: ${_doctorController.text.isEmpty ? 'N/A' : _doctorController.text}\n'
-        'Patient: ${_patientController.text.isEmpty ? 'N/A' : _patientController.text}\n'
-        'Date: ${_dateController.text.isEmpty ? 'N/A' : _dateController.text}\n'
-        'Diagnosis: ${_diagnosisController.text.isEmpty ? 'N/A' : _diagnosisController.text}\n'
-        'License: ${_licenseController.text.isEmpty ? 'N/A' : _licenseController.text}\n'
-        'PTR: ${_ptController.text.isEmpty ? 'N/A' : _ptController.text}\n'
-        'S2: ${_s2Controller.text.isEmpty ? 'N/A' : _s2Controller.text}\n'
-        'Address: ${_addressController.text.isEmpty ? 'N/A' : _addressController.text}\n'
-        'Medicines: ${_matchedMeds.map((m) => m.medicineLabel).join(', ')}';
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: OcrReviewColors.scanNote,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: OcrReviewColors.border),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1B8F3A).withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF1B8F3A)),
-              ),
-              child: const Text(
-                'OCR Complete',
-                style: TextStyle(
-                  color: Color(0xFF1B8F3A),
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Scanned Note',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14.5,
-                    color: OcrReviewColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  displayText.trim(),
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    color: OcrReviewColors.textPrimary.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
             ),
           ),
         ],
@@ -1496,20 +1658,20 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             'OCR EXTRACTED — EDITABLE',
             style: TextStyle(
               color: OcrReviewColors.textSecondary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.6,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Column(
             children: [
               _fieldBox(label: 'Doctor', controller: _doctorController),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _fieldBox(label: 'Date', controller: _dateController),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _fieldBox(label: 'Patient', controller: _patientController),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               // Age's compact TextField is intrinsically shorter than Sex,
               // whose chips sit inside a TapTarget(minSize: 44). IntrinsicHeight
               // + stretch lets Sex set the row height and Age match it exactly,
@@ -1532,14 +1694,13 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(child: _genderField()),
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
-              _fieldBox(label: 'Diagnosis', controller: _diagnosisController),
-              const SizedBox(height: 10),
+
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -1548,7 +1709,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                       controller: _licenseController,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _fieldBox(
                       label: 'PT No.',
@@ -1557,11 +1718,11 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _fieldBox(label: 'S2', controller: _s2Controller),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _fieldBox(label: 'Address', controller: _addressController),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Checkbox(
@@ -1572,10 +1733,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   ),
                   const Text(
                     'Senior Citizen',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   ),
                   if (_isSenior) ...[
                     const Spacer(),
@@ -1583,16 +1741,16 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                       child: TextField(
                         controller: _oscaIdController,
                         style: const TextStyle(
-                          fontSize: 14.5,
+                          fontSize: 14,
                           color: OcrReviewColors.textPrimary,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                         ),
                         decoration: const InputDecoration(
                           hintText: 'OSCA ID No.',
                           isDense: true,
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 10,
+                            vertical: 12,
                           ),
                           border: OutlineInputBorder(),
                         ),
@@ -1619,7 +1777,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
   }) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: OcrReviewColors.border),
@@ -1632,20 +1790,20 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           Text(
             label,
             style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
               color: OcrReviewColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           TextField(
             controller: controller,
             keyboardType: keyboardType,
             inputFormatters: inputFormatters,
             style: const TextStyle(
-              fontSize: 14.5,
+              fontSize: 14,
               color: OcrReviewColors.textPrimary,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
             decoration: const InputDecoration(
               border: InputBorder.none,
@@ -1664,7 +1822,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   /// blocks the save while this is null.
   Widget _genderField() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: OcrReviewColors.border),
@@ -1676,12 +1834,12 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           const Text(
             'Sex',
             style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
               color: OcrReviewColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Row(
             children: [
               _genderChip('M'),
@@ -1716,8 +1874,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           child: Text(
             value,
             style: TextStyle(
-              fontSize: 14.5,
-              fontWeight: FontWeight.w800,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
               color: selected
                   ? OcrReviewColors.teal
                   : OcrReviewColors.textPrimary,
@@ -1743,33 +1901,40 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             children: [
               const Expanded(
                 child: Text(
-                  'AUTO-GENERATED PRICE LIST',
+                  'Auto-generated price list',
                   style: TextStyle(
                     color: OcrReviewColors.textSecondary,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCF3E8),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Text(
-                  'MDRP Compliant',
-                  style: TextStyle(
-                    color: Color(0xFF2E9C6B),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 11.5,
+              // Only claimed when every line is actually priced from the
+              // catalog — it used to show unconditionally, even next to
+              // unmatched ₱0.00 rows.
+              if (_matchedMeds.isNotEmpty &&
+                  _matchedMeds.every(
+                    (m) => m.reviewStatus != _ReviewStatus.problem,
+                  ))
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCF3E8),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'MDRP Compliant',
+                    style: TextStyle(
+                      color: Color(0xFF2E9C6B),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -1778,7 +1943,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               'No matching medicines recognized yet. Ensure OCR text contains the medicine names.',
               style: TextStyle(
                 color: OcrReviewColors.textSecondary,
-                fontSize: 12.5,
+                fontSize: 12,
               ),
             )
           else ...[
@@ -1795,8 +1960,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                 foregroundColor: OcrReviewColors.teal,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 textStyle: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ),
@@ -1809,10 +1974,9 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   Widget _buildEditableMedicineList() {
     return Column(
       children: [
-        for (int i = 0; i < _matchedMeds.length; i++) ...[
-          _buildMedicineRow(_matchedMeds[i]),
-          if (i != _matchedMeds.length - 1) const Divider(height: 1),
-        ],
+        // Each row carries its own status-colored left border, so no
+        // dividers are needed between them.
+        for (final m in _matchedMeds) _buildMedicineRow(m),
       ],
     );
   }
@@ -1870,20 +2034,67 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       );
     }
 
-    final needsAttention =
-        m.medicineNotFound || m.dosageNotStocked || m.needsBrandSelection;
+    final status = m.reviewStatus;
+    final statusColor = _statusColor(status);
     final summaryParts = <String>[
       if (m.brandLabel.trim().isNotEmpty) m.brandLabel.trim(),
       if (m.dosageLabel.trim().isNotEmpty) m.dosageLabel.trim(),
       '×${m.quantity}',
       '₱${m.totalLine.toStringAsFixed(2)}',
     ];
+    // What the OCR actually read, so the pharmacist sees the raw text next
+    // to what it was matched to (e.g. "Amaxicillin 500mg" -> Amoxicillin).
+    final readAs = m.isManualEntry
+        ? ''
+        : (m.sourceText.isNotEmpty
+              ? m.sourceText
+              : (m.isFallbackMatch ? m.originalOcrLabel : ''));
 
-    return Padding(
+    final String? statusNote = switch (status) {
+      _ReviewStatus.problem =>
+        m.medicineNotFound
+            ? 'No catalog match — tap Edit'
+            : m.dosageNotStocked
+            ? 'Strength not listed — tap Edit'
+            : 'Select brand — tap Edit',
+      _ReviewStatus.check => [
+        if (m.quantityBasis.isNotEmpty) m.quantityBasis,
+        if (m.aiUnsureOfHandwriting)
+          'AI was unsure reading this line — check it against the photo'
+        else if (m.quantityBasis.isEmpty ||
+            m.matchConfidence < _MatchedMedicine.confidentMatch ||
+            !m.unitPriceIsExact)
+          'Not an exact match — check it against the photo',
+      ].join('\n'),
+      _ReviewStatus.verified => null,
+    };
+
+    return Container(
       key: ValueKey('med_row_${m.id}'),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: status == _ReviewStatus.verified
+            ? Colors.transparent
+            : statusColor.withValues(alpha: 0.06),
+        border: Border.all(color: statusColor.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Tooltip(
+              message: switch (status) {
+                _ReviewStatus.verified => 'Verified',
+                _ReviewStatus.check => 'Check against the photo',
+                _ReviewStatus.problem => 'Not matched to the catalog',
+              },
+              child: Icon(_statusIcon(status), size: 18, color: statusColor),
+            ),
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1893,7 +2104,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                       ? 'New medicine'
                       : m.medicineLabel.trim(),
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1902,18 +2113,54 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   summaryParts.join('  ·  '),
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
-                if (needsAttention) ...[
-                  const SizedBox(height: 2),
+                if (readAs.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Read as: ',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        TextSpan(
+                          text: '“$readAs”',
+                          style: const TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  ),
+                ],
+                if (statusNote != null) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    m.medicineNotFound
-                        ? 'No catalog match — tap Edit'
-                        : m.dosageNotStocked
-                        ? 'Strength not listed — tap Edit'
-                        : 'Select brand — tap Edit',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFD97706),
+                    statusNote,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                    ),
+                  ),
+                ],
+                if (status == _ReviewStatus.check) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() {
+                      final idx = _matchedMeds.indexWhere((e) => e.id == m.id);
+                      if (idx != -1) {
+                        _matchedMeds[idx] = m.copyWith(reviewConfirmed: true);
+                      }
+                    }),
+                    icon: const Icon(Icons.check_rounded, size: 16),
+                    label: const Text('Confirm — matches the photo'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _statusGreen,
+                      side: const BorderSide(color: _statusGreen),
+                      visualDensity: VisualDensity.compact,
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -2023,13 +2270,13 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: OcrReviewColors.teal,
               side: const BorderSide(color: OcrReviewColors.teal),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
               textStyle: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
@@ -2061,13 +2308,13 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               disabledBackgroundColor: OcrReviewColors.green.withValues(
                 alpha: 0.4,
               ),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
               textStyle: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
@@ -2111,11 +2358,13 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     final lines = normalizedText.split('\n').map((l) => l.trim()).toList();
 
     final doctorLabelRe = RegExp(
-      r'^(dr\.?|doctor|attending\s+physician|prescribing\s+physician|physician)(?![A-Za-z])[:\.\s]*',
+      r'^(dra?\.?|doctor|attending\s+physician|prescribing\s+physician|physician)(?![A-Za-z])[:\.\s]*',
       caseSensitive: false,
     );
+    // "Patient's Name:" used to match as just "Patient", leaving
+    // "'s Name: Mark ..." as the patient's name.
     final patientLabelRe = RegExp(
-      r'^(patient|pangalan|name)(?![A-Za-z])[:\.\s]*',
+      r"^(patient'?s?\s*name|name\s+of\s+patient|patient|pangalan|name)(?![A-Za-z])[:\.\s]*",
       caseSensitive: false,
     );
     final diagnosisLabelRe = RegExp(
@@ -2149,7 +2398,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       caseSensitive: false,
     );
 
-    final doctorNameOnlyRe = RegExp(r'^dr\.?\s+[A-Za-z]', caseSensitive: false);
+    final doctorNameOnlyRe = RegExp(
+      r'^dra?\.?\s+[A-Za-z]',
+      caseSensitive: false,
+    );
 
     final topNameRe = RegExp(r'^[A-Z]\.?[a-z]*\s+[A-Z]');
 
@@ -2167,24 +2419,18 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       final line = lines[i];
       if (line.isEmpty) continue;
 
-      if (licenseLabelRe.hasMatch(line)) {
-        if (licenseNo.isEmpty) {
-          licenseNo = line.replaceFirst(licenseLabelRe, '').trim();
-        }
-        _lastConsumedLines.add(i);
-        continue;
-      }
-      if (ptrLabelRe.hasMatch(line)) {
-        if (ptNo.isEmpty) {
-          ptNo = line.replaceFirst(ptrLabelRe, '').trim();
-        }
-        _lastConsumedLines.add(i);
-        continue;
-      }
-      if (s2LabelRe.hasMatch(line)) {
-        if (s2.isEmpty) {
-          s2 = line.replaceFirst(s2LabelRe, '').trim();
-        }
+      // License, PTR and S2 numbers are often written on ONE line
+      // ("Lic. No. 0123456  PTR No. 7654321  S2 No. 55667"). Taking
+      // "everything after the first label" put the PTR number inside the
+      // License field and left PTR empty, so each number is pulled out
+      // by its own label instead.
+      if (licenseLabelRe.hasMatch(line) ||
+          ptrLabelRe.hasMatch(line) ||
+          s2LabelRe.hasMatch(line)) {
+        final ids = _labeledIdNumbers(line);
+        if (licenseNo.isEmpty) licenseNo = ids.license;
+        if (ptNo.isEmpty) ptNo = ids.ptr;
+        if (s2.isEmpty) s2 = ids.s2;
         _lastConsumedLines.add(i);
         continue;
       }
@@ -2357,6 +2603,13 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         _lastConsumedLines.add(i);
         continue;
       }
+      // "Jose P. Rizal, M.D.", "Maria Clara de la Cruz, MD".
+      final mdName = PrescriptionParserService.doctorFromMdLine(line);
+      if (mdName != null) {
+        if (doctor.isEmpty) doctor = mdName;
+        _lastConsumedLines.add(i);
+        continue;
+      }
     }
 
     if (doctor.isEmpty) {
@@ -2379,11 +2632,27 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     }
 
     String date = '';
+    // A labeled "Date:" line is the prescription date as written — trust
+    // it over pattern-guessing, which only knew numeric formats and
+    // reduced "Date: Oct 5, 2026" to just "2026".
+    final labeledDate = RegExp(
+      r'^\s*date\s*[:.]?\s*(.*\d.*)$',
+      caseSensitive: false,
+      multiLine: true,
+    ).firstMatch(normalizedText);
     final isoDateMatch = RegExp(
       r'(19\d\d|20\d\d)[-/]\d{1,2}[-/]\d{1,2}',
     ).firstMatch(normalizedText);
-    if (isoDateMatch != null) {
+    final namedMonthDate = RegExp(
+      r'\b(?:\d{1,2}\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(?:\d{1,2},?\s+)?(?:19|20)\d\d\b',
+      caseSensitive: false,
+    ).firstMatch(normalizedText);
+    if (labeledDate != null) {
+      date = labeledDate.group(1)!.trim();
+    } else if (isoDateMatch != null) {
       date = isoDateMatch.group(0) ?? '';
+    } else if (namedMonthDate != null) {
+      date = namedMonthDate.group(0) ?? '';
     } else {
       final shortDateMatch = RegExp(
         r'\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b',
@@ -2416,6 +2685,29 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
       address: address,
       age: age,
       gender: gender,
+    );
+  }
+
+  /// Pulls License, PTR and S2 numbers out of [line] by their own labels,
+  /// so several on one line each land in the right field. Each value is
+  /// the token right after its label; empty when that label is absent.
+  static ({String license, String ptr, String s2}) _labeledIdNumbers(
+    String line,
+  ) {
+    String after(String labelPattern) {
+      final m = RegExp(
+        '(?:^|[^A-Za-z])(?:$labelPattern)\\s*[:#.]?\\s*([A-Za-z0-9][A-Za-z0-9\\-]*)',
+        caseSensitive: false,
+      ).firstMatch(line);
+      return m?.group(1) ?? '';
+    }
+
+    return (
+      license: after(
+        r'license\s*no\.?|lic\.?\s*no\.?|reg\.?\s*no\.?|license|lic\.?',
+      ),
+      ptr: after(r'ptr\s*no\.?|pt\s*no\.?|pt#|ptr'),
+      s2: after(r's-?2\s*(?:no\.?)?'),
     );
   }
 
@@ -2674,7 +2966,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       context: context,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetContext) => SafeArea(
         child: ListView.separated(
@@ -2692,7 +2984,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   'Choose brand',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: Colors.grey.shade900,
                   ),
                 ),
@@ -2701,7 +2993,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             final v = candidates[i - 1];
             return ListTile(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -2715,8 +3007,8 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
               title: Text(
                 v.brandName ?? v.name ?? 'Generic (no brand)',
                 style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
               subtitle: v.dosageForm != null && v.dosageForm!.isNotEmpty
@@ -2729,7 +3021,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   ? Text(
                       '₱${(v.unitPrice ?? 0).toStringAsFixed(2)}',
                       style: const TextStyle(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: OcrReviewColors.teal,
                         fontSize: 14,
                       ),
@@ -2787,7 +3079,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       isScrollControlled: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetContext) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -2808,7 +3100,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: OcrReviewColors.teal.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
                             Icons.medication_outlined,
@@ -2816,12 +3108,12 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                             color: OcrReviewColors.teal,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Text(
                           'Pick correct medicine',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: Colors.grey.shade900,
                           ),
                         ),
@@ -2853,7 +3145,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                           ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
+                          horizontal: 16,
                           vertical: 12,
                         ),
                       ),
@@ -2970,6 +3262,10 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       originalOcrLabel: widget.medicine.originalOcrLabel,
       isFallbackMatch: widget.medicine.isFallbackMatch,
       isManualEntry: widget.medicine.isManualEntry,
+      sourceText: widget.medicine.sourceText,
+      sourceLegibility: widget.medicine.sourceLegibility,
+      reviewConfirmed: widget.medicine.reviewConfirmed,
+      quantityBasis: widget.medicine.quantityBasis,
     );
 
     // Pharmacist picked a brand from the picker (or the prescription
@@ -2979,7 +3275,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       widget.onChanged(
         updated.copyWith(
           unitPrice: v.unitPrice ?? 0.0,
-          brandLabel: v.brandName ?? 'Generic (no brand)',
+          brandLabel: v.brandName ?? '',
           needsBrandSelection: false,
           medicineNotFound: false,
           dosageNotStocked: false,
@@ -3002,7 +3298,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
           updated.copyWith(
             medicineLabel: name,
             unitPrice: v.unitPrice ?? 0.0,
-            brandLabel: v.brandName ?? 'Generic (no brand)',
+            brandLabel: v.brandName ?? '',
             needsBrandSelection: false,
             medicineNotFound: false,
             dosageNotStocked: false,
@@ -3041,7 +3337,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             ),
             child: Text(
               'Essential',
-              style: TextStyle(fontSize: 11, color: OcrReviewColors.teal),
+              style: TextStyle(fontSize: 12, color: OcrReviewColors.teal),
             ),
           )
         : Container(
@@ -3052,7 +3348,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             ),
             child: const Text(
               'Optional',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           );
 
@@ -3106,7 +3402,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                       child: TextField(
                         controller: _nameController,
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                         decoration: InputDecoration(
@@ -3141,7 +3437,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                                     identitySuffix,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: OcrReviewColors.teal,
                                       decoration:
@@ -3154,7 +3450,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                                   ),
                                 ),
                                 if (updated.brandCandidates.length > 1) ...[
-                                  const SizedBox(width: 3),
+                                  const SizedBox(width: 4),
                                   Icon(
                                     Icons.unfold_more,
                                     size: 16,
@@ -3171,7 +3467,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   ],
                 ),
                 if (updated.isManualEntry) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       const Text(
@@ -3195,8 +3491,8 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                             ),
                           ],
                           style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                           decoration: const InputDecoration(
                             isDense: true,
@@ -3226,7 +3522,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                       Text(
                         'Added manually — not from the catalog.',
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -3239,9 +3535,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                         child: const Text(
                           'Pick from catalog instead',
                           style: TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 11,
                             color: OcrReviewColors.teal,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             decoration: TextDecoration.underline,
                           ),
                         ),
@@ -3253,12 +3549,12 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   const SizedBox(height: 2),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
+                      horizontal: 8,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFF7E6),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: const Color(0xFFD97706).withValues(alpha: 0.4),
                       ),
@@ -3266,9 +3562,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     child: const Text(
                       'Low-confidence match — please verify',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         color: Color(0xFF92400E),
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -3282,7 +3578,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       onTap: () => _showBrandPicker(
                         context,
                         updated.brandCandidates,
@@ -3293,11 +3589,11 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 10,
+                          vertical: 12,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF7E6),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: const Color(
                               0xFFD97706,
@@ -3317,9 +3613,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                                 'Select brand…',
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: 12,
                                   color: Color(0xFF92400E),
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -3327,7 +3623,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                               '${updated.brandCandidates.length} option'
                               '${updated.brandCandidates.length == 1 ? '' : 's'}',
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 12,
                                 color: Color(0xFF92400E),
                                 fontWeight: FontWeight.w600,
                               ),
@@ -3356,7 +3652,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
-                      vertical: 6,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEE2E2),
@@ -3374,9 +3670,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                           'pick the correct medicine below. This is not a '
                           'stock check.',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: Color(0xFF991B1B),
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -3398,9 +3694,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                               Text(
                                 'Pick from catalog',
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 12,
                                   color: const Color(0xFF991B1B),
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   decoration: TextDecoration.underline,
                                   decorationColor: const Color(
                                     0xFF991B1B,
@@ -3427,7 +3723,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
-                      vertical: 6,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEE2E2),
@@ -3448,9 +3744,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                                     'Listed: '
                                     '${updated.brandCandidates.map((v) => v.dosageForm?.trim()).whereType<String>().where((d) => d.isNotEmpty).toSet().join(', ')}.',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: Color(0xFF991B1B),
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -3472,9 +3768,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                               Text(
                                 'Pick from catalog',
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 12,
                                   color: const Color(0xFF991B1B),
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   decoration: TextDecoration.underline,
                                   decorationColor: const Color(
                                     0xFF991B1B,
@@ -3520,7 +3816,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     style: const TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       color: OcrReviewColors.textPrimary,
                     ),
                     decoration: const InputDecoration(
@@ -3548,9 +3844,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                       _qtyError!,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 9,
+                        fontSize: 11,
                         color: Color(0xFFDC2626),
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -3572,8 +3868,8 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   ? 'Strength not listed'
                   : 'Select brand',
               style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
                 color: updated.medicineNotFound || updated.dosageNotStocked
                     ? const Color(0xFFDC2626)
                     : const Color(0xFFD97706),
@@ -3657,6 +3953,20 @@ class _MatchedMedicine {
   /// catalog SKU via the picker.
   final bool isManualEntry;
 
+  /// What the OCR actually read for this medicine ("Read as"), and the
+  /// vision model's legibility rating for it — see PrescriptionMedicine.
+  final String sourceText;
+  final String sourceLegibility;
+
+  /// The pharmacist tapped Confirm after checking this row against the
+  /// photo. Required before saving for every row in [_ReviewStatus.check].
+  final bool reviewConfirmed;
+
+  /// Why [quantity] wasn't simply read off the prescription (estimated
+  /// from the Sig, or not written) — see PrescriptionMedicine. Empty once
+  /// the quantity was written, edited, or confirmed.
+  final String quantityBasis;
+
   _MatchedMedicine({
     int? id,
     required this.medicineLabel,
@@ -3677,6 +3987,10 @@ class _MatchedMedicine {
     String? originalOcrLabel,
     this.isFallbackMatch = false,
     this.isManualEntry = false,
+    this.sourceText = '',
+    this.sourceLegibility = '',
+    this.reviewConfirmed = false,
+    this.quantityBasis = '',
   }) : id = id ?? ++_idSeq,
        originalOcrLabel = originalOcrLabel ?? medicineLabel;
 
@@ -3700,6 +4014,7 @@ class _MatchedMedicine {
     double? matchConfidence,
     bool? isFallbackMatch,
     bool? isManualEntry,
+    bool? reviewConfirmed,
   }) {
     return _MatchedMedicine(
       // Identity is stable across edits — always carried forward.
@@ -3726,6 +4041,13 @@ class _MatchedMedicine {
       originalOcrLabel: originalOcrLabel,
       isFallbackMatch: isFallbackMatch ?? this.isFallbackMatch,
       isManualEntry: isManualEntry ?? this.isManualEntry,
+      sourceText: sourceText,
+      sourceLegibility: sourceLegibility,
+      reviewConfirmed: reviewConfirmed ?? this.reviewConfirmed,
+      // Typing a quantity replaces the estimate with the pharmacist's own.
+      quantityBasis: (quantity != null && quantity != this.quantity)
+          ? ''
+          : quantityBasis,
     );
   }
 
@@ -3734,7 +4056,39 @@ class _MatchedMedicine {
   bool get wasManuallyCorrected =>
       medicineLabel.trim().toLowerCase() !=
       originalOcrLabel.trim().toLowerCase();
+
+  /// Below this name-match score a row is shown as "check" even when it
+  /// matched the catalog — the fuzzy matcher accepts scores down to 0.60,
+  /// which is close enough to be a different drug.
+  static const double confidentMatch = 0.85;
+
+  bool get aiUnsureOfHandwriting =>
+      sourceLegibility == 'partial' || sourceLegibility == 'unclear';
+
+  _ReviewStatus get reviewStatus {
+    if (medicineNotFound || dosageNotStocked || needsBrandSelection) {
+      return _ReviewStatus.problem;
+    }
+    // Typed or corrected by the pharmacist, or explicitly confirmed.
+    if (isManualEntry || wasManuallyCorrected || reviewConfirmed) {
+      return _ReviewStatus.verified;
+    }
+    final uncertain =
+        matchConfidence < confidentMatch ||
+        isFallbackMatch ||
+        !unitPriceIsExact ||
+        aiUnsureOfHandwriting ||
+        quantityBasis.isNotEmpty;
+    return uncertain ? _ReviewStatus.check : _ReviewStatus.verified;
+  }
 }
+
+/// How much a medicine row needs the pharmacist's attention:
+/// verified (green) — confident catalog match from a clearly read line;
+/// check (amber) — matched, but something about it is a guess and it
+/// must be confirmed against the photo before saving;
+/// problem (red) — not matched/priced from the catalog as written.
+enum _ReviewStatus { verified, check, problem }
 
 class _MedicineResolution {
   static _MatchedMedicine resolve({

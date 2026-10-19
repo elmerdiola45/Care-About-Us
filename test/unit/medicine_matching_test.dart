@@ -8,6 +8,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pharmacy_management_system/pharmacist/services/medicine_dictionary_service.dart';
+import 'package:pharmacy_management_system/pharmacist/services/prescription_parser_service.dart';
 import 'package:pharmacy_management_system/pharmacist/services/price_lookup_service.dart';
 
 MedicineVariant v(
@@ -44,6 +45,143 @@ void seed(
 
 void main() {
   tearDown(MedicineDictionaryService.invalidateCache);
+
+  test('catalog matching ignores letter case of name and brand', () {
+    seed({
+      'amoxicillin': (
+        generic: 'AMOXICILLIN',
+        skus: [
+          v(1186, 'AMOXICILLIN 500 MG.', null, '500 MG.', 5.0),
+          v(1187, 'AMOXICILLIN ( Himox ) 500 MG.', 'Himox', '500 MG.', 20.0),
+        ],
+      ),
+    });
+
+    for (final name in ['AMOXICILLIN', 'Amoxicillin', 'amoxicillin']) {
+      for (final brand in ['HIMOX', 'Himox', 'himox']) {
+        final r = PriceLookupService.lookup(name, dosage: '500MG', brand: brand);
+        expect(r.productId, 1187, reason: '$name / $brand');
+      }
+    }
+
+    for (final text in [
+      'AMOXICILLIN 500MG CAP #21',
+      'amoxicillin 500mg cap #21',
+    ]) {
+      final m = PrescriptionParserService.parse(
+        text,
+        drugDictionary: const ['amoxicillin'],
+      ).medicines.single;
+      expect(m.name.toLowerCase(), 'amoxicillin', reason: text);
+      expect(m.matchConfidence, 1.0, reason: text);
+    }
+  });
+
+  test('strength without a unit is taken only when the catalog has it', () {
+    seed({
+      'levocetirizine': (
+        generic: 'LEVOCETIRIZINE',
+        skus: [v(844, 'LEVOCETIRIZINE 5 MG.', null, '5 MG.', 15.0)],
+      ),
+    });
+
+    final m = PrescriptionParserService.parse(
+      'Levocetirizine 5\ntab 10\n1 tablet once a day\n',
+      drugDictionary: const ['levocetirizine'],
+    ).medicines.single;
+    expect(m.dosage, '5mg');
+    expect(m.quantity, '10');
+
+    final notStocked = PrescriptionParserService.parse(
+      'Levocetirizine 7\n',
+      drugDictionary: const ['levocetirizine'],
+    ).medicines.single;
+    expect(notStocked.dosage, '');
+  });
+
+  test('pack words on the next line attach to the drug above', () {
+    final result = PrescriptionParserService.parse(
+      'Enoxaparin 40mg\n(Clexane) prefilled syringe # 10\n1 inj daily\n',
+      drugDictionary: const ['enoxaparin'],
+    );
+    expect(result.medicines, hasLength(1));
+    expect(result.medicines.single.brand, 'Clexane');
+    expect(result.medicines.single.quantity, '10');
+  });
+
+  group('never substitute a different product', () {
+    const dictionary = [
+      'dapagliflozin',
+      'sitagliptin',
+      'sitagliptin + metformin',
+      'metformin',
+      'losartan',
+    ];
+
+    test('Empagliflozin is not swapped for Dapagliflozin', () {
+      final m = PrescriptionParserService.parse(
+        'Empagliflozin (Jardiance) 25mg\nRx # 180\n',
+        drugDictionary: dictionary,
+      ).medicines.single;
+
+      expect(m.name, 'Empagliflozin');
+      expect(m.matchConfidence, 0.0);
+    });
+
+    test('a combination resolves to the catalog combination, not a part', () {
+      final m = PrescriptionParserService.parse(
+        'Sitagliptin/Metformin (Janumet XR) 100/1,000 # 180\n',
+        drugDictionary: dictionary,
+      ).medicines.single;
+
+      expect(m.name.toLowerCase(), 'sitagliptin + metformin');
+      expect(m.dosage, '100/1000');
+      expect(m.quantity, '180');
+    });
+
+    test('a combination not in the catalog stays a combination', () {
+      final m = PrescriptionParserService.parse(
+        'FeSO4 + Folic acid # 30\n',
+        drugDictionary: const ['ferrous sulfate', 'folic acid'],
+      ).medicines.single;
+
+      expect(m.name, 'Ferrous Sulfate + Folic Acid');
+      expect(m.matchConfidence, 0.0);
+    });
+
+    test('a misread of the same drug is still corrected', () {
+      final m = PrescriptionParserService.parse(
+        'Dapaglifozin 10mg #30\n',
+        drugDictionary: dictionary,
+      ).medicines.single;
+
+      expect(m.name, 'Dapagliflozin');
+    });
+  });
+
+  test('a syrup strength never resolves to the capsule of the same mg', () {
+    seed({
+      'amoxicillin': (
+        generic: 'Amoxicillin',
+        skus: [
+          v(1185, 'AMOXICILLIN 250 MG.', null, '250 MG.', 5.0),
+          v(654, 'AMOXICILLIN 250/60ML.', null, '250/60ML.', 60.0),
+          v(657, 'AMOXICILLIN ( HIMOX 250/60 )', 'HIMOX', '250/60', 190.0),
+        ],
+      ),
+    });
+
+    final himox = PriceLookupService.lookup(
+      'Amoxicillin',
+      dosage: '250/60ml',
+      brand: 'Himox',
+    );
+    expect(himox.productId, 657);
+    expect(himox.unitPrice, 190.0);
+
+    final generic = PriceLookupService.lookup('Amoxicillin', dosage: '250/60ml');
+    expect(generic.variant?.id, isNot(1185));
+  });
 
   // Standard healthy catalog: Amoxicillin with two brands at 500, Thmiox
   // also at 250.

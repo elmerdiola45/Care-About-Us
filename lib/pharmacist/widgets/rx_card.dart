@@ -26,25 +26,38 @@ class RxCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.receipt_long_outlined, color: Color(0xFF0B7B77)),
+                const Icon(
+                  Icons.receipt_long_outlined,
+                  color: Color(0xFF0B7B77),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     rxNo,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 if (isVerifiedQrData)
                   const Chip(
-                    label: Text('QR data verified', style: TextStyle(fontSize: 10)),
-                    avatar: Icon(Icons.verified, size: 16, color: Color(0xFF0B7B77)),
+                    label: Text(
+                      'QR data verified',
+                      style: TextStyle(fontSize: 11),
+                    ),
+                    avatar: Icon(
+                      Icons.verified,
+                      size: 16,
+                      color: Color(0xFF0B7B77),
+                    ),
                   ),
               ],
             ),
             const Divider(height: 22),
             Text(
               patientName,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(height: 4),
             Text(
@@ -53,7 +66,7 @@ class RxCard extends StatelessWidget {
             ),
             if (!isVerifiedQrData)
               const Padding(
-                padding: EdgeInsets.only(top: 10),
+                padding: EdgeInsets.only(top: 12),
                 child: Text(
                   'Unrecognized QR format — demo prescription loaded.',
                   style: TextStyle(color: Color(0xFF9A6700), fontSize: 12),

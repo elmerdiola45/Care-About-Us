@@ -724,12 +724,32 @@ class LaravelApiService {
         uri.host == 'localhost' ||
         uri.host == '127.0.0.1' ||
         uri.host == '10.0.2.2'; // Android emulator loopback
-    if (uri.scheme != 'https' && !(kDebugMode && isLocalDev)) {
+    // Opt-in for testing a release build against a backend on the same
+    // Wi-Fi (e.g. phones hitting the dev PC). Off unless the build passes
+    // --dart-define=ALLOW_LAN_HTTP=true, and even then only private-network
+    // hosts are accepted — public hosts still require https.
+    const allowLanHttp = bool.fromEnvironment('ALLOW_LAN_HTTP');
+    final isPrivateHost = isLocalDev || _isPrivateIPv4(uri.host);
+    if (uri.scheme != 'https' &&
+        !(kDebugMode && isLocalDev) &&
+        !(allowLanHttp && isPrivateHost)) {
       throw ArgumentError(
         'Refusing to use insecure API base URL "$url" outside local debug '
         'builds. Use https:// in production.',
       );
     }
+  }
+
+  /// RFC 1918 private ranges: 10/8, 172.16/12, 192.168/16.
+  static bool _isPrivateIPv4(String host) {
+    final parts = host.split('.');
+    if (parts.length != 4) return false;
+    final octets = parts.map(int.tryParse).toList();
+    if (octets.any((o) => o == null || o < 0 || o > 255)) return false;
+    final a = octets[0]!, b = octets[1]!;
+    return a == 10 ||
+        (a == 172 && b >= 16 && b <= 31) ||
+        (a == 192 && b == 168);
   }
 
   Map<String, String> get _headers => {
@@ -1266,6 +1286,27 @@ class LaravelApiService {
       return _safeMap(data['data']);
     }
     _throwForError(response, 'Failed to fetch patient');
+  }
+
+  /// Every patient of the caller's pharmacy with their adherence, in ONE
+  /// request (GET /patients/adherence). Each row has the same status fields
+  /// as [fetchPatientAdherence] plus patient_name/age/gender, but
+  /// refill_history only holds the 3 most recent fills.
+  Future<List<Map<String, dynamic>>> fetchAllPatientsAdherence() async {
+    final response = await http
+        .get(_buildUri(['patients', 'adherence']), headers: _headers)
+        .timeout(_timeout);
+
+    if (response.statusCode == 200) {
+      final data = _decodeJsonMap(response);
+      return _safeList(data['patients']).map((e) {
+        final row = _safeMap(e);
+        // The single-patient endpoint calls this field 'reason'.
+        row['reason'] ??= row['adherence_reason'];
+        return row;
+      }).toList();
+    }
+    _throwForError(response, 'Failed to fetch patient adherence');
   }
 
   Future<Map<String, dynamic>> fetchPatientAdherence(String patientId) async {

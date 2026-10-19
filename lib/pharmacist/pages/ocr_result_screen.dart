@@ -142,17 +142,17 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             _buildOcrCompleteCard(prescription),
-                            const SizedBox(height: 22),
+                            const SizedBox(height: 24),
                             _buildEditableFields(),
                             if (prescription.medicines.isNotEmpty) ...[
-                              const SizedBox(height: 22),
+                              const SizedBox(height: 24),
                               _buildPriceList(prescription),
                             ],
                             if (_validationError != null) ...[
                               const SizedBox(height: 12),
                               _buildInlineError(_validationError!),
                             ],
-                            const SizedBox(height: 22),
+                            const SizedBox(height: 24),
                             _buildActionButtons(prescription),
                           ],
                         ),
@@ -168,15 +168,15 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
   Widget _buildInlineError(String message) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFFDECEA),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFF3B6AF)),
       ),
       child: Text(
         message,
-        style: const TextStyle(fontSize: 13, color: Color(0xFFC0392B)),
+        style: const TextStyle(fontSize: 14, color: Color(0xFFC0392B)),
       ),
     );
   }
@@ -184,7 +184,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
@@ -202,7 +202,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
           const SizedBox(width: 4),
           const Text(
             "OCR Prescription Scan",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -226,27 +226,27 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                 child: Text(
                   p.doctorName.isEmpty ? 'Unknown Doctor' : p.doctorName,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                     color: Color(0xFF1F2A2E),
                   ),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
+                  horizontal: 12,
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2E9C6B),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Text(
                   "OCR Complete",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -262,17 +262,17 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
             "Pt: ${p.patientName.isEmpty ? '—' : p.patientName} · "
             "Date: ${p.date.isEmpty ? '—' : p.date}",
             style: const TextStyle(
-              fontSize: 12.5,
+              fontSize: 12,
               fontStyle: FontStyle.italic,
               color: Color(0xFF3D4A4D),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           if (p.medicines.isEmpty)
             const Text(
               "No medicines were extracted from this scan.",
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 12,
                 fontStyle: FontStyle.italic,
                 color: Color(0xFF9AA6A9),
               ),
@@ -284,7 +284,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                 child: Text(
                   "℞ ${m.name} ${m.dosage} tab #${m.quantity}".trim(),
                   style: const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 12,
                     fontStyle: FontStyle.italic,
                     color: Color(0xFF2E9C6B),
                   ),
@@ -303,9 +303,9 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
         const Text(
           "OCR EXTRACTED — EDITABLE",
           style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0,
             color: Color(0xFF9AA6A9),
           ),
         ),
@@ -340,7 +340,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
               color: labelColor,
             ),
@@ -361,11 +361,11 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
               filled: true,
               fillColor: const Color(0xFFF6F8F8),
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
+                horizontal: 16,
                 vertical: 12,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
             ),
@@ -385,24 +385,24 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
               child: Text(
                 "AUTO-GENERATED PRICE LIST",
                 style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0,
                   color: Color(0xFF9AA6A9),
                 ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: const Text(
                 "MDRP Compliant",
                 style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF3B6EC9),
                 ),
               ),
@@ -413,9 +413,9 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
         Container(
           decoration: BoxDecoration(
             color: const Color(0xFFF6F8F8),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Row(
@@ -425,8 +425,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                     child: Text(
                       "MEDICATION",
                       style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                         letterSpacing: 0.4,
                         color: Color(0xFF8A9A9E),
                       ),
@@ -438,8 +438,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                       "QTY /TAB",
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                         letterSpacing: 0.4,
                         color: Color(0xFF8A9A9E),
                       ),
@@ -451,8 +451,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                       "TOTAL",
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                         letterSpacing: 0.4,
                         color: Color(0xFF8A9A9E),
                       ),
@@ -460,7 +460,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               ...p.medicines.map((m) => _buildPriceRow(m)),
               const Divider(height: 24, color: Color(0xFFE5E7EB)),
               Row(
@@ -469,8 +469,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                     child: Text(
                       "Total",
                       style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                         color: Color(0xFF1F2A2E),
                       ),
                     ),
@@ -478,8 +478,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
                   Text(
                     "₱${p.total.toStringAsFixed(2)}",
                     style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: Color(0xFF0B7B77),
                     ),
                   ),
@@ -494,7 +494,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
 
   Widget _buildPriceRow(PricedMedicine m) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -503,7 +503,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
             child: Text(
               "${m.name} ${m.dosage}".trim(),
               style: const TextStyle(
-                fontSize: 13.5,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF1F2A2E),
               ),
@@ -514,7 +514,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
             child: Text(
               "${m.quantity} tabs ₱${m.pricePerTab.toStringAsFixed(2)}",
               textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
             ),
           ),
           Expanded(
@@ -523,8 +523,8 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
               "₱${m.total.toStringAsFixed(2)}",
               textAlign: TextAlign.right,
               style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
                 color: Color(0xFF1F2A2E),
               ),
             ),
@@ -543,7 +543,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF0B7B77),
               side: const BorderSide(color: Color(0xFFB9E4DF)),
-              padding: const EdgeInsets.symmetric(vertical: 15),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -561,7 +561,7 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0B7B77),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 15),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -592,16 +592,16 @@ class _OcrResultScreenState extends State<OcrResultScreen> {
             const Text(
               "No scan result yet",
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF5A6669),
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             const Text(
               "Capture a prescription to see the extracted results here.",
-              style: TextStyle(fontSize: 13, color: Color(0xFF9AA6A9)),
+              style: TextStyle(fontSize: 14, color: Color(0xFF9AA6A9)),
               textAlign: TextAlign.center,
             ),
           ],

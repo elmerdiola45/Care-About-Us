@@ -231,15 +231,15 @@ class _AdminPatientAdherenceDetailPageState
                 Text(
                   'Patient not found',
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'The patient record could not be found. It may have been removed.',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
@@ -319,18 +319,18 @@ class _AdminPatientAdherenceDetailPageState
               style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
             if (rxNumber != null)
               Text(
                 'Rx: $rxNumber',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5),
+                style: TextStyle(color: AppColors.textFaint, fontSize: 12),
               )
             else
               Text(
                 p.genderAge,
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5),
+                style: TextStyle(color: AppColors.textFaint, fontSize: 12),
               ),
           ],
         ),
@@ -342,15 +342,15 @@ class _AdminPatientAdherenceDetailPageState
           children: [
             if (initialPrescription)
               _buildPrescriptionInfoCard(rxNumber, doctorName, dateTime),
-            if (initialPrescription) const SizedBox(height: 14),
+            if (initialPrescription) const SizedBox(height: 16),
             _buildScoreCard(tierColor, tierBg, tierLabel, tierSub),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             _buildMedicationsCard(),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             _buildRefillHistoryCard(),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             _buildInfoBanner(),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             _buildAdminActionSection(),
           ],
         ),
@@ -390,15 +390,15 @@ class _AdminPatientAdherenceDetailPageState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'PRESCRIPTION DETAILS',
+            'Prescription details',
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           if (rxNumber != null)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -412,7 +412,7 @@ class _AdminPatientAdherenceDetailPageState
                   child: Text(
                     'Rx Number: $rxNumber',
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -420,7 +420,7 @@ class _AdminPatientAdherenceDetailPageState
               ],
             ),
           if (doctorName != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -436,7 +436,7 @@ class _AdminPatientAdherenceDetailPageState
                 Expanded(
                   child: Text(
                     'Doctor: $doctorName',
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: 14),
                     // Long consultant names wrap to a second line rather
                     // than overflowing the row; a truly pathological name
                     // then ellipsizes instead of pushing the card taller.
@@ -448,7 +448,7 @@ class _AdminPatientAdherenceDetailPageState
             ),
           ],
           if (dateTime != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -462,10 +462,7 @@ class _AdminPatientAdherenceDetailPageState
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    dateTime,
-                    style: const TextStyle(fontSize: 13),
-                  ),
+                  child: Text(dateTime, style: const TextStyle(fontSize: 14)),
                 ),
               ],
             ),
@@ -493,12 +490,12 @@ class _AdminPatientAdherenceDetailPageState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'ADHERENCE STATUS',
+                  'Adherence status',
                   style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -506,8 +503,8 @@ class _AdminPatientAdherenceDetailPageState
                   tierLabel,
                   style: TextStyle(
                     color: tierColor,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -515,17 +512,17 @@ class _AdminPatientAdherenceDetailPageState
                   '$displayScore%',
                   style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (tierSub != null && tierSub.isNotEmpty) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     tierSub,
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -585,19 +582,19 @@ class _AdminPatientAdherenceDetailPageState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'MEDICATIONS FROM DISPENSING HISTORY',
+            'Medications from dispensing history',
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
             ),
           ),
           const SizedBox(height: 12),
           if (displayMeds.isEmpty)
             Text(
               'No medications dispensed yet.',
-              style: TextStyle(color: AppColors.textFaint, fontSize: 13),
+              style: TextStyle(color: AppColors.textFaint, fontSize: 14),
             )
           else
             for (int i = 0; i < displayMeds.length; i++)
@@ -630,7 +627,7 @@ class _AdminPatientAdherenceDetailPageState
                             Text(
                               displayMeds[i].name,
                               style: const TextStyle(
-                                fontSize: 13.5,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
@@ -651,7 +648,7 @@ class _AdminPatientAdherenceDetailPageState
                                 'Complete',
                                 style: TextStyle(
                                   color: AppColors.success,
-                                  fontSize: 11.5,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -662,7 +659,7 @@ class _AdminPatientAdherenceDetailPageState
                   ),
                   if (i < displayMeds.length - 1)
                     const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
+                      padding: EdgeInsets.symmetric(vertical: 12),
                       child: Divider(height: 1, color: AppColors.border),
                     ),
                 ],
@@ -699,19 +696,19 @@ class _AdminPatientAdherenceDetailPageState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'DISPENSING HISTORY',
+            'Dispensing history',
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           if (events.isEmpty)
             Text(
               'No dispensing history yet.',
-              style: TextStyle(color: AppColors.textFaint, fontSize: 13),
+              style: TextStyle(color: AppColors.textFaint, fontSize: 14),
             )
           else
             for (int i = 0; i < events.length; i++)
@@ -751,15 +748,15 @@ class _AdminPatientAdherenceDetailPageState
           const SizedBox(width: 12),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     event.medicineName,
                     style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -767,7 +764,7 @@ class _AdminPatientAdherenceDetailPageState
                   Text(
                     '\u00d7${event.quantity} \u00b7 ${_fmtDate(event.date)}',
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -793,21 +790,21 @@ class _AdminPatientAdherenceDetailPageState
     if (_isFullyDispensed) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.tealPale,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.shield_outlined, color: AppColors.teal, size: 18),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 p.adherenceReason ?? 'All prescriptions fully dispensed.',
                 style: const TextStyle(
-                  fontSize: 12.5,
+                  fontSize: 12,
                   color: AppColors.textSecondary,
                   height: 1.4,
                 ),
@@ -821,21 +818,21 @@ class _AdminPatientAdherenceDetailPageState
     if (p.isLocked) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.dangerBg,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.lock, color: AppColors.danger, size: 18),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 p.lockReason ?? 'This prescription is locked.',
                 style: const TextStyle(
-                  fontSize: 12.5,
+                  fontSize: 12,
                   color: AppColors.textSecondary,
                   height: 1.4,
                 ),
@@ -876,18 +873,14 @@ class _AdminPatientAdherenceDetailPageState
       ),
       child: const Row(
         children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            color: AppColors.warning,
-            size: 18,
-          ),
+          Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 18),
           SizedBox(width: 8),
           Expanded(
             child: Text(
               'This patient has an overdue refill \u2014 review before dispensing further.',
               style: TextStyle(
                 color: AppColors.warning,
-                fontSize: 12.5,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -897,21 +890,14 @@ class _AdminPatientAdherenceDetailPageState
     );
   }
 
-
   Widget _card({required Widget child}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: child,
     );
@@ -963,8 +949,8 @@ class _ScoreRing extends StatelessWidget {
             '$score%',
             style: TextStyle(
               color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
           ),
         ),
