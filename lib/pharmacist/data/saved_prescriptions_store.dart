@@ -343,9 +343,20 @@ class SavedPrescriptionsStore {
   }
 
   Future<void> _fetchFromBackendInternal() async {
+    // The bulk adherence call doesn't depend on the prescription list, so
+    // start it now and let both round-trips overlap instead of queueing.
+    final bulkAdherence = _api
+        .fetchAllPatientsAdherence()
+        .then<List<Map<String, dynamic>>?>(
+          (rows) => rows,
+          onError: (Object e) {
+            debugPrint('STORE: bulk adherence failed, per-patient: $e');
+            return null;
+          },
+        );
     final prescriptions = await _api.fetchPrescriptions();
     _mergePrescriptions(prescriptions);
-    await _fetchAdherenceForAll();
+    await _fetchAdherenceForAll(await bulkAdherence);
   }
 
   /// Merges a freshly fetched backend prescription list into [_items]:
@@ -505,7 +516,7 @@ class SavedPrescriptionsStore {
     );
   }
 
-  Future<void> _fetchAdherenceForAll() async {
+  Future<void> _fetchAdherenceForAll(List<Map<String, dynamic>>? rows) async {
     final uniquePatientIds = _items
         .where((e) => e.patientId != null && e.patientId!.isNotEmpty)
         .map((e) => e.patientId!)
@@ -513,12 +524,11 @@ class SavedPrescriptionsStore {
         .toList();
     if (uniquePatientIds.isEmpty) return;
 
-    // One request for every patient's badge. Only the badge (status/tier)
-    // is read from entry.adherence, so the bulk rows' trimmed
-    // refill_history doesn't matter here. Falls back to the per-patient
-    // batches below if it fails.
-    try {
-      final rows = await _api.fetchAllPatientsAdherence();
+    // [rows] is the bulk /patients/adherence result (null if it failed).
+    // Only the badge (status/tier) is read from entry.adherence, so the
+    // bulk rows' trimmed refill_history doesn't matter here. Falls back to
+    // the per-patient batches below if it failed.
+    if (rows != null) {
       final byPatient = {
         for (final row in rows)
           row['patient_id']?.toString() ?? '': AdherenceStatus.fromJson(row),
@@ -530,8 +540,6 @@ class SavedPrescriptionsStore {
         }
       }
       return;
-    } catch (e) {
-      debugPrint('STORE: bulk adherence failed, per-patient: $e');
     }
 
     // Was Future.wait(...) firing EVERY patient's fetch at once. On
