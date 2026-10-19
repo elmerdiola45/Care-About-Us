@@ -1288,6 +1288,27 @@ class LaravelApiService {
     _throwForError(response, 'Failed to fetch patient');
   }
 
+  /// Every patient of the caller's pharmacy with their adherence, in ONE
+  /// request (GET /patients/adherence). Each row has the same status fields
+  /// as [fetchPatientAdherence] plus patient_name/age/gender, but
+  /// refill_history only holds the 3 most recent fills.
+  Future<List<Map<String, dynamic>>> fetchAllPatientsAdherence() async {
+    final response = await http
+        .get(_buildUri(['patients', 'adherence']), headers: _headers)
+        .timeout(_timeout);
+
+    if (response.statusCode == 200) {
+      final data = _decodeJsonMap(response);
+      return _safeList(data['patients']).map((e) {
+        final row = _safeMap(e);
+        // The single-patient endpoint calls this field 'reason'.
+        row['reason'] ??= row['adherence_reason'];
+        return row;
+      }).toList();
+    }
+    _throwForError(response, 'Failed to fetch patient adherence');
+  }
+
   Future<Map<String, dynamic>> fetchPatientAdherence(String patientId) async {
     final response = await http
         .get(_buildUri(['patients', patientId, 'adherence']), headers: _headers)

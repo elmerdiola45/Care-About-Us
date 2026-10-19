@@ -518,7 +518,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                           _torchOn ? Icons.flash_on : Icons.flash_off,
                           _toggleTorch,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         _roundButton(
                           Icons.cameraswitch_outlined,
                           _controller.switchCamera,
@@ -537,10 +537,10 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: ScanColors.text,
-                            fontSize: 13.5,
+                            fontSize: 14,
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
                         _homeBanner(),
                       ],
                     ),
@@ -556,7 +556,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
   }
 
   Widget _header() => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+    padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
     child: widget.showBackButton
         ? Row(
             children: [
@@ -582,17 +582,17 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: ScanColors.text,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(
                       'Your branch — ${widget.branchName}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: ScanColors.teal,
-                        fontSize: 12.5,
+                        fontSize: 12,
                       ),
                     ),
                   ],
@@ -607,14 +607,14 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                 'Home Pharmacy Scan',
                 style: TextStyle(
                   color: ScanColors.text,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 4),
               Text(
                 'Your branch — ${widget.branchName}',
-                style: const TextStyle(color: ScanColors.teal, fontSize: 12.5),
+                style: const TextStyle(color: ScanColors.teal, fontSize: 12),
               ),
             ],
           ),
@@ -649,7 +649,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
       );
 
   Widget _homeBanner() => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     decoration: BoxDecoration(
       color: ScanColors.teal.withValues(alpha: .16),
       border: Border.all(color: ScanColors.teal.withValues(alpha: .45)),
@@ -659,7 +659,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
       mainAxisSize: MainAxisSize.min,
       children: [
         const Icon(Icons.info_outline, color: ScanColors.teal, size: 16),
-        const SizedBox(width: 7),
+        const SizedBox(width: 8),
         Flexible(
           child: Text(
             widget.isHomeBranch
@@ -667,7 +667,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
                 : 'Other branch — record will be shared securely.',
             style: const TextStyle(
               color: ScanColors.teal,
-              fontSize: 11.5,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -704,7 +704,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
     final denied = error.errorCode == MobileScannerErrorCode.permissionDenied;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(30),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -713,7 +713,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
               color: ScanColors.teal,
               size: 44,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Text(
               denied
                   ? 'Camera access is needed to scan prescriptions.'
@@ -734,7 +734,7 @@ class _FunctionalQrScannerScreenState extends State<FunctionalQrScannerScreen>
               textAlign: TextAlign.center,
               style: const TextStyle(color: ScanColors.muted),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 12,

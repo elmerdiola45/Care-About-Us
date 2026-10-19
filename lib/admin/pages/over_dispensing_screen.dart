@@ -98,7 +98,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                 "Couldn't load this prescription",
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
@@ -120,7 +120,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                     vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: const Text('Retry'),
@@ -192,7 +192,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
         Text(
           'Medications (${items.length})',
           style: const TextStyle(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             fontSize: 14,
             color: AppColors.textPrimary,
           ),
@@ -207,18 +207,14 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
             im['disposed_quantity'] ?? im['dispatched_quantity'],
           );
           return Container(
-            margin: const EdgeInsets.only(bottom: 10),
+            margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
+              border: Border.fromBorderSide(
+                BorderSide(color: AppColors.border),
+              ),
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Row(
               children: [
@@ -229,8 +225,8 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                       Text(
                         name,
                         style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -239,7 +235,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                         Text(
                           dosage,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: AppColors.textFaint,
                           ),
                         ),
@@ -250,8 +246,8 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                 Text(
                   '×$qty',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                     color: AppColors.teal,
                   ),
                 ),
@@ -259,7 +255,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Dispensed: $dispensed',
-                    style: TextStyle(fontSize: 11, color: AppColors.textFaint),
+                    style: TextStyle(fontSize: 12, color: AppColors.textFaint),
                   ),
                 ],
               ],
@@ -272,22 +268,22 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.redLight,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'OVER-DISPENSING ALERT',
+                'Over-dispensing alert',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.danger,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text(
                 'This prescription has been flagged for over-dispensing review.',
                 style: const TextStyle(
@@ -296,7 +292,7 @@ class _OverDispensingScreenState extends State<OverDispensingScreen> {
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextButton(
                 onPressed: Navigator.of(context).maybePop,
                 child: const Text('Go Back'),
@@ -350,12 +346,12 @@ class _RedHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'TRANSACTION BLOCKED',
+                    'Transaction blocked',
                     style: TextStyle(
                       color: Colors.white70,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       fontSize: 12,
-                      letterSpacing: 1,
+                      letterSpacing: 0,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -364,7 +360,7 @@ class _RedHeader extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       fontSize: 20,
                     ),
                   ),
@@ -374,10 +370,10 @@ class _RedHeader extends StatelessWidget {
             const SizedBox(height: 16),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
@@ -418,15 +414,9 @@ class _InfoCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,18 +424,18 @@ class _InfoCard extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
               color: AppColors.textFaint,
-              letterSpacing: 0.5,
+              letterSpacing: 0,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),

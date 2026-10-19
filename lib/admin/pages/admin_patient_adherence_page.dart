@@ -281,7 +281,7 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
@@ -326,13 +326,13 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                               size: 44,
                               color: AppColors.danger,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 12),
                             Text(
                               _errorMessage!,
                               style: const TextStyle(color: AppColors.danger),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 12),
                             ElevatedButton.icon(
                               onPressed: _loadRecords,
                               icon: const Icon(Icons.refresh),
@@ -346,13 +346,13 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                   ? Center(
                       child: Text(
                         'No prescriptions found',
-                        style: TextStyle(color: Colors.grey.shade500),
+                        style: TextStyle(color: AppColors.textFaint),
                       ),
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                       itemCount: _filtered.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) =>
                           _buildPrescriptionCard(_filtered[index]),
                     ),
@@ -369,15 +369,8 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFEEF0F3)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 1),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
         ),
         child: TextField(
           controller: _searchController,
@@ -385,7 +378,7 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
           style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: 'Search by patient name or Rx number...',
-            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13.5),
+            hintStyle: TextStyle(color: AppColors.textFaint, fontSize: 14),
             prefixIcon: Icon(
               Icons.search,
               color: Colors.grey.shade400,
@@ -393,8 +386,8 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
             ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
+              horizontal: 16,
+              vertical: 16,
             ),
           ),
         ),
@@ -419,7 +412,7 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
             final (label, value) = chip;
             final isSelected = _selectedTier == value;
             return Padding(
-              padding: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.only(right: 12),
               child: ChoiceChip(
                 label: Text(label),
                 selected: isSelected,
@@ -428,17 +421,17 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.white : Colors.grey.shade600,
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: 14,
                 ),
                 backgroundColor: Colors.white,
                 selectedColor: AppColors.teal,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
+                  horizontal: 16,
                   vertical: 8,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: Color(0xFFEEF0F3)),
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: AppColors.border),
                 ),
               ),
             );
@@ -507,17 +500,11 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Row(
           children: [
@@ -533,7 +520,7 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                 initials,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
               ),
@@ -549,26 +536,26 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                         child: Text(
                           record.name,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
                             color: AppColors.textPrimary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           'Rx: ${record.id}',
                           style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 11,
+                            color: AppColors.textFaint,
+                            fontSize: 12,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (record.isLocked) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         const Icon(
                           Icons.lock,
                           size: 16,
@@ -599,7 +586,7 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                     Text(
                       'No medications',
                       style: TextStyle(
-                        color: Colors.grey.shade400,
+                        color: AppColors.textFaint,
                         fontSize: 12,
                       ),
                     ),
@@ -612,8 +599,8 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
+                    horizontal: 12,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: bg,
@@ -633,8 +620,8 @@ class _AdminPatientAdherencePageState extends State<AdminPatientAdherencePage> {
                     },
                     style: TextStyle(
                       color: fg,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
                   ),
                 ),

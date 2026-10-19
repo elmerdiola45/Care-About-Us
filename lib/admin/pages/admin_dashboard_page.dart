@@ -260,7 +260,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1140),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
           child: Row(
             children: [
               Expanded(
@@ -271,7 +271,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       AppSession.instance.branchName ??
                           'Care About Us Pharmacy',
                       style: TextStyle(
-                        color: Colors.grey.shade500,
+                        color: AppColors.textFaint,
                         fontSize: 12,
                       ),
                     ),
@@ -279,8 +279,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     const Text(
                       'Admin Dashboard',
                       style: TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -330,7 +330,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           top: -2,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
+                              horizontal: 4,
                               vertical: 1,
                             ),
                             constraints: const BoxConstraints(minWidth: 18),
@@ -349,8 +349,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -391,7 +391,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         Text(
                           _adminName ?? 'Admin',
                           style: const TextStyle(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
                         ),
@@ -415,7 +415,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           size: 18,
                           color: AppColors.teal,
                         ),
-                        SizedBox(width: 10),
+                        SizedBox(width: 12),
                         Text('Change Password'),
                       ],
                     ),
@@ -426,7 +426,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     child: Row(
                       children: [
                         Icon(Icons.logout, size: 18, color: Colors.red),
-                        SizedBox(width: 10),
+                        SizedBox(width: 12),
                         Text(
                           'Log Out',
                           style: TextStyle(
@@ -499,11 +499,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         style: TextStyle(
                           color: selected
                               ? AppColors.teal
-                              : Colors.grey.shade500,
+                              : AppColors.textFaint,
                           fontWeight: selected
-                              ? FontWeight.w700
+                              ? FontWeight.w600
                               : FontWeight.w500,
-                          fontSize: 14.5,
+                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -761,7 +761,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                       '$periodLabel, ${_formatDate(DateTime.now())}',
                       style: TextStyle(
                         color: Colors.grey.shade600,
-                        fontSize: 13,
+                        fontSize: 14,
                       ),
                     ),
                     Row(
@@ -798,17 +798,13 @@ class _OverviewTabState extends State<_OverviewTab> {
               const SizedBox(height: 20),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
+                  border: Border.fromBorderSide(
+                    BorderSide(color: AppColors.border),
+                  ),
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -816,14 +812,14 @@ class _OverviewTabState extends State<_OverviewTab> {
                     const Text(
                       'Dispensing Trend',
                       style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Divider(color: Colors.grey.shade200),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
                     _DispensingChart(
                       points: _trend.isEmpty ? _defaultTrend() : _trend,
                     ),
@@ -948,15 +944,9 @@ class _ShortcutCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
         ),
         child: Row(
           children: [
@@ -969,7 +959,7 @@ class _ShortcutCard extends StatelessWidget {
               ),
               child: Icon(icon, color: AppColors.teal),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -978,8 +968,8 @@ class _ShortcutCard extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -987,7 +977,7 @@ class _ShortcutCard extends StatelessWidget {
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -1054,16 +1044,16 @@ class _PeriodButton extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
           color: selected ? AppColors.teal : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
             color: selected ? Colors.white : AppColors.textFaint,
           ),
         ),
@@ -1103,7 +1093,7 @@ class _DispensingChartState extends State<_DispensingChart> {
               const SizedBox(height: 8),
               Text(
                 'No prescriptions dispensed in this period',
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                style: TextStyle(fontSize: 14, color: AppColors.textFaint),
               ),
             ],
           ),
@@ -1144,14 +1134,14 @@ class _DispensingChartState extends State<_DispensingChart> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.tealDark,
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   '${point.count} Rx',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -1173,7 +1163,7 @@ class _DispensingChartState extends State<_DispensingChart> {
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.tealDark : AppColors.teal,
                       borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(6),
+                        top: Radius.circular(8),
                       ),
                     ),
                   ),
@@ -1181,12 +1171,12 @@ class _DispensingChartState extends State<_DispensingChart> {
                   Text(
                     point.day,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       color: isSelected
                           ? AppColors.tealDark
-                          : Colors.grey.shade500,
+                          : AppColors.textFaint,
                       fontWeight: isSelected
-                          ? FontWeight.w700
+                          ? FontWeight.w600
                           : FontWeight.w400,
                     ),
                   ),
@@ -1239,15 +1229,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1261,8 +1245,8 @@ class _StatCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
                     color: color,
                   ),
                 ),
@@ -1273,7 +1257,7 @@ class _StatCard extends StatelessWidget {
                 height: 34,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 18),
               ),
@@ -1283,7 +1267,7 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.grey.shade700,
             ),
@@ -1293,8 +1277,8 @@ class _StatCard extends StatelessWidget {
             Text(
               subtitle!,
               style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey.shade500,
+                fontSize: 12,
+                color: AppColors.textFaint,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -1443,8 +1427,8 @@ class _UsersTabState extends State<_UsersTab> {
               const Text(
                 'Staff Accounts',
                 style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -1457,7 +1441,7 @@ class _UsersTabState extends State<_UsersTab> {
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 10,
+                    vertical: 12,
                   ),
                 ),
                 icon: const Icon(Icons.add, size: 16, color: Colors.white),
@@ -1465,8 +1449,8 @@ class _UsersTabState extends State<_UsersTab> {
                   'Add User',
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -1484,10 +1468,7 @@ class _UsersTabState extends State<_UsersTab> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Search staff by name or email',
-                hintStyle: TextStyle(
-                  color: AppColors.textFaint,
-                  fontSize: 13.5,
-                ),
+                hintStyle: TextStyle(color: AppColors.textFaint, fontSize: 14),
                 prefixIcon: const Icon(
                   Icons.search,
                   color: AppColors.textFaint,
@@ -1551,7 +1532,7 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg, label) = _style;
     final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
@@ -1559,7 +1540,7 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: fg),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg),
       ),
     );
     if (onTap == null) {
@@ -1623,17 +1604,11 @@ class _StaffCardState extends State<_StaffCard> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -1644,7 +1619,7 @@ class _StaffCardState extends State<_StaffCard> {
               s.initials,
               style: const TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
             ),
@@ -1657,8 +1632,8 @@ class _StaffCardState extends State<_StaffCard> {
                 Text(
                   s.name,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -1666,7 +1641,7 @@ class _StaffCardState extends State<_StaffCard> {
                 Text(
                   s.roleLabel,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 12,
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1674,7 +1649,7 @@ class _StaffCardState extends State<_StaffCard> {
                 const SizedBox(height: 2),
                 Text(
                   'Last: ${s.lastActive}',
-                  style: TextStyle(fontSize: 11.5, color: AppColors.textFaint),
+                  style: TextStyle(fontSize: 12, color: AppColors.textFaint),
                 ),
               ],
             ),
@@ -1727,7 +1702,7 @@ class _StaffCardState extends State<_StaffCard> {
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: SafeArea(
           child: Column(
@@ -1747,7 +1722,7 @@ class _StaffCardState extends State<_StaffCard> {
                 'Set Staff Status',
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -1761,7 +1736,7 @@ class _StaffCardState extends State<_StaffCard> {
                   title: Text(
                     _statusLabel(st),
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -1851,8 +1826,8 @@ class _ReportsTabState extends State<_ReportsTab> {
           const Text(
             'Reports',
             style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
@@ -1896,7 +1871,7 @@ class _ReportsTabState extends State<_ReportsTab> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.teal,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1917,7 +1892,7 @@ class _ReportsTabState extends State<_ReportsTab> {
                         ),
                   label: Text(
                     _loadingPreview ? 'Loading...' : 'Preview',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -1928,7 +1903,7 @@ class _ReportsTabState extends State<_ReportsTab> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.danger,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1949,7 +1924,7 @@ class _ReportsTabState extends State<_ReportsTab> {
                         ),
                   label: Text(
                     _exportingPdf ? 'Exporting...' : 'Export as PDF',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -1961,7 +1936,7 @@ class _ReportsTabState extends State<_ReportsTab> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.dangerBg,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: AppColors.danger.withValues(alpha: 0.3),
                 ),
@@ -1979,7 +1954,7 @@ class _ReportsTabState extends State<_ReportsTab> {
                       _error!,
                       style: const TextStyle(
                         color: AppColors.danger,
-                        fontSize: 12.5,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -2149,20 +2124,20 @@ class _ReportTypeButton extends StatelessWidget {
     return TapTarget(
       onTap: onTap,
       semanticLabel: label,
-      borderRadius: BorderRadius.circular(11),
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
           color: selected ? AppColors.teal : Colors.transparent,
-          borderRadius: BorderRadius.circular(11),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
             color: selected ? Colors.white : AppColors.textFaint,
           ),
         ),
@@ -2186,7 +2161,7 @@ class _DateRangeField extends StatelessWidget {
       onTap: onPick,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
@@ -2199,12 +2174,12 @@ class _DateRangeField extends StatelessWidget {
               size: 18,
               color: AppColors.textFaint,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 13.5,
+                  fontSize: 14,
                   color: dateRange == null
                       ? AppColors.textFaint
                       : AppColors.textSecondary,
@@ -2286,91 +2261,61 @@ class _DispensingPreviewTable extends StatelessWidget {
                 DataColumn(
                   label: Text(
                     'Date Dispensed',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'RX No.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Physician',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Patient Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Generic Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Brand Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Lot No.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Expiry Date',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Qty Served',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Remarks',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
               ],
@@ -2387,52 +2332,46 @@ class _DispensingPreviewTable extends StatelessWidget {
                     DataCell(
                       Text(
                         row.dateDispensed,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
-                      Text(
-                        row.rxNumber,
-                        style: const TextStyle(fontSize: 12.5),
-                      ),
+                      Text(row.rxNumber, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
                       Text(
                         row.physicianName,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         row.patientName,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         row.genericName,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
-                      Text(
-                        row.brandName,
-                        style: const TextStyle(fontSize: 12.5),
-                      ),
+                      Text(row.brandName, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
-                      Text(row.lotNo, style: const TextStyle(fontSize: 12.5)),
+                      Text(row.lotNo, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
                       Text(
                         row.expiryDate,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         '${row.quantityServed}',
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
@@ -2449,7 +2388,7 @@ class _DispensingPreviewTable extends StatelessWidget {
                           row.remarks,
                           style: TextStyle(
                             color: tagColor,
-                            fontSize: 11.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -2476,11 +2415,11 @@ class _DispensingRecordCard extends StatelessWidget {
     final tagColor = isFully ? AppColors.success : AppColors.warning;
     final tagBg = isFully ? AppColors.successBg : AppColors.warningBg;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -2493,8 +2432,8 @@ class _DispensingRecordCard extends StatelessWidget {
                 child: Text(
                   row.patientName,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
               ),
@@ -2509,7 +2448,7 @@ class _DispensingRecordCard extends StatelessWidget {
                   row.remarks,
                   style: TextStyle(
                     color: tagColor,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -2548,7 +2487,7 @@ class _DispensingRecordCard extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ),
       ],
@@ -2602,73 +2541,49 @@ class _SeniorCitizenPreviewTable extends StatelessWidget {
                 DataColumn(
                   label: Text(
                     'Date',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Senior Citizen Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'OSCA ID No.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Drug Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Gross Cost',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     '% Discount',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'Net Cost',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     'OR No.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
               ],
@@ -2676,46 +2591,40 @@ class _SeniorCitizenPreviewTable extends StatelessWidget {
                 return DataRow(
                   cells: [
                     DataCell(
-                      Text(row.date, style: const TextStyle(fontSize: 12.5)),
+                      Text(row.date, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
                       Text(
                         row.seniorCitizenName,
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
-                      Text(row.oscaId, style: const TextStyle(fontSize: 12.5)),
+                      Text(row.oscaId, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
-                      Text(
-                        row.drugName,
-                        style: const TextStyle(fontSize: 12.5),
-                      ),
+                      Text(row.drugName, style: const TextStyle(fontSize: 12)),
                     ),
                     DataCell(
                       Text(
                         '₱${row.grossCost.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         '${row.discountPercent.toStringAsFixed(0)}%',
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
                       Text(
                         '₱${row.netCost.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 12.5),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     DataCell(
-                      Text(
-                        row.orNumber,
-                        style: const TextStyle(fontSize: 12.5),
-                      ),
+                      Text(row.orNumber, style: const TextStyle(fontSize: 12)),
                     ),
                   ],
                 );
@@ -2735,11 +2644,11 @@ class _SeniorCitizenRecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -2747,7 +2656,7 @@ class _SeniorCitizenRecordCard extends StatelessWidget {
         children: [
           Text(
             row.seniorCitizenName,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
           const SizedBox(height: 2),
           Text(
@@ -2780,7 +2689,7 @@ class _SeniorCitizenRecordCard extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ),
       ],

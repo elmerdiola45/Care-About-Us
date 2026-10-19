@@ -207,8 +207,8 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                     const Text(
                       'Add Staff Member',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -218,7 +218,7 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                           ? 'Dispenser — Pharmacy Assistant'
                           : 'Pharmacist — Licensed Staff',
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         color: AppColors.textFaint,
                       ),
                     ),
@@ -330,14 +330,14 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.textFaint,
                               side: const BorderSide(color: AppColors.border),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             child: const Text(
                               'Cancel',
-                              style: TextStyle(fontWeight: FontWeight.w700),
+                              style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ),
                         ),
@@ -349,7 +349,7 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                               backgroundColor: AppColors.teal700,
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -366,7 +366,7 @@ class _AddStaffSheetState extends State<AddStaffSheet> {
                                 : const Text(
                                     'Create',
                                     style: TextStyle(
-                                      fontWeight: FontWeight.w700,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                           ),
@@ -401,7 +401,7 @@ class RoleToggle extends StatelessWidget {
             onTap: () => onChanged(StaffRole.dispenser),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: _RoleCard(
             label: 'Pharmacist',
@@ -432,13 +432,13 @@ class _RoleCard extends StatelessWidget {
     return TapTarget(
       onTap: onTap,
       semanticLabel: '$label: $subtitle',
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
           color: selected ? AppColors.teal700 : AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? AppColors.teal700 : AppColors.border,
             width: 1.5,
@@ -451,7 +451,7 @@ class _RoleCard extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: selected ? Colors.white : AppColors.textSecondary,
               ),
             ),
@@ -459,7 +459,7 @@ class _RoleCard extends StatelessWidget {
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: selected ? AppColors.mint100 : AppColors.textFaint,
               ),
@@ -531,7 +531,7 @@ class StrengthIndicator extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -542,7 +542,7 @@ class StrengthIndicator extends StatelessWidget {
                     child: Container(
                       height: 4,
                       margin: EdgeInsets.only(
-                        right: index < segments - 1 ? 3 : 0,
+                        right: index < segments - 1 ? 4 : 0,
                       ),
                       decoration: BoxDecoration(
                         color: filled ? color : AppColors.border,
@@ -558,7 +558,7 @@ class StrengthIndicator extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: color,
                 ),
@@ -603,12 +603,12 @@ class LabeledField extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.textFaint,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           validator: readOnly ? null : validator,
@@ -625,8 +625,8 @@ class LabeledField extends StatelessWidget {
             filled: true,
             fillColor: readOnly ? AppColors.border : AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
+              horizontal: 16,
+              vertical: 16,
             ),
             suffixIcon: suffixIcon,
             border: OutlineInputBorder(
@@ -658,7 +658,7 @@ class LabeledField extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             serverError!,
-            style: const TextStyle(fontSize: 11.5, color: AppColors.danger),
+            style: const TextStyle(fontSize: 12, color: AppColors.danger),
           ),
         ],
       ],
@@ -676,7 +676,7 @@ class ErrorBanner extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.dangerBg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -686,7 +686,7 @@ class ErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(fontSize: 12.5, color: AppColors.danger),
+              style: const TextStyle(fontSize: 12, color: AppColors.danger),
             ),
           ),
         ],

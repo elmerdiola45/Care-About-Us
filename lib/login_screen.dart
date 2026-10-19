@@ -259,13 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Expanded(
           flex: 5,
           child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.loginGradientDark, AppColors.teal],
-              ),
-            ),
+            decoration: const BoxDecoration(color: AppColors.loginGradientDark),
             padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 56),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 48,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.shield_outlined,
@@ -285,13 +279,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         size: 26,
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 16),
                     const Text(
                       'Care About Us Pharmacy',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -301,9 +295,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   'Safe, accurate dispensing\nfor every prescription.',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 36,
+                    fontSize: 28,
                     height: 1.2,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -312,14 +306,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   'over-dispensing across branches in one place.',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 15.5,
+                    fontSize: 14,
                     height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 32),
                 for (final (icon, label) in features)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.only(bottom: 16),
                     child: Row(
                       children: [
                         Container(
@@ -327,17 +321,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 36,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(icon, color: Colors.white, size: 19),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 16),
                         Flexible(
                           child: Text(
                             label,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 14.5,
+                              fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -365,15 +359,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Welcome back',
                       style: TextStyle(
                         fontSize: 28,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     const Text(
                       'Sign in to your pharmacy account to continue.',
                       style: TextStyle(
-                        fontSize: 14.5,
+                        fontSize: 14,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -397,11 +391,11 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           _buildRoleToggle(),
           const SizedBox(height: 24),
-          _buildFieldLabel('EMAIL ADDRESS'),
+          _buildFieldLabel('Email address'),
           const SizedBox(height: 8),
           _buildEmailField(),
-          const SizedBox(height: 18),
-          _buildFieldLabel('PASSWORD'),
+          const SizedBox(height: 16),
+          _buildFieldLabel('Password'),
           const SizedBox(height: 8),
           _buildPasswordField(),
           const SizedBox(height: 8),
@@ -418,19 +412,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 'Forgot Password?',
                 style: TextStyle(
                   color: AppColors.teal,
-                  fontSize: 13.5,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 24),
           _buildSignInButton(isWide),
           if (_errorMessage != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
                 color: Colors.redAccent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
@@ -451,7 +445,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _errorMessage!,
                       style: const TextStyle(
                         color: Colors.redAccent,
-                        fontSize: 13,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -476,13 +470,7 @@ class _LoginScreenState extends State<LoginScreen> {
         vertical: isWide ? 56 : 44,
         horizontal: isWide ? 32 : 24,
       ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.loginGradientDark, AppColors.teal],
-        ),
-      ),
+      decoration: const BoxDecoration(color: AppColors.loginGradientDark),
       child: Column(
         children: [
           Container(
@@ -490,7 +478,7 @@ class _LoginScreenState extends State<LoginScreen> {
             height: iconSize,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
               Icons.shield_outlined,
@@ -498,14 +486,14 @@ class _LoginScreenState extends State<LoginScreen> {
               size: 30,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           const Text(
             'Care About Us Pharmacy',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 21,
-              fontWeight: FontWeight.w800,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 12),
@@ -517,7 +505,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildCompliancePill() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
@@ -551,15 +539,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildRoleToggle() {
     return Container(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: AppColors.bg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           Expanded(child: _roleTab('Pharmacy Assistant', LoginRole.assistant)),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(child: _roleTab('Pharmacist / Admin', LoginRole.admin)),
         ],
       ),
@@ -571,13 +559,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return TapTarget(
       onTap: () => setState(() => _role = role),
       semanticLabel: label,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: selected
               ? [
                   BoxShadow(
@@ -593,8 +581,8 @@ class _LoginScreenState extends State<LoginScreen> {
           textAlign: TextAlign.center,
           style: TextStyle(
             color: selected ? AppColors.teal : AppColors.textFaint,
-            fontWeight: FontWeight.w700,
-            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
           ),
         ),
       ),
@@ -606,9 +594,9 @@ class _LoginScreenState extends State<LoginScreen> {
       text,
       style: const TextStyle(
         color: AppColors.textSecondary,
-        fontSize: 11.5,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.6,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
       ),
     );
   }
@@ -619,7 +607,7 @@ class _LoginScreenState extends State<LoginScreen> {
       suffixIcon: suffix,
       filled: true,
       fillColor: AppColors.bg,
-      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -643,7 +631,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14.5),
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
       decoration: _inputDecoration(icon: Icons.mail_outline),
       validator: (value) {
         if (value == null || value.trim().isEmpty) return 'Email is required';
@@ -657,7 +645,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return TextFormField(
       controller: _passwordController,
       obscureText: _obscurePassword,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14.5),
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
       decoration: _inputDecoration(
         icon: Icons.lock_outline,
         suffix: IconButton(
@@ -688,7 +676,7 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: AppColors.loginGradientDark,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
           elevation: 0,
         ),
@@ -706,7 +694,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: const [
                   Text(
                     'Sign In Securely',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   SizedBox(width: 8),
                   Icon(Icons.arrow_forward, size: 18),
@@ -721,13 +709,13 @@ class _LoginScreenState extends State<LoginScreen> {
       children: const [
         Text(
           'Secured · DoH-accredited e-prescription system',
-          style: TextStyle(color: AppColors.textFaint, fontSize: 11.5),
+          style: TextStyle(color: AppColors.textFaint, fontSize: 12),
           textAlign: TextAlign.center,
         ),
         SizedBox(height: 2),
         Text(
           'Care About Us Pharmacy · v2.4.1 · Build 20250705',
-          style: TextStyle(color: AppColors.textFaint, fontSize: 11.5),
+          style: TextStyle(color: AppColors.textFaint, fontSize: 12),
           textAlign: TextAlign.center,
         ),
       ],

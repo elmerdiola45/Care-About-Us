@@ -352,7 +352,7 @@ class _PriceListPageState extends State<PriceListPage> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -370,7 +370,7 @@ class _PriceListPageState extends State<PriceListPage> {
                     const Text(
                       'Recently Removed',
                       style: TextStyle(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         fontSize: 16,
                         color: AppColors.textPrimary,
                       ),
@@ -379,14 +379,14 @@ class _PriceListPageState extends State<PriceListPage> {
                     Text(
                       'Restore a medicine that was removed by mistake.',
                       style: TextStyle(
-                        fontSize: 12.5,
-                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                        color: AppColors.textFaint,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
                     if (loading)
                       const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 30),
+                        padding: EdgeInsets.symmetric(vertical: 32),
                         child: Center(
                           child: CircularProgressIndicator(
                             color: AppColors.teal,
@@ -403,11 +403,11 @@ class _PriceListPageState extends State<PriceListPage> {
                       )
                     else if (trashed.isEmpty)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 30),
+                        padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Center(
                           child: Text(
                             'No removed medicines.',
-                            style: TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: AppColors.textFaint),
                           ),
                         ),
                       )
@@ -418,7 +418,7 @@ class _PriceListPageState extends State<PriceListPage> {
                           child: Column(
                             children: trashed.map((m) {
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.only(bottom: 12),
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
@@ -435,8 +435,8 @@ class _PriceListPageState extends State<PriceListPage> {
                                             Text(
                                               m.medicineName,
                                               style: const TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14,
                                                 color: AppColors.textPrimary,
                                               ),
                                             ),
@@ -494,7 +494,7 @@ class _PriceListPageState extends State<PriceListPage> {
                                           'Restore',
                                           style: TextStyle(
                                             color: AppColors.teal,
-                                            fontWeight: FontWeight.w700,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ),
@@ -593,12 +593,12 @@ class _PriceListPageState extends State<PriceListPage> {
                 ],
               ),
               if (preview.errors.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.warningBg,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,7 +606,7 @@ class _PriceListPageState extends State<PriceListPage> {
                       const Text(
                         'Some rows were skipped:',
                         style: TextStyle(
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.warning,
                         ),
                       ),
@@ -622,9 +622,9 @@ class _PriceListPageState extends State<PriceListPage> {
               const SizedBox(height: 12),
               const Text(
                 'Preview:',
-                style: TextStyle(fontWeight: FontWeight.w700),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 260),
                 child: SingleChildScrollView(
@@ -654,8 +654,8 @@ class _PriceListPageState extends State<PriceListPage> {
                                       subtitle,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey.shade500,
+                                        fontSize: 12,
+                                        color: AppColors.textFaint,
                                       ),
                                     ),
                                 ],
@@ -664,11 +664,11 @@ class _PriceListPageState extends State<PriceListPage> {
                             if (!isNew && r.oldPrice != null)
                               Text(
                                 '₱${r.oldPrice!.toStringAsFixed(2)} → ',
-                                style: TextStyle(color: Colors.grey.shade500),
+                                style: TextStyle(color: AppColors.textFaint),
                               ),
                             if (isRestoring)
                               const Padding(
-                                padding: EdgeInsets.only(right: 6),
+                                padding: EdgeInsets.only(right: 8),
                                 child: Icon(
                                   Icons.restore,
                                   size: 16,
@@ -680,7 +680,7 @@ class _PriceListPageState extends State<PriceListPage> {
                                   ? '₱${r.newPrice!.toStringAsFixed(2)}'
                                   : 'Not set',
                               style: TextStyle(
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                                 color: isRestoring
                                     ? AppColors.warning
                                     : isNew
@@ -720,18 +720,14 @@ class _PriceListPageState extends State<PriceListPage> {
   }
 
   Widget _summaryChip(String label, Color color) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
     ),
     child: Text(
       label,
-      style: TextStyle(
-        color: color,
-        fontWeight: FontWeight.w700,
-        fontSize: 12.5,
-      ),
+      style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
     ),
   );
 
@@ -766,7 +762,7 @@ class _PriceListPageState extends State<PriceListPage> {
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -776,7 +772,7 @@ class _PriceListPageState extends State<PriceListPage> {
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           'Add Medicine',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
       ),
       body: Column(
@@ -798,8 +794,8 @@ class _PriceListPageState extends State<PriceListPage> {
                       decoration: InputDecoration(
                         hintText: 'Search medicine...',
                         hintStyle: TextStyle(
-                          color: Colors.grey.shade400,
-                          fontSize: 13.5,
+                          color: AppColors.textFaint,
+                          fontSize: 14,
                         ),
                         prefixIcon: Icon(
                           Icons.search,
@@ -808,13 +804,13 @@ class _PriceListPageState extends State<PriceListPage> {
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14,
+                          vertical: 16,
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 // Below AppBreakpoints.phone, "Upload" label + icon next to
                 // the search field + history icon no longer reliably fits —
                 // collapse to icon-only rather than let it overflow.
@@ -833,7 +829,7 @@ class _PriceListPageState extends State<PriceListPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(16),
                         ),
                       )
                     : OutlinedButton.icon(
@@ -853,8 +849,8 @@ class _PriceListPageState extends State<PriceListPage> {
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppColors.teal),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 14,
+                            horizontal: 16,
+                            vertical: 16,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -876,7 +872,7 @@ class _PriceListPageState extends State<PriceListPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(16),
                   ),
                 ),
               ],
@@ -891,13 +887,13 @@ class _PriceListPageState extends State<PriceListPage> {
                 ? Center(
                     child: Text(
                       'No medicines in the price list yet.',
-                      style: TextStyle(color: Colors.grey.shade500),
+                      style: TextStyle(color: AppColors.textFaint),
                     ),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 90),
                     itemCount: _visibleMedicines.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) => _PriceCard(
                       medicine: _visibleMedicines[index],
                       onTap: () =>
@@ -935,17 +931,11 @@ class _PriceCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
         ),
         child: Row(
           children: [
@@ -955,7 +945,7 @@ class _PriceCard extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: AppColors.tealPale,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.medication_outlined,
@@ -971,7 +961,7 @@ class _PriceCard extends StatelessWidget {
                   Text(
                     medicine.medicineName,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       fontSize: 14,
                       color: AppColors.textPrimary,
                     ),
@@ -983,7 +973,7 @@ class _PriceCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade500,
+                        color: AppColors.textFaint,
                       ),
                     ),
                   ],
@@ -995,14 +985,14 @@ class _PriceCard extends StatelessWidget {
                   ? '₱${medicine.sellingPrice!.toStringAsFixed(2)}'
                   : 'Price not set',
               style: TextStyle(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: medicine.sellingPrice != null
                     ? AppColors.teal
-                    : Colors.grey.shade400,
-                fontSize: 15,
+                    : AppColors.textFaint,
+                fontSize: 14,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 18),
           ],
         ),

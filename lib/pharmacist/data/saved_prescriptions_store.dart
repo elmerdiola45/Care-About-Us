@@ -511,6 +511,28 @@ class SavedPrescriptionsStore {
         .map((e) => e.patientId!)
         .toSet()
         .toList();
+    if (uniquePatientIds.isEmpty) return;
+
+    // One request for every patient's badge. Only the badge (status/tier)
+    // is read from entry.adherence, so the bulk rows' trimmed
+    // refill_history doesn't matter here. Falls back to the per-patient
+    // batches below if it fails.
+    try {
+      final rows = await _api.fetchAllPatientsAdherence();
+      final byPatient = {
+        for (final row in rows)
+          row['patient_id']?.toString() ?? '': AdherenceStatus.fromJson(row),
+      };
+      for (var j = 0; j < _items.length; j++) {
+        final adherence = byPatient[_items[j].patientId];
+        if (adherence != null) {
+          _items[j] = _items[j].copyWith(adherence: adherence);
+        }
+      }
+      return;
+    } catch (e) {
+      debugPrint('STORE: bulk adherence failed, per-patient: $e');
+    }
 
     // Was Future.wait(...) firing EVERY patient's fetch at once. On
     // Render's free tier, PHP-FPM only has 4 worker slots total (see

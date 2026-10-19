@@ -187,8 +187,8 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                     const Text(
                       'Reset Password',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -196,7 +196,7 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                     Text(
                       '${widget.staff.name} · ${widget.staff.email}',
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         color: AppColors.textFaint,
                       ),
                     ),
@@ -256,7 +256,7 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                       'Share it with them directly — it will not be shown '
                       'again after this screen closes.',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 12,
                         color: AppColors.textFaint,
                       ),
                     ),
@@ -271,14 +271,14 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.textFaint,
                               side: const BorderSide(color: AppColors.border),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             child: const Text(
                               'Cancel',
-                              style: TextStyle(fontWeight: FontWeight.w700),
+                              style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ),
                         ),
@@ -290,7 +290,7 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                               backgroundColor: AppColors.teal700,
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -307,7 +307,7 @@ class _ResetStaffPasswordSheetState extends State<ResetStaffPasswordSheet> {
                                 : const Text(
                                     'Reset Password',
                                     style: TextStyle(
-                                      fontWeight: FontWeight.w700,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                           ),

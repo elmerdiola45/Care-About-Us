@@ -93,11 +93,7 @@ class _RailBrand extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.tealLight, AppColors.teal],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.teal,
         borderRadius: BorderRadius.circular(12),
       ),
       child: const Icon(
@@ -125,8 +121,8 @@ class _RailBrand extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),

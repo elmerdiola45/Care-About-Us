@@ -6,8 +6,10 @@ class AppColors {
   static const tealDark = Color(0xFF0B5B54);
   static const tealPale = Color(0xFFE6F5F3);
   static const textPrimary = Color(0xFF1F2937);
-  static const textSecondary = Color(0xFF6B7280);
-  static const textFaint = Color(0xFF9CA3AF);
+  // Both pass 4.5:1 on white (textSecondary on [bg] too); the old faint
+  // grey (#9CA3AF) was ~2.5:1 and hard to read on small labels.
+  static const textSecondary = Color(0xFF5B6472);
+  static const textFaint = Color(0xFF6B7280);
   static const success = Color(0xFF16A34A);
   static const successBg = Color(0xFFDCFCE7);
   static const warning = Color(0xFFD97706);

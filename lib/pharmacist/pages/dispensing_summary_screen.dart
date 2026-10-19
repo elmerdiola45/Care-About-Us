@@ -1,6 +1,7 @@
 //dispensing_summary_screen.dart
 import 'package:flutter/material.dart';
 import '../../common/widgets/responsive_center.dart';
+import '../../common/theme/app_colors.dart';
 import '../models/prescription.dart' show DispensingStatus;
 
 class SummaryColors {
@@ -123,7 +124,7 @@ class DispensingSummaryScreen extends StatelessWidget {
               child: ResponsiveCenter.dashboard(
                 padding: EdgeInsets.zero,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                   children: [
                     _transactionCard(),
                     const SizedBox(height: 16),
@@ -149,11 +150,11 @@ class DispensingSummaryScreen extends StatelessWidget {
                     backgroundColor: SummaryColors.green,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     textStyle: const TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   child: const Text('Done'),
@@ -169,12 +170,10 @@ class DispensingSummaryScreen extends StatelessWidget {
   Widget _header() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [SummaryColors.greenDark, SummaryColors.green],
-        ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
+        color: SummaryColors.greenDark,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +185,7 @@ class DispensingSummaryScreen extends StatelessWidget {
                 height: 45,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: .18),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.check_circle_rounded,
@@ -197,29 +196,29 @@ class DispensingSummaryScreen extends StatelessWidget {
               const SizedBox(width: 12),
               const Expanded(
                 child: Text(
-                  'HOME PHARMACY DISPENSING',
+                  'Home pharmacy dispensing',
                   style: TextStyle(
                     color: Color(0xFFD2F8F0),
-                    letterSpacing: 1.1,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           const Text(
             'Dispensing Summary',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: .15),
               borderRadius: BorderRadius.circular(12),
@@ -254,8 +253,8 @@ class DispensingSummaryScreen extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('TRANSACTION DETAILS', style: _sectionStyle),
-        const SizedBox(height: 10),
+        const Text('Transaction details', style: _sectionStyle),
+        const SizedBox(height: 12),
         _detailRow('Date & Time', _formatDateTime(transaction.dateTime)),
         _line(),
         _detailRow('Patient', transaction.patientDisplay),
@@ -305,14 +304,14 @@ class DispensingSummaryScreen extends StatelessWidget {
         Row(
           children: [
             const Expanded(
-              child: Text('MEDICINES DISPENSED', style: _sectionStyle),
+              child: Text('Medicines dispensed', style: _sectionStyle),
             ),
             if (transaction.isSenior)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF7E6),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -327,8 +326,8 @@ class DispensingSummaryScreen extends StatelessWidget {
                       'SC 20% OFF',
                       style: TextStyle(
                         color: Color(0xFFD97706),
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -348,7 +347,7 @@ class DispensingSummaryScreen extends StatelessWidget {
               const Expanded(
                 child: Text(
                   'Subtotal',
-                  style: TextStyle(color: SummaryColors.muted, fontSize: 13.5),
+                  style: TextStyle(color: SummaryColors.muted, fontSize: 14),
                 ),
               ),
               Text(
@@ -360,7 +359,7 @@ class DispensingSummaryScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Row(
             children: [
               const Icon(
@@ -374,7 +373,7 @@ class DispensingSummaryScreen extends StatelessWidget {
                   'Senior Citizen Discount (20%)',
                   style: TextStyle(
                     color: Color(0xFFD97706),
-                    fontSize: 13.5,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -384,7 +383,7 @@ class DispensingSummaryScreen extends StatelessWidget {
                 style: const TextStyle(
                   color: Color(0xFFD97706),
                   fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -399,7 +398,7 @@ class DispensingSummaryScreen extends StatelessWidget {
                 style: TextStyle(
                   color: SummaryColors.text,
                   fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -407,8 +406,8 @@ class DispensingSummaryScreen extends StatelessWidget {
               _peso(transaction.totalCollected),
               style: const TextStyle(
                 color: SummaryColors.green,
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -424,7 +423,7 @@ class DispensingSummaryScreen extends StatelessWidget {
         Row(
           children: [
             const Expanded(
-              child: Text('INVENTORY UPDATE', style: _sectionStyle),
+              child: Text('Inventory update', style: _sectionStyle),
             ),
             _badge(
               'Auto-updated ✓',
@@ -433,7 +432,7 @@ class DispensingSummaryScreen extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         for (var i = 0; i < transaction.medicines.length; i++) ...[
           _inventoryRow(transaction.medicines[i]),
           if (i < transaction.medicines.length - 1) _line(),
@@ -455,8 +454,8 @@ class DispensingSummaryScreen extends StatelessWidget {
                 medicine.name,
                 style: const TextStyle(
                   color: SummaryColors.text,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
               if (medicine.brand.isNotEmpty) ...[
@@ -470,12 +469,12 @@ class DispensingSummaryScreen extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 3),
+              const SizedBox(height: 4),
               Text(
                 '${medicine.quantity} ${medicine.unitLabel} × ${_peso(medicine.pricePerUnit)}',
                 style: const TextStyle(
                   color: SummaryColors.muted,
-                  fontSize: 12.5,
+                  fontSize: 12,
                 ),
               ),
               if (medicine.isSeniorCitizen) ...[
@@ -484,7 +483,7 @@ class DispensingSummaryScreen extends StatelessWidget {
                   'SC discount: −${_peso(medicine.discountAmount)}',
                   style: const TextStyle(
                     color: Color(0xFFD97706),
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -501,7 +500,7 @@ class DispensingSummaryScreen extends StatelessWidget {
                 _peso(medicine.grossTotal),
                 style: const TextStyle(
                   color: SummaryColors.muted,
-                  fontSize: 12.5,
+                  fontSize: 12,
                   decoration: TextDecoration.lineThrough,
                 ),
               ),
@@ -509,8 +508,8 @@ class DispensingSummaryScreen extends StatelessWidget {
               _peso(medicine.lineTotal),
               style: const TextStyle(
                 color: SummaryColors.green,
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ],
@@ -520,7 +519,7 @@ class DispensingSummaryScreen extends StatelessWidget {
   );
 
   Widget _inventoryRow(DispensedMedicine medicine) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 9),
+    padding: const EdgeInsets.symmetric(vertical: 8),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -528,7 +527,7 @@ class DispensingSummaryScreen extends StatelessWidget {
           padding: EdgeInsets.only(top: 2),
           child: Icon(Icons.check_circle, color: SummaryColors.green, size: 18),
         ),
-        const SizedBox(width: 9),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -537,7 +536,7 @@ class DispensingSummaryScreen extends StatelessWidget {
                 medicine.name,
                 style: const TextStyle(
                   color: SummaryColors.text,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 2),
@@ -545,7 +544,7 @@ class DispensingSummaryScreen extends StatelessWidget {
                 '${medicine.stockBefore} → ${medicine.stockAfter} units (−${medicine.deducted})',
                 style: const TextStyle(
                   color: SummaryColors.muted,
-                  fontSize: 12.5,
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -562,7 +561,7 @@ class DispensingSummaryScreen extends StatelessWidget {
     Color valueColor = SummaryColors.text,
   }) => LayoutBuilder(
     builder: (context, constraints) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -570,10 +569,7 @@ class DispensingSummaryScreen extends StatelessWidget {
             width: constraints.maxWidth < 280 ? 90 : 108,
             child: Text(
               label,
-              style: const TextStyle(
-                color: SummaryColors.muted,
-                fontSize: 12.5,
-              ),
+              style: const TextStyle(color: SummaryColors.muted, fontSize: 12),
             ),
           ),
           Expanded(
@@ -582,8 +578,8 @@ class DispensingSummaryScreen extends StatelessWidget {
               textAlign: TextAlign.right,
               style: TextStyle(
                 color: valueColor,
-                fontWeight: FontWeight.w700,
-                fontSize: 13.2,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
                 height: 1.35,
               ),
             ),
@@ -597,14 +593,14 @@ class DispensingSummaryScreen extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
       color: background,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
     ),
     child: Text(
       label,
       style: TextStyle(
         color: foreground,
-        fontSize: 10.5,
-        fontWeight: FontWeight.w800,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
       ),
     ),
   );
@@ -612,15 +608,9 @@ class DispensingSummaryScreen extends StatelessWidget {
   Widget _card({required Widget child}) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
+      border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: .04),
-          blurRadius: 10,
-          offset: const Offset(0, 3),
-        ),
-      ],
     ),
     child: child,
   );
@@ -630,9 +620,9 @@ class DispensingSummaryScreen extends StatelessWidget {
 
 const _sectionStyle = TextStyle(
   color: SummaryColors.muted,
-  fontSize: 11.5,
-  letterSpacing: .7,
-  fontWeight: FontWeight.w800,
+  fontSize: 12,
+  letterSpacing: 0,
+  fontWeight: FontWeight.w600,
 );
 
 String _peso(double value) => '₱${value.toStringAsFixed(2)}';

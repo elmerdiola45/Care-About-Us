@@ -28,7 +28,9 @@ class CrossPharmacyScanColors {
 /// Throws [LaravelApiException] on an invalid/expired/already-used token.
 /// There is deliberately no demo-data fallback here: a cross-pharmacy scan
 /// is about to modify another pharmacy's real records.
-Future<LaravelVerifiedPrescription> verifyCrossPharmacyQr(String rawValue) async {
+Future<LaravelVerifiedPrescription> verifyCrossPharmacyQr(
+  String rawValue,
+) async {
   String token = '';
   try {
     final decoded = jsonDecode(rawValue);
@@ -48,7 +50,9 @@ Future<LaravelVerifiedPrescription> verifyCrossPharmacyQr(String rawValue) async
   final api = LaravelApiService(token: AppSession.instance.token);
   final verified = await api.verifyQrToken(token);
   if (!verified.valid) {
-    throw LaravelApiException(verified.message ?? 'This QR code is invalid or already used.');
+    throw LaravelApiException(
+      verified.message ?? 'This QR code is invalid or already used.',
+    );
   }
   return verified;
 }
@@ -67,7 +71,8 @@ class CrossPharmacyScanScreen extends StatefulWidget {
   });
 
   @override
-  State<CrossPharmacyScanScreen> createState() => _CrossPharmacyScanScreenState();
+  State<CrossPharmacyScanScreen> createState() =>
+      _CrossPharmacyScanScreenState();
 }
 
 class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
@@ -101,7 +106,11 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
     if (error != null) {
       setState(() => _processing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: CrossPharmacyScanColors.danger, duration: const Duration(seconds: 3)),
+        SnackBar(
+          content: Text(error),
+          backgroundColor: CrossPharmacyScanColors.danger,
+          duration: const Duration(seconds: 3),
+        ),
       );
       return;
     }
@@ -118,12 +127,17 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Scan cancelled. Ready for next prescription.'), duration: Duration(seconds: 2)),
+        const SnackBar(
+          content: Text('Scan cancelled. Ready for next prescription.'),
+          duration: Duration(seconds: 2),
+        ),
       );
     }
   }
 
-  Future<bool?> _showVerificationSheet(LaravelVerifiedPrescription prescription) {
+  Future<bool?> _showVerificationSheet(
+    LaravelVerifiedPrescription prescription,
+  ) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -132,7 +146,9 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
     );
   }
 
-  Future<void> _submitCrossPharmacyDispense(LaravelVerifiedPrescription prescription) async {
+  Future<void> _submitCrossPharmacyDispense(
+    LaravelVerifiedPrescription prescription,
+  ) async {
     final branchInfo = await _showBranchInfoSheet();
     if (branchInfo == null || !mounted) return;
 
@@ -150,7 +166,10 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
     if (items.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nothing remains to dispense on this prescription.'), backgroundColor: CrossPharmacyScanColors.danger),
+        const SnackBar(
+          content: Text('Nothing remains to dispense on this prescription.'),
+          backgroundColor: CrossPharmacyScanColors.danger,
+        ),
       );
       return;
     }
@@ -170,7 +189,9 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Submitted for $pharmacyName — awaiting home pharmacy verification.'),
+          content: Text(
+            'Submitted for $pharmacyName — awaiting home pharmacy verification.',
+          ),
           backgroundColor: CrossPharmacyScanColors.primary,
           duration: const Duration(seconds: 3),
         ),
@@ -178,12 +199,20 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
     } on LaravelApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: CrossPharmacyScanColors.danger, duration: const Duration(seconds: 4)),
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: CrossPharmacyScanColors.danger,
+          duration: const Duration(seconds: 4),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to submit dispense: $e'), backgroundColor: CrossPharmacyScanColors.danger, duration: const Duration(seconds: 4)),
+        SnackBar(
+          content: Text('Failed to submit dispense: $e'),
+          backgroundColor: CrossPharmacyScanColors.danger,
+          duration: const Duration(seconds: 4),
+        ),
       );
     }
   }
@@ -199,16 +228,43 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 20, 14),
-      child: Row(children: [
-        IconButton(onPressed: () => Navigator.maybePop(context), tooltip: 'Back', icon: const Icon(Icons.chevron_left, color: CrossPharmacyScanColors.text, size: 30)),
-        Expanded(child: Column(children: [
-          const Text('Cross-Pharmacy Scan', style: TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w700, fontSize: 17)),
-          const SizedBox(height: 3),
-          Text('External branch — ${widget.branchName}', style: TextStyle(color: CrossPharmacyScanColors.primaryLight, fontSize: 12.5)),
-        ])),
-        const SizedBox(width: 48),
-      ]),
+      padding: const EdgeInsets.fromLTRB(12, 12, 20, 16),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.maybePop(context),
+            tooltip: 'Back',
+            icon: const Icon(
+              Icons.chevron_left,
+              color: CrossPharmacyScanColors.text,
+              size: 30,
+            ),
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                const Text(
+                  'Cross-Pharmacy Scan',
+                  style: TextStyle(
+                    color: CrossPharmacyScanColors.text,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'External branch — ${widget.branchName}',
+                  style: TextStyle(
+                    color: CrossPharmacyScanColors.primaryLight,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 48),
+        ],
+      ),
     );
   }
 
@@ -227,65 +283,116 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
                     child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: CrossPharmacyScanColors.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: CrossPharmacyScanColors.border),
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(Icons.qr_code_scanner_outlined, color: CrossPharmacyScanColors.primaryLight, size: 48),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Cross-Pharmacy Scanner',
-                              style: TextStyle(color: CrossPharmacyScanColors.text, fontSize: 20, fontWeight: FontWeight.w700),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: CrossPharmacyScanColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: CrossPharmacyScanColors.border,
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Paste the QR code content below to scan a prescription.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 14),
-                            ),
-                            const SizedBox(height: 20),
-                            TextField(
-                              controller: _textController,
-                              maxLines: 5,
-                              style: const TextStyle(color: CrossPharmacyScanColors.text, fontSize: 14),
-                              decoration: InputDecoration(
-                                hintText: 'Paste QR content here...',
-                                hintStyle: const TextStyle(color: CrossPharmacyScanColors.muted),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CrossPharmacyScanColors.border)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: CrossPharmacyScanColors.border)),
-                                contentPadding: const EdgeInsets.all(12),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.qr_code_scanner_outlined,
+                                color: CrossPharmacyScanColors.primaryLight,
+                                size: 48,
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: _processing ? null : () => _processText(_textController.text),
-                                icon: _processing
-                                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                    : const Icon(Icons.check, color: Colors.white),
-                                label: Text(_processing ? 'Scanning...' : 'Scan QR', style: const TextStyle(fontWeight: FontWeight.w700)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: CrossPharmacyScanColors.primary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Cross-Pharmacy Scanner',
+                                style: TextStyle(
+                                  color: CrossPharmacyScanColors.text,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Paste the QR code content below to scan a prescription.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: CrossPharmacyScanColors.muted,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              TextField(
+                                controller: _textController,
+                                maxLines: 5,
+                                style: const TextStyle(
+                                  color: CrossPharmacyScanColors.text,
+                                  fontSize: 14,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Paste QR content here...',
+                                  hintStyle: const TextStyle(
+                                    color: CrossPharmacyScanColors.muted,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: CrossPharmacyScanColors.border,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: CrossPharmacyScanColors.border,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.all(12),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _processing
+                                      ? null
+                                      : () =>
+                                            _processText(_textController.text),
+                                  icon: _processing
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                        ),
+                                  label: Text(
+                                    _processing ? 'Scanning...' : 'Scan QR',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        CrossPharmacyScanColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      _immediateRecordBanner(),
-                    ],
+                        const SizedBox(height: 20),
+                        _immediateRecordBanner(),
+                      ],
                     ),
                   ),
                 ),
@@ -305,18 +412,34 @@ class _CrossPharmacyScanScreenState extends State<CrossPharmacyScanScreen> {
 // home pharmacy's admin reviews and approves it (same corrected messaging
 // applied to verify.blade.php's public portal page).
 Widget _immediateRecordBanner() => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-      decoration: BoxDecoration(
-        color: CrossPharmacyScanColors.warningBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: CrossPharmacyScanColors.warning.withValues(alpha: .45)),
+  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  decoration: BoxDecoration(
+    color: CrossPharmacyScanColors.warningBg,
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(
+      color: CrossPharmacyScanColors.warning.withValues(alpha: .45),
+    ),
+  ),
+  child: const Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(
+        Icons.info_outline,
+        color: CrossPharmacyScanColors.warning,
+        size: 16,
       ),
-      child: const Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.info_outline, color: CrossPharmacyScanColors.warning, size: 16),
-        SizedBox(width: 7),
-        Text('Submissions are held for home pharmacy review before the prescription record updates.', style: TextStyle(color: CrossPharmacyScanColors.warning, fontSize: 11.5, fontWeight: FontWeight.w600)),
-      ]),
-    );
+      SizedBox(width: 8),
+      Text(
+        'Submissions are held for home pharmacy review before the prescription record updates.',
+        style: TextStyle(
+          color: CrossPharmacyScanColors.warning,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ],
+  ),
+);
 
 class _VerificationSheet extends StatelessWidget {
   final LaravelVerifiedPrescription prescription;
@@ -339,7 +462,10 @@ class _VerificationSheet extends StatelessWidget {
             margin: const EdgeInsets.only(top: 12),
             width: 40,
             height: 4,
-            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(20),
@@ -348,36 +474,96 @@ class _VerificationSheet extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.verified_outlined, color: CrossPharmacyScanColors.primaryLight, size: 20),
+                    const Icon(
+                      Icons.verified_outlined,
+                      color: CrossPharmacyScanColors.primaryLight,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     const Text(
                       'Cross-Pharmacy Dispense',
-                      style: TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w800, fontSize: 16),
+                      style: TextStyle(
+                        color: CrossPharmacyScanColors.text,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text('RX: ${prescription.ocrCode}', style: const TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13)),
+                Text(
+                  'RX: ${prescription.ocrCode}',
+                  style: const TextStyle(
+                    color: CrossPharmacyScanColors.muted,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text('Patient: ${prescription.patientName}', style: const TextStyle(color: CrossPharmacyScanColors.text, fontWeight: FontWeight.w700, fontSize: 15)),
+                Text(
+                  'Patient: ${prescription.patientName}',
+                  style: const TextStyle(
+                    color: CrossPharmacyScanColors.text,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text('Prescriber: ${prescription.doctorName}', style: const TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13)),
+                Text(
+                  'Prescriber: ${prescription.doctorName}',
+                  style: const TextStyle(
+                    color: CrossPharmacyScanColors.muted,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 const Divider(color: CrossPharmacyScanColors.border),
                 const SizedBox(height: 12),
-                const Text('Medicines to dispense (remaining)', style: TextStyle(color: CrossPharmacyScanColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
+                const Text(
+                  'Medicines to dispense (remaining)',
+                  style: TextStyle(
+                    color: CrossPharmacyScanColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 if (items.isEmpty)
-                  const Text('No remaining quantity on this prescription.', style: TextStyle(color: CrossPharmacyScanColors.muted, fontSize: 13))
+                  const Text(
+                    'No remaining quantity on this prescription.',
+                    style: TextStyle(
+                      color: CrossPharmacyScanColors.muted,
+                      fontSize: 14,
+                    ),
+                  )
                 else
-                  ...items.map((i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(children: [
-                          Container(width: 6, height: 6, decoration: const BoxDecoration(color: CrossPharmacyScanColors.primaryLight, shape: BoxShape.circle)),
-                          const SizedBox(width: 10),
-                          Expanded(child: Text('${i.medicineName} × ${i.remainingQuantity}', style: const TextStyle(color: CrossPharmacyScanColors.text, fontSize: 14))),
-                        ]),
-                      )),
+                  ...items.map(
+                    (i) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: CrossPharmacyScanColors.primaryLight,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              '${i.medicineName} × ${i.remainingQuantity}',
+                              style: const TextStyle(
+                                color: CrossPharmacyScanColors.text,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -386,25 +572,39 @@ class _VerificationSheet extends StatelessWidget {
                         onPressed: () => Navigator.of(context).pop(false),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: CrossPharmacyScanColors.muted,
-                          side: const BorderSide(color: CrossPharmacyScanColors.border),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: const BorderSide(
+                            color: CrossPharmacyScanColors.border,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700)),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: items.isEmpty ? null : () => Navigator.of(context).pop(true),
+                        onPressed: items.isEmpty
+                            ? null
+                            : () => Navigator.of(context).pop(true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: CrossPharmacyScanColors.primary,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 0,
                         ),
-                        child: const Text('Continue', style: TextStyle(fontWeight: FontWeight.w700)),
+                        child: const Text(
+                          'Continue',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                   ],

@@ -1178,7 +1178,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           'OCR Prescription Scan → Review',
           style: TextStyle(
             color: OcrReviewColors.textPrimary,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
@@ -1259,7 +1259,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         _buildEditableFieldsSection(),
         const SizedBox(height: 16),
         _buildMedicineListSection(),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         _buildBottomButtons(),
       ],
     );
@@ -1311,7 +1311,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     );
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: OcrReviewColors.card,
         borderRadius: BorderRadius.circular(16),
@@ -1324,12 +1324,12 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             children: [
               const Expanded(
                 child: Text(
-                  'PRESCRIPTION PHOTO',
+                  'Prescription photo',
                   style: TextStyle(
                     color: OcrReviewColors.textSecondary,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
                   ),
                 ),
               ),
@@ -1348,7 +1348,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               color: OcrReviewColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           if (fillHeight)
             Expanded(child: photo)
           else
@@ -1378,7 +1378,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     Widget chip(_ReviewStatus s, String label) {
       final color = _statusColor(s);
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(999),
@@ -1387,12 +1387,12 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(_statusIcon(s), size: 14, color: color),
-            const SizedBox(width: 5),
+            const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
             ),
@@ -1448,10 +1448,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   Widget _buildSavedBanner() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: OcrReviewColors.greenBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: OcrReviewColors.green.withValues(alpha: 0.35),
         ),
@@ -1464,7 +1464,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             color: OcrReviewColors.green,
             size: 20,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1473,7 +1473,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   'Prescription saved as $_ocrCode',
                   style: const TextStyle(
                     color: OcrReviewColors.green,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
                 ),
@@ -1482,7 +1482,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   'Generate a QR code from the Saved Rx list.',
                   style: TextStyle(
                     color: OcrReviewColors.textSecondary,
-                    fontSize: 12.5,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -1496,10 +1496,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   Widget _buildValidationWarnings() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF7E6),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: const Color(0xFFD97706).withValues(alpha: 0.35),
         ),
@@ -1518,8 +1518,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               Text(
                 'Validation Notice',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                   color: Color(0xFFD97706),
                 ),
               ),
@@ -1531,10 +1531,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 '• $w',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: Color(0xFF92400E),
-                ),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF92400E)),
               ),
             ),
           ),
@@ -1564,10 +1561,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFEE2E2),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: const Color(0xFFDC2626).withValues(alpha: 0.5),
         ),
@@ -1582,7 +1579,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               Text(
                 'Not Matched to Catalog',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w600,
                   fontSize: 14,
                   color: Color(0xFFDC2626),
                 ),
@@ -1593,23 +1590,23 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           Text(
             'The medicine or strength below could not be matched to this '
             'pharmacy\'s catalog (this is not a live stock check):',
-            style: const TextStyle(fontSize: 12.5, color: Color(0xFF991B1B)),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           ...affected.map(
             (label) => Padding(
               padding: const EdgeInsets.only(bottom: 2),
               child: Text(
                 '• $label',
                 style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF991B1B),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           const Text(
             'Nothing will be substituted automatically. You can still save '
             'and dispense the other medicine(s) on this prescription now — '
@@ -1620,7 +1617,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             'your explicit confirmation.',
             style: TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -1635,8 +1632,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 textStyle: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ),
@@ -1661,20 +1658,20 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             'OCR EXTRACTED — EDITABLE',
             style: TextStyle(
               color: OcrReviewColors.textSecondary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.6,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Column(
             children: [
               _fieldBox(label: 'Doctor', controller: _doctorController),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _fieldBox(label: 'Date', controller: _dateController),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _fieldBox(label: 'Patient', controller: _patientController),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               // Age's compact TextField is intrinsically shorter than Sex,
               // whose chips sit inside a TapTarget(minSize: 44). IntrinsicHeight
               // + stretch lets Sex set the row height and Age match it exactly,
@@ -1697,13 +1694,13 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(child: _genderField()),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -1712,7 +1709,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                       controller: _licenseController,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _fieldBox(
                       label: 'PT No.',
@@ -1721,11 +1718,11 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _fieldBox(label: 'S2', controller: _s2Controller),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _fieldBox(label: 'Address', controller: _addressController),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Checkbox(
@@ -1736,10 +1733,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   ),
                   const Text(
                     'Senior Citizen',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14.5,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   ),
                   if (_isSenior) ...[
                     const Spacer(),
@@ -1747,16 +1741,16 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                       child: TextField(
                         controller: _oscaIdController,
                         style: const TextStyle(
-                          fontSize: 14.5,
+                          fontSize: 14,
                           color: OcrReviewColors.textPrimary,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                         ),
                         decoration: const InputDecoration(
                           hintText: 'OSCA ID No.',
                           isDense: true,
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 10,
+                            vertical: 12,
                           ),
                           border: OutlineInputBorder(),
                         ),
@@ -1783,7 +1777,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
     MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
   }) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: OcrReviewColors.border),
@@ -1796,20 +1790,20 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           Text(
             label,
             style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
               color: OcrReviewColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           TextField(
             controller: controller,
             keyboardType: keyboardType,
             inputFormatters: inputFormatters,
             style: const TextStyle(
-              fontSize: 14.5,
+              fontSize: 14,
               color: OcrReviewColors.textPrimary,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
             decoration: const InputDecoration(
               border: InputBorder.none,
@@ -1828,7 +1822,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
   /// blocks the save while this is null.
   Widget _genderField() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: OcrReviewColors.border),
@@ -1840,12 +1834,12 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           const Text(
             'Sex',
             style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
               color: OcrReviewColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Row(
             children: [
               _genderChip('M'),
@@ -1880,8 +1874,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
           child: Text(
             value,
             style: TextStyle(
-              fontSize: 14.5,
-              fontWeight: FontWeight.w800,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
               color: selected
                   ? OcrReviewColors.teal
                   : OcrReviewColors.textPrimary,
@@ -1907,12 +1901,12 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             children: [
               const Expanded(
                 child: Text(
-                  'AUTO-GENERATED PRICE LIST',
+                  'Auto-generated price list',
                   style: TextStyle(
                     color: OcrReviewColors.textSecondary,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
                   ),
                 ),
               ),
@@ -1925,8 +1919,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   ))
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: 12,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFDCF3E8),
@@ -1936,8 +1930,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                     'MDRP Compliant',
                     style: TextStyle(
                       color: Color(0xFF2E9C6B),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -1949,7 +1943,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               'No matching medicines recognized yet. Ensure OCR text contains the medicine names.',
               style: TextStyle(
                 color: OcrReviewColors.textSecondary,
-                fontSize: 12.5,
+                fontSize: 12,
               ),
             )
           else ...[
@@ -1966,8 +1960,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                 foregroundColor: OcrReviewColors.teal,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 textStyle: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ),
@@ -2082,10 +2076,10 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
         color: status == _ReviewStatus.verified
             ? Colors.transparent
             : statusColor.withValues(alpha: 0.06),
-        border: Border(left: BorderSide(color: statusColor, width: 4)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.35)),
         borderRadius: BorderRadius.circular(8),
       ),
-      padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2110,7 +2104,7 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                       ? 'New medicine'
                       : m.medicineLabel.trim(),
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -2120,13 +2114,13 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 if (readAs.isNotEmpty) ...[
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 4),
                   Text.rich(
                     TextSpan(
                       children: [
                         const TextSpan(
                           text: 'Read as: ',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                          style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                         TextSpan(
                           text: '“$readAs”',
@@ -2138,18 +2132,18 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                   ),
                 ],
                 if (statusNote != null) ...[
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 4),
                   Text(
                     statusNote,
                     style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                       color: statusColor,
                     ),
                   ),
                 ],
                 if (status == _ReviewStatus.check) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: () => setState(() {
                       final idx = _matchedMeds.indexWhere((e) => e.id == m.id);
@@ -2164,8 +2158,8 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
                       side: const BorderSide(color: _statusGreen),
                       visualDensity: VisualDensity.compact,
                       textStyle: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -2276,13 +2270,13 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: OcrReviewColors.teal,
               side: const BorderSide(color: OcrReviewColors.teal),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
               textStyle: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
@@ -2314,13 +2308,13 @@ class _OcrReviewScreenState extends State<OcrReviewScreen> {
               disabledBackgroundColor: OcrReviewColors.green.withValues(
                 alpha: 0.4,
               ),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
               textStyle: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
@@ -2972,7 +2966,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       context: context,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetContext) => SafeArea(
         child: ListView.separated(
@@ -2990,7 +2984,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   'Choose brand',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: Colors.grey.shade900,
                   ),
                 ),
@@ -2999,7 +2993,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             final v = candidates[i - 1];
             return ListTile(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -3013,8 +3007,8 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
               title: Text(
                 v.brandName ?? v.name ?? 'Generic (no brand)',
                 style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
               subtitle: v.dosageForm != null && v.dosageForm!.isNotEmpty
@@ -3027,7 +3021,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   ? Text(
                       '₱${(v.unitPrice ?? 0).toStringAsFixed(2)}',
                       style: const TextStyle(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: OcrReviewColors.teal,
                         fontSize: 14,
                       ),
@@ -3085,7 +3079,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
       isScrollControlled: true,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetContext) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -3106,7 +3100,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: OcrReviewColors.teal.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
                             Icons.medication_outlined,
@@ -3114,12 +3108,12 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                             color: OcrReviewColors.teal,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Text(
                           'Pick correct medicine',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: Colors.grey.shade900,
                           ),
                         ),
@@ -3151,7 +3145,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                           ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
+                          horizontal: 16,
                           vertical: 12,
                         ),
                       ),
@@ -3343,7 +3337,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             ),
             child: Text(
               'Essential',
-              style: TextStyle(fontSize: 11, color: OcrReviewColors.teal),
+              style: TextStyle(fontSize: 12, color: OcrReviewColors.teal),
             ),
           )
         : Container(
@@ -3354,7 +3348,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
             ),
             child: const Text(
               'Optional',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           );
 
@@ -3408,7 +3402,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                       child: TextField(
                         controller: _nameController,
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                         decoration: InputDecoration(
@@ -3443,7 +3437,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                                     identitySuffix,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: OcrReviewColors.teal,
                                       decoration:
@@ -3456,7 +3450,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                                   ),
                                 ),
                                 if (updated.brandCandidates.length > 1) ...[
-                                  const SizedBox(width: 3),
+                                  const SizedBox(width: 4),
                                   Icon(
                                     Icons.unfold_more,
                                     size: 16,
@@ -3473,7 +3467,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   ],
                 ),
                 if (updated.isManualEntry) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       const Text(
@@ -3497,8 +3491,8 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                             ),
                           ],
                           style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                           decoration: const InputDecoration(
                             isDense: true,
@@ -3528,7 +3522,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                       Text(
                         'Added manually — not from the catalog.',
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -3541,9 +3535,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                         child: const Text(
                           'Pick from catalog instead',
                           style: TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 11,
                             color: OcrReviewColors.teal,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             decoration: TextDecoration.underline,
                           ),
                         ),
@@ -3555,12 +3549,12 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   const SizedBox(height: 2),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
+                      horizontal: 8,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFF7E6),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: const Color(0xFFD97706).withValues(alpha: 0.4),
                       ),
@@ -3568,9 +3562,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     child: const Text(
                       'Low-confidence match — please verify',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         color: Color(0xFF92400E),
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -3584,7 +3578,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       onTap: () => _showBrandPicker(
                         context,
                         updated.brandCandidates,
@@ -3595,11 +3589,11 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 10,
+                          vertical: 12,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF7E6),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: const Color(
                               0xFFD97706,
@@ -3619,9 +3613,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                                 'Select brand…',
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: 12,
                                   color: Color(0xFF92400E),
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -3629,7 +3623,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                               '${updated.brandCandidates.length} option'
                               '${updated.brandCandidates.length == 1 ? '' : 's'}',
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 12,
                                 color: Color(0xFF92400E),
                                 fontWeight: FontWeight.w600,
                               ),
@@ -3658,7 +3652,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
-                      vertical: 6,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEE2E2),
@@ -3676,9 +3670,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                           'pick the correct medicine below. This is not a '
                           'stock check.',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: Color(0xFF991B1B),
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -3700,9 +3694,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                               Text(
                                 'Pick from catalog',
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 12,
                                   color: const Color(0xFF991B1B),
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   decoration: TextDecoration.underline,
                                   decorationColor: const Color(
                                     0xFF991B1B,
@@ -3729,7 +3723,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
-                      vertical: 6,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEE2E2),
@@ -3750,9 +3744,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                                     'Listed: '
                                     '${updated.brandCandidates.map((v) => v.dosageForm?.trim()).whereType<String>().where((d) => d.isNotEmpty).toSet().join(', ')}.',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: Color(0xFF991B1B),
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -3774,9 +3768,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                               Text(
                                 'Pick from catalog',
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 12,
                                   color: const Color(0xFF991B1B),
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   decoration: TextDecoration.underline,
                                   decorationColor: const Color(
                                     0xFF991B1B,
@@ -3822,7 +3816,7 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     style: const TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       color: OcrReviewColors.textPrimary,
                     ),
                     decoration: const InputDecoration(
@@ -3850,9 +3844,9 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                       _qtyError!,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 9,
+                        fontSize: 11,
                         color: Color(0xFFDC2626),
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -3874,8 +3868,8 @@ class _EditableMedicineRowState extends State<_EditableMedicineRow> {
                   ? 'Strength not listed'
                   : 'Select brand',
               style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
                 color: updated.medicineNotFound || updated.dosageNotStocked
                     ? const Color(0xFFDC2626)
                     : const Color(0xFFD97706),

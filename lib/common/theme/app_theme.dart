@@ -1,6 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+
+/// IBM Plex Mono, for codes people read character by character (Rx
+/// numbers, patient and request IDs) so they don't blend into prose.
+TextStyle appMono({
+  double fontSize = 12,
+  FontWeight fontWeight = FontWeight.w500,
+  Color? color,
+}) => GoogleFonts.ibmPlexMono(
+  fontSize: fontSize,
+  fontWeight: fontWeight,
+  color: color,
+);
+
+/// The app's type scale (IBM Plex Sans): five sizes — 28, 20, 16, 14, 12
+/// (11 only for count badges) — and three weights, 400/500/600. Screens set
+/// sizes on their own TextStyles; these are the defaults stock widgets use.
+TextTheme _textTheme(TextTheme base) {
+  TextStyle s(TextStyle? t, double size, double height, FontWeight weight) =>
+      t!.copyWith(
+        fontSize: size,
+        height: height / size,
+        fontWeight: weight,
+        letterSpacing: 0,
+      );
+  final t = GoogleFonts.ibmPlexSansTextTheme(base);
+  return t.copyWith(
+    displayLarge: s(t.displayLarge, 28, 34, FontWeight.w600),
+    displayMedium: s(t.displayMedium, 28, 34, FontWeight.w600),
+    displaySmall: s(t.displaySmall, 28, 34, FontWeight.w600),
+    headlineLarge: s(t.headlineLarge, 28, 34, FontWeight.w600),
+    headlineMedium: s(t.headlineMedium, 28, 34, FontWeight.w600),
+    headlineSmall: s(t.headlineSmall, 20, 28, FontWeight.w600),
+    titleLarge: s(t.titleLarge, 20, 28, FontWeight.w600),
+    titleMedium: s(t.titleMedium, 16, 24, FontWeight.w600),
+    titleSmall: s(t.titleSmall, 14, 20, FontWeight.w600),
+    bodyLarge: s(t.bodyLarge, 16, 24, FontWeight.w400),
+    bodyMedium: s(t.bodyMedium, 14, 20, FontWeight.w400),
+    bodySmall: s(t.bodySmall, 12, 16, FontWeight.w400),
+    labelLarge: s(t.labelLarge, 14, 20, FontWeight.w500),
+    labelMedium: s(t.labelMedium, 12, 16, FontWeight.w500),
+    labelSmall: s(t.labelSmall, 11, 16, FontWeight.w500),
+  );
+}
 
 /// App-wide Material theme built from [AppColors].
 ///
@@ -25,15 +69,16 @@ ThemeData buildAppTheme() {
   // Derived from the default text theme (not a bare TextStyle) so buttons
   // keep the theme's font family — ButtonStyle.textStyle replaces the
   // inherited style outright rather than merging into it.
-  final baseText = ThemeData(useMaterial3: true, colorScheme: scheme).textTheme;
-  final buttonText = baseText.labelLarge!.copyWith(
-    fontSize: 14.5,
-    fontWeight: FontWeight.w600,
+  final baseText = _textTheme(
+    ThemeData(useMaterial3: true, colorScheme: scheme).textTheme,
   );
+  final buttonText = baseText.labelLarge!;
 
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
+    fontFamily: GoogleFonts.ibmPlexSans().fontFamily,
+    textTheme: baseText,
     scaffoldBackgroundColor: AppColors.bg,
     visualDensity: VisualDensity.standard,
     dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
@@ -46,8 +91,8 @@ ThemeData buildAppTheme() {
       shadowColor: AppColors.border,
       centerTitle: false,
       titleTextStyle: baseText.titleLarge!.copyWith(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
     ),
@@ -66,13 +111,15 @@ ThemeData buildAppTheme() {
         foregroundColor: Colors.white,
         elevation: 0,
         textStyle: buttonText,
-        shape: RoundedRectangleBorder(borderRadius: radius12),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(64, 44),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         textStyle: buttonText,
-        shape: RoundedRectangleBorder(borderRadius: radius12),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(64, 44),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -80,14 +127,16 @@ ThemeData buildAppTheme() {
         foregroundColor: AppColors.teal,
         textStyle: buttonText,
         side: const BorderSide(color: AppColors.border),
-        shape: RoundedRectangleBorder(borderRadius: radius12),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(64, 44),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppColors.teal,
         textStyle: buttonText,
-        shape: RoundedRectangleBorder(borderRadius: radius12),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(64, 44),
       ),
     ),
     // Only label colors here: many screens draw their own borderless fields
@@ -101,15 +150,15 @@ ThemeData buildAppTheme() {
       side: const BorderSide(color: AppColors.border),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       selectedColor: AppColors.tealPale,
-      labelStyle: baseText.labelLarge!.copyWith(fontSize: 13),
+      labelStyle: baseText.labelLarge!.copyWith(fontSize: 14),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: AppColors.surface,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       titleTextStyle: baseText.titleLarge!.copyWith(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
     ),
@@ -144,10 +193,10 @@ ThemeData buildAppTheme() {
       backgroundColor: AppColors.surface,
       elevation: 8,
       selectedLabelStyle: baseText.labelSmall!.copyWith(
-        fontSize: 11.5,
-        fontWeight: FontWeight.w700,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
       ),
-      unselectedLabelStyle: baseText.labelSmall!.copyWith(fontSize: 11.5),
+      unselectedLabelStyle: baseText.labelSmall!.copyWith(fontSize: 12),
     ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: AppColors.surface,
@@ -157,13 +206,13 @@ ThemeData buildAppTheme() {
       unselectedIconTheme: const IconThemeData(color: AppColors.textSecondary),
       selectedLabelTextStyle: baseText.labelLarge!.copyWith(
         color: AppColors.teal,
-        fontWeight: FontWeight.w700,
-        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+        fontSize: 14,
       ),
       unselectedLabelTextStyle: baseText.labelLarge!.copyWith(
         color: AppColors.textSecondary,
         fontWeight: FontWeight.w500,
-        fontSize: 13.5,
+        fontSize: 14,
       ),
     ),
     tooltipTheme: TooltipThemeData(

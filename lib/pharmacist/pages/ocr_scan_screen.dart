@@ -368,18 +368,18 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
             child: Column(
               children: [
                 _buildHeader(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
                 _buildCameraCard(),
                 const SizedBox(height: 70),
                 _buildBookIcon(),
                 const SizedBox(height: 26),
                 _buildTitle(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
                 _buildDescription(),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 20),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 34),
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
                       _errorMessage!,
                       textAlign: TextAlign.center,
@@ -387,7 +387,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
                         color: _isQuotaExceeded
                             ? const Color(0xFF9A6B0A)
                             : Colors.red,
-                        fontSize: 13,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -404,7 +404,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: OcrColors.border)),
@@ -419,7 +419,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
           const SizedBox(width: 4),
           const Text(
             'OCR Prescription Scan',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -428,12 +428,12 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
 
   Widget _buildCameraCard() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 22),
-      padding: const EdgeInsets.symmetric(vertical: 34),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 32),
       width: double.infinity,
       decoration: BoxDecoration(
         color: OcrColors.dark,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
@@ -454,10 +454,10 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
             )
           else
             ClipRRect(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(12),
               child: Image.memory(_imageBytes!, height: 220, fit: BoxFit.cover),
             ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           Text(
             _isProcessing ? _processingStage : 'Tap to capture prescription',
             style: const TextStyle(color: OcrColors.dimText, fontSize: 16),
@@ -473,7 +473,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
               elevation: 0,
               minimumSize: const Size(170, 52),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             child: const Text(
@@ -492,7 +492,7 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       height: 78,
       decoration: BoxDecoration(
         color: OcrColors.tealLight,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: const Icon(
         Icons.menu_book_outlined,
@@ -508,14 +508,14 @@ class _OCRScanScreenState extends State<OCRScanScreen> {
       child: Text(
         'Capture a Handwritten Prescription',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
       ),
     );
   }
 
   Widget _buildDescription() {
     return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 34),
+      padding: EdgeInsets.symmetric(horizontal: 32),
       child: Text(
         'Photograph the prescription clearly.\n'
         'RxTrack extracts medicines using OCR.space and generates\n'

@@ -32,7 +32,9 @@ class _MedicineCardState extends State<MedicineCard> {
   @override
   void initState() {
     super.initState();
-    quantity = widget.initialQuantity > 0 ? widget.initialQuantity : widget.prescribedQuantity;
+    quantity = widget.initialQuantity > 0
+        ? widget.initialQuantity
+        : widget.prescribedQuantity;
   }
 
   double get subtotal => quantity * widget.unitPrice;
@@ -40,9 +42,9 @@ class _MedicineCardState extends State<MedicineCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -57,7 +59,7 @@ class _MedicineCardState extends State<MedicineCard> {
                         widget.medicineName,
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
@@ -80,14 +82,14 @@ class _MedicineCardState extends State<MedicineCard> {
                       style: const TextStyle(
                         color: Color(0xFF0B7B77),
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                        fontSize: 16,
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             const Row(
               children: [
                 Expanded(
@@ -111,7 +113,7 @@ class _MedicineCardState extends State<MedicineCard> {
                   }
                 }),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     quantity.toString(),
                     style: const TextStyle(
@@ -133,30 +135,30 @@ class _MedicineCardState extends State<MedicineCard> {
                       '${widget.stock} units',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                        fontSize: 16,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(
                       'After: ${widget.stock - quantity}',
                       style: const TextStyle(
                         color: Colors.redAccent,
-                        fontSize: 13,
+                        fontSize: 14,
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             const Divider(),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: Text(
                     'Subtotal',
-                    style: const TextStyle(color: Colors.grey, fontSize: 15),
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                 ),
                 Text(
@@ -164,7 +166,7 @@ class _MedicineCardState extends State<MedicineCard> {
                   style: const TextStyle(
                     color: Color(0xFF0B7B77),
                     fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                    fontSize: 16,
                   ),
                 ),
               ],
